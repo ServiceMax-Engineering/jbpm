@@ -215,19 +215,15 @@ public class XMLPersistenceTest extends JbpmTestCase {
         startNode.setMetaData("meta2", "someOtherValue");
         ConstraintTrigger constraintTrigger = new ConstraintTrigger();
         constraintTrigger.setConstraint("constraint");
-        Map<String, String> inMapping = new HashMap<String, String>();
-        inMapping.put("key", "value");
-        inMapping.put("key2", "value2");
-        constraintTrigger.setInMappings(inMapping);
+        constraintTrigger.addInMapping("key", "value");
+        constraintTrigger.addInMapping("key2", "value2");
         startNode.addTrigger(constraintTrigger);
         EventTrigger eventTrigger = new EventTrigger();
         EventTypeFilter eventTypeFilter = new EventTypeFilter();
         eventTypeFilter.setType("eventType");
         eventTrigger.addEventFilter(eventTypeFilter);
-        inMapping = new HashMap<String, String>();
-        inMapping.put("key", "value");
-        inMapping.put("key2", "value2");
-        eventTrigger.setInMappings(inMapping);
+        eventTrigger.addInMapping("key", "value");
+        eventTrigger.addInMapping("key2", "value2");
         startNode.addTrigger(eventTrigger);
         process.addNode(startNode);
         

@@ -17,50 +17,37 @@
 package org.jbpm.workflow.core.node;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jbpm.process.core.context.variable.Mappable;
+import org.jbpm.workflow.core.node.DataAssociation.Direction;
 
 public class Trigger implements Mappable, Serializable {
 	
 	private static final long serialVersionUID = 510l;
 	
-	private Map<String, String> inMapping = new HashMap<String, String>();
+	private List<DataAssociation> inMapping = new ArrayList<DataAssociation>();
 
-    public void addInMapping(String subVariableName, String variableName) {
-        inMapping.put(subVariableName, variableName);
+	public DataAssociation addInMapping(String parameterName, String variableName) {
+        DataAssociation da = new DataAssociation(variableName, parameterName, Direction.INPUT);
+        inMapping.add(da);
+        return da;
     }
-    
-    public void setInMappings(Map<String, String> inMapping) {
-        this.inMapping = inMapping;
-    }
-    
-    public String getInMapping(String parameterName) {
-        return inMapping.get(parameterName);
+	
+    public List<DataAssociation> getInMappings() {
+        return Collections.unmodifiableList(inMapping);
     }
 
-    public Map<String, String> getInMappings() {
-        return Collections.unmodifiableMap(inMapping);
-    }
-    
-    public void addOutMapping(String subVariableName, String variableName) {
+    public DataAssociation addOutMapping(String subVariableName, String variableName) {
         throw new IllegalArgumentException(
     		"A trigger does not support out mappings");
     }
     
-    public void setOutMappings(Map<String, String> outMapping) {
-        throw new IllegalArgumentException(
-			"A trigger does not support out mappings");
-    }
-    
-    public String getOutMapping(String parameterName) {
-        throw new IllegalArgumentException(
-			"A trigger does not support out mappings");
-    }
-
-    public Map<String, String> getOutMappings() {
+    public List<DataAssociation> getOutMappings() {
         throw new IllegalArgumentException(
         	"A trigger does not support out mappings");
     }

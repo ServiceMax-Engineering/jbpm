@@ -17,10 +17,13 @@
 package org.jbpm.workflow.instance.node;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.drools.WorkItemHandlerNotFoundException;
 import org.drools.definition.process.Node;
@@ -34,10 +37,14 @@ import org.drools.runtime.process.WorkItem;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
+import org.jbpm.workflow.core.node.Assignment;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
 import org.jbpm.workflow.instance.impl.WorkItemResolverFactory;
 import org.mvel2.MVEL;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Runtime counterpart of a work item node.
@@ -118,24 +125,34 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
         ((org.drools.process.instance.WorkItem) workItem).setName(work.getName());
         ((org.drools.process.instance.WorkItem) workItem).setProcessInstanceId(getProcessInstance().getId());
         ((org.drools.process.instance.WorkItem) workItem).setParameters(new HashMap<String, Object>(work.getParameters()));
-        for (Iterator<Map.Entry<String, String>> iterator = workItemNode.getInMappings().entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry<String, String> mapping = iterator.next();
+        for (DataAssociation mapping : workItemNode.getInMappings()) {
             Object parameterValue = null;
             VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-                resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getValue());
+                resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getVariable());
             if (variableScopeInstance != null) {
-            	parameterValue = variableScopeInstance.getVariable(mapping.getValue());
+            	parameterValue = variableScopeInstance.getVariable(mapping.getVariable());
             } else {
             	try {
-            		parameterValue = MVEL.eval(mapping.getValue(), new NodeInstanceResolverFactory(this));
+            		parameterValue = MVEL.eval(mapping.getVariable(), new NodeInstanceResolverFactory(this));
             	} catch (Throwable t) {
-	                System.err.println("Could not find variable scope for variable " + mapping.getValue());
+	                System.err.println("Could not find variable scope for variable " + mapping.getVariable());
 	                System.err.println("when trying to execute Work Item " + work.getName());
 	                System.err.println("Continuing without setting parameter.");
             	}
             }
             if (parameterValue != null) {
-            	((org.drools.process.instance.WorkItem) workItem).setParameter(mapping.getKey(), parameterValue);
+                try {
+                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+                    for (Assignment assign : mapping.getAssignments()) {
+                        parameterValue = assign.evaluate(parameterValue, doc);
+                    }
+                    
+                    ((org.drools.process.instance.WorkItem) workItem).setParameter(mapping.getDataInput(), doc.getFirstChild());
+                } catch (ParserConfigurationException e) {
+                    e.printStackTrace();
+                } catch (XPathExpressionException e) {
+                    e.printStackTrace();
+                }
             }
         }
         for (Map.Entry<String, Object> entry: workItem.getParameters().entrySet()) {
@@ -178,22 +195,21 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
     	this.workItem = workItem;
     	WorkItemNode workItemNode = getWorkItemNode();
     	if (workItemNode != null) {
-	        for (Iterator<Map.Entry<String, String>> iterator = getWorkItemNode().getOutMappings().entrySet().iterator(); iterator.hasNext(); ) {
-	            Map.Entry<String, String> mapping = iterator.next();
+    	    for (DataAssociation mapping : workItemNode.getOutMappings()) {
 	            VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-	                resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getValue());
+	                resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getVariable());
 	            if (variableScopeInstance != null) {
-	            	Object value = workItem.getResult(mapping.getKey());
+	            	Object value = workItem.getResult(mapping.getDataOutput());
 	            	if (value == null) {
 	            		try {
-	                		value = MVEL.eval(mapping.getKey(), new WorkItemResolverFactory(workItem));
+	                		value = MVEL.eval(mapping.getDataOutput(), new WorkItemResolverFactory(workItem));
 	                	} catch (Throwable t) {
 	                		// do nothing
 	                	}
 	            	}
-	                variableScopeInstance.setVariable(mapping.getValue(), value);
+	                variableScopeInstance.setVariable(mapping.getVariable(), value);
 	            } else {
-	                System.err.println("Could not find variable scope for variable " + mapping.getValue());
+	                System.err.println("Could not find variable scope for variable " + mapping.getVariable());
 	                System.err.println("when trying to complete Work Item " + workItem.getName());
 	                System.err.println("Continuing without setting variable.");
 	            }

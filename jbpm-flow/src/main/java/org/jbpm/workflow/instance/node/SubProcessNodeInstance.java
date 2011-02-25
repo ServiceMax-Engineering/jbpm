@@ -30,6 +30,7 @@ import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.process.instance.impl.ProcessInstanceImpl;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
 import org.jbpm.workflow.instance.impl.VariableScopeResolverFactory;
@@ -58,23 +59,23 @@ public class SubProcessNodeInstance extends StateBasedNodeInstance implements Ev
                 "A SubProcess node only accepts default incoming connections!");
         }
         Map<String, Object> parameters = new HashMap<String, Object>();
-        for (Map.Entry<String, String> mapping: getSubProcessNode().getInMappings().entrySet()) {
+        for (DataAssociation mapping : getSubProcessNode().getInMappings()) {
         	Object parameterValue = null;
             VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-                resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getValue());
+                resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getVariable());
             if (variableScopeInstance != null) {
-                parameterValue = variableScopeInstance.getVariable(mapping.getValue());
+                parameterValue = variableScopeInstance.getVariable(mapping.getVariable());
             } else {
             	try {
-            		parameterValue = MVEL.eval(mapping.getValue(), new NodeInstanceResolverFactory(this));
+            		parameterValue = MVEL.eval(mapping.getVariable(), new NodeInstanceResolverFactory(this));
             	} catch (Throwable t) {
-            		System.err.println("Could not find variable scope for variable " + mapping.getValue());
+            		System.err.println("Could not find variable scope for variable " + mapping.getVariable());
                     System.err.println("when trying to execute SubProcess node " + getSubProcessNode().getName());
                     System.err.println("Continuing without setting parameter.");
             	}
             }
             if (parameterValue != null) {
-            	parameters.put(mapping.getKey(),parameterValue); 
+            	parameters.put(mapping.getDataInput(),parameterValue); 
             }
         }
         String processId = getSubProcessNode().getProcessId();
@@ -186,21 +187,21 @@ public class SubProcessNodeInstance extends StateBasedNodeInstance implements Ev
     private void handleOutMappings(ProcessInstance processInstance) {
         VariableScopeInstance subProcessVariableScopeInstance = (VariableScopeInstance)
 	        processInstance.getContextInstance(VariableScope.VARIABLE_SCOPE);
-	    for (Map.Entry<String, String> mapping: getSubProcessNode().getOutMappings().entrySet()) {
+	    for (DataAssociation mapping: getSubProcessNode().getOutMappings()) {
 	        VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-	            resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getValue());
+	            resolveContextInstance(VariableScope.VARIABLE_SCOPE, mapping.getVariable());
 	        if (variableScopeInstance != null) {
-	        	Object value = subProcessVariableScopeInstance.getVariable(mapping.getKey());
+	        	Object value = subProcessVariableScopeInstance.getVariable(mapping.getVariable());
 	        	if (value == null) {
 	        		try {
-	            		value = MVEL.eval(mapping.getKey(), new VariableScopeResolverFactory(subProcessVariableScopeInstance));
+	            		value = MVEL.eval(mapping.getVariable(), new VariableScopeResolverFactory(subProcessVariableScopeInstance));
 	            	} catch (Throwable t) {
 	            		// do nothing
 	            	}
 	        	}
-	            variableScopeInstance.setVariable(mapping.getValue(), value);
+	            variableScopeInstance.setVariable(mapping.getDataOutput(), value);
 	        } else {
-	            System.err.println("Could not find variable scope for variable " + mapping.getValue());
+	            System.err.println("Could not find variable scope for variable " + mapping.getVariable());
 	            System.err.println("when trying to complete SubProcess node " + getSubProcessNode().getName());
 	            System.err.println("Continuing without setting variable.");
 	        }

@@ -28,6 +28,7 @@ import org.jbpm.process.instance.event.SignalManager;
 import org.jbpm.process.instance.event.SignalManagerFactory;
 import org.jbpm.process.instance.timer.TimerManager;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.EventTrigger;
 import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.Trigger;
@@ -213,11 +214,11 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
     	
 	    private String              processId;
 	    private List<EventFilter>   eventFilters;
-	    private Map<String, String> inMappings;
+	    private  List<DataAssociation> inMappings;
 	
 	    public StartProcessEventListener(String processId,
 	                                     List<EventFilter> eventFilters,
-	                                     Map<String, String> inMappings) {
+	                                     List<DataAssociation> inMappings) {
 	        this.processId = processId;
 	        this.eventFilters = eventFilters;
 	        this.inMappings = inMappings;
@@ -238,13 +239,13 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 	        Map<String, Object> params = null;
 	        if ( inMappings != null && !inMappings.isEmpty() ) {
 	            params = new HashMap<String, Object>();
-	            for ( Map.Entry<String, String> entry : inMappings.entrySet() ) {
-	                if ( "event".equals( entry.getValue() ) ) {
-	                    params.put( entry.getKey(),
+	            for ( DataAssociation entry : inMappings ) {
+	                if ( "event".equals( entry.getTo() ) ) {
+	                    params.put( entry.getFrom(),
 	                                event );
 	                } else {
-	                    params.put( entry.getKey(),
-	                                entry.getValue() );
+	                    params.put( entry.getFrom(),
+	                                entry.getTo() );
 	                }
 	            }
 	        }

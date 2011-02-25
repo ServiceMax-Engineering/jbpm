@@ -1,9 +1,11 @@
 package org.jbpm.compiler.xml.processes;
 
+import java.util.List;
 import java.util.Map;
 
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.workflow.core.Node;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.SubProcessNode;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -54,19 +56,19 @@ public class SubProcessNodeHandler extends AbstractNodeHandler {
         if (includeMeta) {
         	writeMetaData(subProcessNode, xmlDump);
         }
-        Map<String, String> inMappings = subProcessNode.getInMappings();
-        for (Map.Entry<String, String> inMapping: inMappings.entrySet()) {
+        List<DataAssociation> inMappings = subProcessNode.getInMappings();
+        for (DataAssociation inMapping: inMappings) {
             xmlDump.append(
                 "      <mapping type=\"in\" "
-                             + "from=\"" + inMapping.getValue() + "\" "
-                             + "to=\"" + inMapping.getKey() + "\" />" + EOL);
+                             + "from=\"" + inMapping.getFrom() + "\" "
+                             + "to=\"" + inMapping.getTo() + "\" />" + EOL);
         }
-        Map<String, String> outMappings = subProcessNode.getOutMappings();
-        for (Map.Entry<String, String> outMapping: outMappings.entrySet()) {
+        List<DataAssociation> outMappings = subProcessNode.getOutMappings();
+        for (DataAssociation outMapping: outMappings) {
             xmlDump.append(
                 "      <mapping type=\"out\" "
-                             + "from=\"" + outMapping.getKey() + "\" "
-                             + "to=\"" + outMapping.getValue() + "\" />" + EOL);
+                             + "from=\"" + outMapping.getFrom() + "\" "
+                             + "to=\"" + outMapping.getTo() + "\" />" + EOL);
         }
         for (String eventType: subProcessNode.getActionTypes()) {
         	writeActions(eventType, subProcessNode.getActions(eventType), xmlDump);

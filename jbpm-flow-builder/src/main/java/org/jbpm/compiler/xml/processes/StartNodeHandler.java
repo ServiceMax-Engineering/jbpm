@@ -8,6 +8,7 @@ import org.jbpm.process.core.event.EventFilter;
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.node.ConstraintTrigger;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.EventTrigger;
 import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.Trigger;
@@ -41,12 +42,12 @@ public class StartNodeHandler extends AbstractNodeHandler {
 						xmlDump.append("        <trigger type=\"constraint\" >" + EOL);
 						xmlDump.append("          <constraint type=\"rule\" dialect=\"mvel\" >"
 							+ ((ConstraintTrigger) trigger).getConstraint() + "</constraint>" + EOL);
-						Map<String, String> inMappings = trigger.getInMappings();
+						List<DataAssociation> inMappings = trigger.getInMappings();
 				    	if (inMappings != null && !inMappings.isEmpty()) {
-				    		for (Map.Entry<String, String> entry: inMappings.entrySet()) {
+				    		for (DataAssociation entry: inMappings) {
 					    		xmlDump.append("          <mapping type=\"in\" from=\""
-				    				+ XmlDumper.replaceIllegalChars(entry.getValue())
-				    				+ "\" to=\"" + entry.getKey() + "\" />" + EOL);
+				    				+ XmlDumper.replaceIllegalChars(entry.getFrom())
+				    				+ "\" to=\"" + entry.getTo() + "\" />" + EOL);
 					    	}
 				    	}
 						xmlDump.append("        </trigger>" + EOL);
@@ -64,12 +65,12 @@ public class StartNodeHandler extends AbstractNodeHandler {
 				        	}
 				        }
 				        xmlDump.append("          </eventFilters>" + EOL);
-						Map<String, String> inMappings = trigger.getInMappings();
+						List<DataAssociation> inMappings = trigger.getInMappings();
 				    	if (inMappings != null && !inMappings.isEmpty()) {
-				    		for (Map.Entry<String, String> entry: inMappings.entrySet()) {
+				    		for (DataAssociation entry: inMappings) {
 					    		xmlDump.append("          <mapping type=\"in\" from=\""
-				    				+ XmlDumper.replaceIllegalChars(entry.getValue())
-				    				+ "\" to=\"" + entry.getKey() + "\" />" + EOL);
+				    				+ XmlDumper.replaceIllegalChars(entry.getFrom())
+				    				+ "\" to=\"" + entry.getTo() + "\" />" + EOL);
 					    	}
 				    	}
 						xmlDump.append("        </trigger>" + EOL);

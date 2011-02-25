@@ -16,13 +16,14 @@
 
 package org.jbpm.workflow.core.node;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.drools.definition.process.Connection;
 import org.drools.process.core.Work;
 import org.jbpm.process.core.context.variable.Mappable;
+import org.jbpm.workflow.core.node.DataAssociation.Direction;
 
 /**
  * Default implementation of a task node.
@@ -34,8 +35,8 @@ public class WorkItemNode extends StateBasedNode implements Mappable {
 	private static final long serialVersionUID = 510l;
 	
 	private Work work;
-    private Map<String, String> inMapping = new HashMap<String, String>();
-    private Map<String, String> outMapping = new HashMap<String, String>();
+	private List<DataAssociation> inMapping = new ArrayList<DataAssociation>();
+	private List<DataAssociation> outMapping = new ArrayList<DataAssociation>();
     private boolean waitForCompletion = true;
     // TODO boolean independent (cancel work item if node gets cancelled?)
 
@@ -47,38 +48,44 @@ public class WorkItemNode extends StateBasedNode implements Mappable {
 		this.work = work;
 	}
 	
-    public void addInMapping(String parameterName, String variableName) {
-        inMapping.put(parameterName, variableName);
+    public DataAssociation addInMapping(String parameterName, String variableName) {
+        DataAssociation da = new DataAssociation(variableName, parameterName, Direction.INPUT);
+        inMapping.add(da);
+        return da;
     }
     
-    public void setInMappings(Map<String, String> inMapping) {
-        this.inMapping = inMapping;
+    public DataAssociation addOutMapping(String parameterName, String variableName) {
+        DataAssociation da = new DataAssociation(parameterName, variableName, Direction.OUTPUT);
+        outMapping.add(da);
+        return da;
     }
     
-    public String getInMapping(String parameterName) {
-        return inMapping.get(parameterName);
+    public List<DataAssociation> getInMappings() {
+        return Collections.unmodifiableList(inMapping);
     }
 
-    public Map<String, String> getInMappings() {
-        return Collections.unmodifiableMap(inMapping);
+    public List<DataAssociation> getOutMappings() {
+        return Collections.unmodifiableList(outMapping);
     }
     
-    public void addOutMapping(String parameterName, String variableName) {
-        outMapping.put(parameterName, variableName);
+    public DataAssociation getInMapping(String name) {
+        for (DataAssociation assoc : inMapping) {
+            if (name.equals(assoc.getDataInput())) {
+                return assoc;
+            }
+        }
+        return null;
     }
     
-    public void setOutMappings(Map<String, String> outMapping) {
-        this.outMapping = outMapping;
+    public DataAssociation getOutMapping(String name) {
+        for (DataAssociation assoc : outMapping) {
+            if (name.equals(assoc.getDataOutput())) {
+                return assoc;
+            }
+        }
+        return null;
     }
     
-    public String getOutMapping(String parameterName) {
-        return outMapping.get(parameterName);
-    }
-
-    public Map<String, String> getOutMappings() {
-        return Collections.unmodifiableMap(outMapping);
-    }
-
     public boolean isWaitForCompletion() {
         return waitForCompletion;
     }
@@ -110,5 +117,5 @@ public class WorkItemNode extends StateBasedNode implements Mappable {
                 "This type of node cannot have more than one outgoing connection!");
         }
     }
-    
+
 }

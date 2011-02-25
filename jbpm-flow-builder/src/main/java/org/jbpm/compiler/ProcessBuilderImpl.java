@@ -69,6 +69,7 @@ import org.jbpm.workflow.core.impl.ConnectionRef;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.impl.WorkflowProcessImpl;
 import org.jbpm.workflow.core.node.ConstraintTrigger;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.MilestoneNode;
 import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StartNode;
@@ -428,11 +429,11 @@ public class ProcessBuilderImpl implements ProcessBuilder {
         	"    when\n" + 
         	"        " + trigger.getConstraint() + "\n" + 
         	"    then\n";
-        Map<String, String> inMappings = trigger.getInMappings();
+        List<DataAssociation> inMappings = trigger.getInMappings();
         if ( inMappings != null && !inMappings.isEmpty() ) {
             result += "        java.util.Map params = new java.util.HashMap();\n";
-            for ( Map.Entry<String, String> entry : inMappings.entrySet() ) {
-                result += "        params.put(\"" + entry.getKey() + "\", " + entry.getValue() + ");\n";
+            for ( DataAssociation entry : inMappings ) {
+                result += "        params.put(\"" + entry.getFrom() + "\", " + entry.getTo() + ");\n";
             }
             result += "        kcontext.getKnowledgeRuntime().startProcess(\"" + process.getId() + "\", params);\n" + "end\n\n";
         } else {

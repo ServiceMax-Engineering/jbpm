@@ -16,12 +16,15 @@
 
 package org.jbpm.workflow.core.node;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.drools.definition.process.Connection;
 import org.jbpm.process.core.context.variable.Mappable;
+import org.jbpm.workflow.core.node.DataAssociation.Direction;
 
 
 /**
@@ -35,8 +38,8 @@ public class SubProcessNode extends StateBasedNode implements Mappable {
 	
 	private String processId;
 	private boolean waitForCompletion = true;
-    private Map<String, String> inMapping = new HashMap<String, String>();
-    private Map<String, String> outMapping = new HashMap<String, String>();
+	private List<DataAssociation> inMapping = new ArrayList<DataAssociation>();
+    private List<DataAssociation> outMapping = new ArrayList<DataAssociation>();
     private boolean independent = true;
 
     public void setProcessId(final String processId) {
@@ -55,36 +58,24 @@ public class SubProcessNode extends StateBasedNode implements Mappable {
         this.waitForCompletion = waitForCompletion;
     }
 
-    public void addInMapping(String subVariableName, String variableName) {
-        inMapping.put(subVariableName, variableName);
+    public DataAssociation addInMapping(String parameterName, String variableName) {
+        DataAssociation da = new DataAssociation(variableName, parameterName, Direction.INPUT);
+        inMapping.add(da);
+        return da;
     }
     
-    public void setInMappings(Map<String, String> inMapping) {
-        this.inMapping = inMapping;
+    public DataAssociation addOutMapping(String parameterName, String variableName) {
+        DataAssociation da = new DataAssociation(parameterName, variableName, Direction.OUTPUT);
+        outMapping.add(da);
+        return da;
     }
     
-    public String getInMapping(String parameterName) {
-        return inMapping.get(parameterName);
+    public List<DataAssociation> getInMappings() {
+        return Collections.unmodifiableList(inMapping);
     }
 
-    public Map<String, String> getInMappings() {
-        return Collections.unmodifiableMap(inMapping);
-    }
-    
-    public void addOutMapping(String subVariableName, String variableName) {
-        outMapping.put(subVariableName, variableName);
-    }
-    
-    public void setOutMappings(Map<String, String> outMapping) {
-        this.outMapping = outMapping;
-    }
-    
-    public String getOutMapping(String parameterName) {
-        return outMapping.get(parameterName);
-    }
-
-    public Map<String, String> getOutMappings() {
-        return Collections.unmodifiableMap(outMapping);
+    public List<DataAssociation> getOutMappings() {
+        return Collections.unmodifiableList(outMapping);
     }
 
     public boolean isIndependent() {

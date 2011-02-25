@@ -20,6 +20,8 @@ import java.util.Map;
 
 import org.drools.compiler.xml.XmlDumper;
 import org.jbpm.workflow.core.Node;
+import org.jbpm.workflow.core.node.Assignment;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.xml.sax.Attributes;
 
@@ -60,20 +62,20 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
                 "          <dataOutputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_result</dataOutputRefs>" + EOL +
                 "        </outputSet>" + EOL +
                 "      </ioSpecification>" + EOL);
-            String inMapping = workItemNode.getInMapping("Parameter");
+            DataAssociation inMapping = workItemNode.getInMapping("Parameter");
             if (inMapping != null) {
                 xmlDump.append(
                     "      <dataInputAssociation>" + EOL +
-                    "        <sourceRef>" + XmlDumper.replaceIllegalChars(inMapping) + "</sourceRef>" + EOL +
+                    "        <sourceRef>" + XmlDumper.replaceIllegalChars(inMapping.getVariable()) + "</sourceRef>" + EOL +
                     "        <targetRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_param</targetRef>" + EOL +
                     "      </dataInputAssociation>" + EOL);
             }
-            String outMapping = workItemNode.getOutMapping("Result");
+            DataAssociation outMapping = workItemNode.getOutMapping("Result");
             if (outMapping != null) {
                 xmlDump.append(
                     "      <dataOutputAssociation>" + EOL +
                     "        <sourceRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_result</sourceRef>" + EOL +
-                    "        <targetRef>" + XmlDumper.replaceIllegalChars(outMapping) + "</targetRef>" + EOL +
+                    "        <targetRef>" + XmlDumper.replaceIllegalChars(outMapping.getDataOutput()) + "</targetRef>" + EOL +
                     "      </dataOutputAssociation>" + EOL);
             }
             endNode("serviceTask", xmlDump);
@@ -92,11 +94,11 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
                 "        </inputSet>" + EOL +
                 "        <outputSet/>" + EOL +
                 "      </ioSpecification>" + EOL);
-            String inMapping = workItemNode.getInMapping("Message");
+    		DataAssociation inMapping = workItemNode.getInMapping("Message");
             if (inMapping != null) {
                 xmlDump.append(
                     "      <dataInputAssociation>" + EOL +
-                    "        <sourceRef>" + XmlDumper.replaceIllegalChars(inMapping) + "</sourceRef>" + EOL +
+                    "        <sourceRef>" + XmlDumper.replaceIllegalChars(inMapping.getVariable()) + "</sourceRef>" + EOL +
                     "        <targetRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_param</targetRef>" + EOL +
                     "      </dataInputAssociation>" + EOL);
             }
@@ -117,12 +119,12 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
                 "          <dataOutputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_result</dataOutputRefs>" + EOL +
                 "        </outputSet>" + EOL +
                 "      </ioSpecification>" + EOL);
-            String outMapping = workItemNode.getOutMapping("Message");
+    		DataAssociation outMapping = workItemNode.getOutMapping("Message");
             if (outMapping != null) {
                 xmlDump.append(
                     "      <dataOutputAssociation>" + EOL +
                     "        <sourceRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_result</sourceRef>" + EOL +
-                    "        <targetRef>" + XmlDumper.replaceIllegalChars(outMapping) + "</targetRef>" + EOL +
+                    "        <targetRef>" + XmlDumper.replaceIllegalChars(outMapping.getDataOutput()) + "</targetRef>" + EOL +
                     "      </dataOutputAssociation>" + EOL);
             }
             endNode("receiveTask", xmlDump);
@@ -137,20 +139,20 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
 	
 	protected void writeIO(WorkItemNode workItemNode, StringBuilder xmlDump) {
 		xmlDump.append("      <ioSpecification>" + EOL);
-		for (Map.Entry<String, String> entry: workItemNode.getInMappings().entrySet()) {
-			xmlDump.append("        <dataInput id=\"" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "Input\" name=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "\" />" + EOL);
+		for (DataAssociation entry : workItemNode.getInMappings()) {
+			xmlDump.append("        <dataInput id=\"" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getDataInput()) + "Input\" name=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getDataInput()) + "\" />" + EOL);
 		}
 		for (Map.Entry<String, Object> entry: workItemNode.getWork().getParameters().entrySet()) {
 			if (entry.getValue() != null) {
 				xmlDump.append("        <dataInput id=\"" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "Input\" name=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "\" />" + EOL);
 			}
 		}
-		for (Map.Entry<String, String> entry: workItemNode.getOutMappings().entrySet()) {
-			xmlDump.append("        <dataOutput id=\"" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "Output\" name=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "\" />" + EOL);
+		for (DataAssociation entry: workItemNode.getOutMappings()) {
+			xmlDump.append("        <dataOutput id=\"" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getDataOutput()) + "Output\" name=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getDataOutput()) + "\" />" + EOL);
 		}
 		xmlDump.append("        <inputSet>" + EOL);
-		for (Map.Entry<String, String> entry: workItemNode.getInMappings().entrySet()) {
-			xmlDump.append("          <dataInputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getKey()) + "Input</dataInputRefs>" + EOL);
+		for (DataAssociation entry: workItemNode.getInMappings()) {
+			xmlDump.append("          <dataInputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(entry.getDataInput()) + "Input</dataInputRefs>" + EOL);
 		}
 		for (Map.Entry<String, Object> entry: workItemNode.getWork().getParameters().entrySet()) {
 			if (entry.getValue() != null) {
@@ -160,8 +162,8 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
 		xmlDump.append(
 			"        </inputSet>" + EOL);
 		xmlDump.append("        <outputSet>" + EOL);
-		for (Map.Entry<String, String> entry: workItemNode.getOutMappings().entrySet()) {
-			xmlDump.append("          <dataOutputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlDumper.replaceIllegalChars(entry.getKey()) + "Output</dataOutputRefs>" + EOL);
+		for (DataAssociation entry: workItemNode.getOutMappings()) {
+			xmlDump.append("          <dataOutputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlDumper.replaceIllegalChars(entry.getDataOutput()) + "Output</dataOutputRefs>" + EOL);
 		}
 		xmlDump.append(
 			"        </outputSet>" + EOL);
@@ -172,11 +174,17 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
 	}
 	
 	protected void writeInputAssociation(WorkItemNode workItemNode, StringBuilder xmlDump) {
-		for (Map.Entry<String, String> entry: workItemNode.getInMappings().entrySet()) {
+		for (DataAssociation entry: workItemNode.getInMappings()) {
 			xmlDump.append("      <dataInputAssociation>" + EOL);
 			xmlDump.append(
-				"        <sourceRef>" + XmlDumper.replaceIllegalChars(entry.getValue()) + "</sourceRef>" + EOL +
-				"        <targetRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlDumper.replaceIllegalChars(entry.getKey()) + "Input</targetRef>" + EOL);
+				"        <sourceRef>" + XmlDumper.replaceIllegalChars(entry.getVariable()) + "</sourceRef>" + EOL +
+				"        <targetRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlDumper.replaceIllegalChars(entry.getDataInput()) + "Input</targetRef>" + EOL);
+			for (Assignment assignment : entry.getAssignments()) {
+                xmlDump.append("        <assignment>" + EOL);
+                xmlDump.append("           <from>" + assignment.getFrom() +"</from>" + EOL);
+                xmlDump.append("           <to>" + assignment.getTo() + "</to>" + EOL);
+                xmlDump.append("        </assignment>" + EOL);
+            }
 			xmlDump.append("      </dataInputAssociation>" + EOL);
 		}
 		for (Map.Entry<String, Object> entry: workItemNode.getWork().getParameters().entrySet()) {
@@ -194,11 +202,17 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
 	}
 	
     protected void writeOutputAssociation(WorkItemNode workItemNode, StringBuilder xmlDump) {
-		for (Map.Entry<String, String> entry: workItemNode.getOutMappings().entrySet()) {
+		for (DataAssociation entry: workItemNode.getOutMappings()) {
 			xmlDump.append("      <dataOutputAssociation>" + EOL);
 			xmlDump.append(
-				"        <sourceRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlDumper.replaceIllegalChars(entry.getKey()) + "Output</sourceRef>" + EOL +
-				"        <targetRef>" + XmlDumper.replaceIllegalChars(entry.getValue()) + "</targetRef>" + EOL);
+				"        <sourceRef>" + XmlBPMNProcessDumper.getUniqueNodeId(workItemNode) + "_" + XmlDumper.replaceIllegalChars(entry.getDataOutput()) + "Output</sourceRef>" + EOL +
+				"        <targetRef>" + XmlDumper.replaceIllegalChars(entry.getVariable()) + "</targetRef>" + EOL);
+			for (Assignment assignment : entry.getAssignments()) {
+                xmlDump.append("        <assignment>" + EOL);
+                xmlDump.append("           <from>" + assignment.getFrom() +"</from>" + EOL);
+                xmlDump.append("           <to>" + assignment.getTo() + "</to>" + EOL);
+                xmlDump.append("        </assignment>" + EOL);
+            }
 			xmlDump.append("      </dataOutputAssociation>" + EOL);
 		}
 	}

@@ -12,6 +12,7 @@ import org.drools.process.core.datatype.DataType;
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.compiler.xml.XmlWorkflowProcessDumper;
 import org.jbpm.workflow.core.Node;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -63,21 +64,21 @@ public class WorkItemNodeHandler extends AbstractNodeHandler {
         }
 	}
 	
-	protected void visitInMappings(Map<String, String> inMappings, StringBuilder xmlDump) {
-        for (Map.Entry<String, String> inMapping: inMappings.entrySet()) {
+	protected void visitInMappings(List<DataAssociation> inMappings, StringBuilder xmlDump) {
+        for (DataAssociation inMapping: inMappings) {
             xmlDump.append(
                 "      <mapping type=\"in\" "
-                             + "from=\"" + inMapping.getValue() + "\" "
-                             + "to=\"" + inMapping.getKey() + "\" />" + EOL);
+                             + "from=\"" + inMapping.getFrom() + "\" "
+                             + "to=\"" + inMapping.getTo() + "\" />" + EOL);
         }
 	}
 	
-	protected void visitOutMappings(Map<String, String> outMappings, StringBuilder xmlDump) {
-        for (Map.Entry<String, String> outMapping: outMappings.entrySet()) {
+	protected void visitOutMappings(List<DataAssociation> outMappings, StringBuilder xmlDump) {
+        for (DataAssociation outMapping: outMappings) {
             xmlDump.append(
                 "      <mapping type=\"out\" "
-                             + "from=\"" + outMapping.getKey() + "\" "
-                             + "to=\"" + outMapping.getValue() + "\" />" + EOL);
+                             + "from=\"" + outMapping.getFrom() + "\" "
+                             + "to=\"" + outMapping.getTo() + "\" />" + EOL);
         }
     }
     

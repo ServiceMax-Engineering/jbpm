@@ -85,8 +85,7 @@ public class XPATHReturnValueEvaluator implements ReturnValueEvaluator, External
     			}
     	);
         
-        XPathExpression expr 
-         = xpath.compile(this.xpath);
+        XPathExpression expr = xpath.compile(this.xpath);
 
 		DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         return expr.evaluate(builder.newDocument(), XPathConstants.BOOLEAN);

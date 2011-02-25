@@ -161,7 +161,7 @@ public class StartEventHandler extends AbstractNodeHandler {
 		    } else if (trigger instanceof EventTrigger) {
 		        EventTrigger eventTrigger = (EventTrigger) trigger;
 		        if (!trigger.getInMappings().isEmpty()) {
-		            String mapping = eventTrigger.getInMappings().keySet().iterator().next();
+		            String mapping = eventTrigger.getInMappings().iterator().next().getVariable();
 		            xmlDump.append(
 	                    "      <dataOutput id=\"_" + startNode.getId() + "_Output\" />" + EOL +
                         "      <dataOutputAssociation>" + EOL +

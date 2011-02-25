@@ -16,13 +16,17 @@
 
 package org.jbpm.bpmn2.xml;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.drools.process.core.Work;
 import org.drools.process.core.impl.WorkImpl;
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.workflow.core.Node;
+import org.jbpm.workflow.core.node.Assignment;
+import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
@@ -88,35 +92,67 @@ public class TaskHandler extends AbstractNodeHandler {
     }
     
     protected void readDataInputAssociation(org.w3c.dom.Node xmlNode, WorkItemNode workItemNode, Map<String, String> dataInputs) {
-		// sourceRef
-		org.w3c.dom.Node subNode = xmlNode.getFirstChild();
-		if ("sourceRef".equals(subNode.getNodeName())) {
-    		String from = subNode.getTextContent();
-    		// targetRef
-    		subNode = subNode.getNextSibling();
-    		String to = subNode.getTextContent();
-    		workItemNode.addInMapping(
-				dataInputs.get(to),
-				from);
-		} else {
-			// targetRef
-			String to = subNode.getTextContent();
-			// assignment
-			subNode = subNode.getNextSibling();
-    		org.w3c.dom.Node subSubNode = subNode.getFirstChild();
-			String from = subSubNode.getTextContent();
-    		workItemNode.getWork().setParameter(dataInputs.get(to), from);
+
+        org.w3c.dom.Node subNode = xmlNode.getFirstChild();
+		String from = null;
+		String to = null;
+		List<Assignment> assignments = new ArrayList<Assignment>();
+		
+		while (subNode != null) {
+		    if ("sourceRef".equals(subNode.getNodeName())) {
+	            from = subNode.getTextContent();
+		    } else if ("targetRef".equals(subNode.getNodeName())) {
+		        to = subNode.getTextContent();
+		    } else if ("assignment".equals(subNode.getNodeName())) {
+		        assignments.add(parseAssignment(subNode));
+		    } else {
+		        System.err.println("Unable to make sense of " + subNode.getNodeName() + ", ignoring");
+		    }
+		    subNode = subNode.getNextSibling();
 		}
+		
+		DataAssociation assoc = workItemNode.addInMapping(
+                dataInputs.get(to),
+                from);
+		assoc.addAll(assignments);
+    }
+    
+    private Assignment parseAssignment(org.w3c.dom.Node node) {
+        String assignFrom = null, assignTo = null;
+        org.w3c.dom.Node assignNode = node.getFirstChild();
+        while (assignNode != null) {
+            if ("from".equals(assignNode.getNodeName())) {
+                assignFrom = assignNode.getTextContent();
+            } else if ("to".equals(assignNode.getNodeName())) {
+                assignTo = assignNode.getTextContent();
+            }
+            
+            assignNode = assignNode.getNextSibling();
+        }
+        return new Assignment(assignFrom, assignTo);
     }
     
     protected void readDataOutputAssociation(org.w3c.dom.Node xmlNode, WorkItemNode workItemNode, Map<String, String> dataOutputs) {
-		// sourceRef
-		org.w3c.dom.Node subNode = xmlNode.getFirstChild();
-		String from = subNode.getTextContent();
-		// targetRef
-		subNode = subNode.getNextSibling();
-		String to = subNode.getTextContent();
-		workItemNode.addOutMapping(dataOutputs.get(from), to);
+        org.w3c.dom.Node subNode = xmlNode.getFirstChild();
+        String from = null;
+        String to = null;
+        List<Assignment> assignments = new ArrayList<Assignment>();
+        
+        while (subNode.getNextSibling() != null) {
+            if ("sourceRef".equals(subNode.getNodeName())) {
+                from = subNode.getTextContent();
+            } else if ("targetRef".equals(subNode.getNodeName())) {
+                to = subNode.getTextContent();
+            } else if ("assignment".equals(subNode.getNodeName())) {
+                assignments.add(parseAssignment(subNode));
+            } else {
+                System.err.println("Unable to make sense of " + subNode.getNodeName() + ", ignoring");
+            }
+            subNode = subNode.getNextSibling();
+        }
+        DataAssociation assoc = workItemNode.addOutMapping(dataOutputs.get(from), to);
+        
+        assoc.addAll(assignments);
     }
 
     @Override
