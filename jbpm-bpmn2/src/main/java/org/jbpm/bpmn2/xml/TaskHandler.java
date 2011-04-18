@@ -30,6 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.drools.process.core.Work;
 import org.drools.process.core.datatype.DataType;
 import org.drools.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.process.core.impl.ParameterDefinitionImpl;
 import org.drools.process.core.impl.WorkImpl;
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.ItemDefinition;
@@ -45,6 +46,8 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+
+import org.jbpm.bpmn2.xml.StandardLoopTask;
 
 public class TaskHandler extends AbstractNodeHandler {
     
@@ -209,6 +212,63 @@ public class TaskHandler extends AbstractNodeHandler {
 				handleForEachNode(node, element, uri, localName, parser);
 				found = true;
 				break;
+			} else if ("standardLoopCharacteristics".equals(xmlNode.getNodeName())) {
+			    StandardLoopTask standardLoopTask = new StandardLoopTask();
+			    org.w3c.dom.Node loopXmlNode = xmlNode.getFirstChild();
+			    while (loopXmlNode != null) {
+			        if ("loopCondition".equals(loopXmlNode.getNodeName())) {
+			            standardLoopTask.setCondition(loopXmlNode
+			                    .getTextContent());
+			            org.w3c.dom.Node languageNode = loopXmlNode
+			                .getAttributes().getNamedItem("language");
+			            if (languageNode != null) {
+			                String language = languageNode.getNodeValue();
+			                if (XmlBPMNProcessDumper.JAVA_LANGUAGE
+			                        .equals(language)) {
+			                    standardLoopTask.setLanguage("java");
+			                } else if (XmlBPMNProcessDumper.RULE_LANGUAGE
+			                        .equals(language)) {
+			                    standardLoopTask.setType("rule");
+			                } else if (XmlBPMNProcessDumper.XPATH_LANGUAGE
+			                        .equals(language)) {
+			                    standardLoopTask.setLanguage("XPath");
+			                } else {
+			                    throw new IllegalArgumentException(
+			                            "Unknown language " + language);
+			                }
+			            }
+			        } else if ("loopMaximum".equals(loopXmlNode.getNodeName())) {
+			            if (loopXmlNode.getTextContent() != null) {
+			                try {
+			                    int loopMaximum = Integer.parseInt(loopXmlNode
+			                            .getTextContent());
+			                    standardLoopTask.setLoopMaximum(loopMaximum);
+			                } catch (NumberFormatException e) {
+			                    throw new IllegalArgumentException(
+			                            loopXmlNode.getTextContent()
+			                            + "is not a integer value");
+			                }
+			            }
+			        } else if ("testBefore".equals(loopXmlNode.getNodeName())) {
+			            if (loopXmlNode.getTextContent() != null) {
+			                try {
+			                    boolean testBefore = Boolean.parseBoolean(loopXmlNode
+			                                .getTextContent());
+			                    standardLoopTask.setTestBefore(testBefore);
+			                } catch (NumberFormatException e) {
+			                    throw new IllegalArgumentException(
+			                            loopXmlNode.getTextContent() + "is not a boolean value");
+			                }
+			            }
+			        }
+			        loopXmlNode = loopXmlNode.getNextSibling();
+			    }
+			    Work work = ((WorkItemNode) node).getWork();
+			    work.addParameterDefinition(new ParameterDefinitionImpl(
+			            "standardLoopTask",
+			            new ObjectDataType("org.jbpm.bpmn2.xml.StandardLoopTask")));
+			    standardLoopTask.setLoopCount(0);
+			    work.setParameter("standardLoopTask", standardLoopTask);
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
