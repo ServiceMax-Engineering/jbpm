@@ -1,0 +1,13 @@
+<bpmn2:definitions xmlns:bpmn2='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:xrm='http://www.intalio.com/cloud/xrm' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' typeLanguage='http://www.java.com/javaTypes' expressionLanguage='http://www.mvel.org/2.0' id='697027551989662611' targetNamespace=''>
+  <bpmn2:import importType='xrm' namespace='http://www.intalio.com/cloud/xrm'/>
+  <bpmn2:itemDefinition id='objectType' structureRef='java.lang.Object'/>
+  <bpmn2:process id='697027551989662611 + Tue Apr 26 17:44:20 -0300 2011'>
+    <bpmn2:property id='instanceMetadata' itemSubjectRef='objectType'/>
+    <bpmn2:property id='processMetadata' itemSubjectRef='objectType'/>
+    <bpmn2:property id='startMessage' itemSubjectRef='objectType'/>
+    <bpmn2:startEvent id='_16E4696A-AF3B-408B-B6C0-29182236AD83' name=''/>
+    <bpmn2:sequenceFlow id='_486A132C-746F-483E-9DED-D24A5BBB1581' sourceRef='_16E4696A-AF3B-408B-B6C0-29182236AD83' targetRef='_59E8CAF7-2A07-4492-8FE0-412210C31B50'/>
+    <bpmn2:sequenceFlow id='_B0D7A25A-AEA6-4D04-BD99-04D2CC63C7CE' sourceRef='_59E8CAF7-2A07-4492-8FE0-412210C31B50' targetRef='_5611FC4F-D21D-465F-B319-EA7C46681824'/>
+    <bpmn2:endEvent id='_5611FC4F-D21D-465F-B319-EA7C46681824' name=''/>
+  </bpmn2:process>
+</bpmn2:definitions>
