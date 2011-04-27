@@ -50,10 +50,21 @@
     
     
     
-        <bpmn2:sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef='_A20D381B-15D5-4874-8514-EBEB9472D55B' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>
-    
-  
-  
+     <bpmn2:sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef='_A20D381B-15D5-4874-8514-EBEB9472D55B' targetRef='id_1'/>
+     
+     
+     <!-- throw link event -->
+     <bpmn2:linkEventDefinition id="id_1"  name="nextPage">
+     	<bpmn2:source>id_2</bpmn2:source>
+     </bpmn2:linkEventDefinition>
+     
+     <!-- catch link event -->
+     <bpmn2:linkEventDefinition id="id_2" name="nextPage">
+     	<bpmn2:target>id_1</bpmn2:target>
+     </bpmn2:linkEventDefinition>   
+     
+     
+     <bpmn2:sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='id_2' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>
   
   
     <bpmn2:userTask id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' name='do it'>
