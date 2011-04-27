@@ -1,3 +1,4 @@
+
 <bpmn2:definitions xmlns:bpmn2='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:xrm='http://www.intalio.com/cloud/xrm' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' typeLanguage='http://www.java.com/javaTypes' expressionLanguage='http://www.mvel.org/2.0' id='698320704338395684' targetNamespace=''>
   <bpmn2:import importType='xrm' namespace='http://www.intalio.com/cloud/xrm'/>
   <bpmn2:itemDefinition id='objectType' structureRef='java.lang.Object'/>
@@ -110,9 +111,5 @@
     
     <bpmn2:endEvent id='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1' name='stop doing'/>
     
-    
- 
- 
- 
   </bpmn2:process>
 </bpmn2:definitions>
