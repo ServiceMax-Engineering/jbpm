@@ -1,13 +1,107 @@
-<bpmn2:definitions xmlns:bpmn2='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:xrm='http://www.intalio.com/cloud/xrm' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' typeLanguage='http://www.java.com/javaTypes' expressionLanguage='http://www.mvel.org/2.0' id='697027551989662611' targetNamespace=''>
+<bpmn2:definitions xmlns:bpmn2='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:xrm='http://www.intalio.com/cloud/xrm' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' typeLanguage='http://www.java.com/javaTypes' expressionLanguage='http://www.mvel.org/2.0' id='698320704338395684' targetNamespace=''>
   <bpmn2:import importType='xrm' namespace='http://www.intalio.com/cloud/xrm'/>
   <bpmn2:itemDefinition id='objectType' structureRef='java.lang.Object'/>
-  <bpmn2:process id='697027551989662611 + Tue Apr 26 17:44:20 -0300 2011'>
+  <bpmn2:process id='698320704338395684 + Wed Apr 27 15:13:21 -0300 2011'>
     <bpmn2:property id='instanceMetadata' itemSubjectRef='objectType'/>
     <bpmn2:property id='processMetadata' itemSubjectRef='objectType'/>
     <bpmn2:property id='startMessage' itemSubjectRef='objectType'/>
-    <bpmn2:startEvent id='_16E4696A-AF3B-408B-B6C0-29182236AD83' name=''/>
-    <bpmn2:sequenceFlow id='_486A132C-746F-483E-9DED-D24A5BBB1581' sourceRef='_16E4696A-AF3B-408B-B6C0-29182236AD83' targetRef='_59E8CAF7-2A07-4492-8FE0-412210C31B50'/>
-    <bpmn2:sequenceFlow id='_B0D7A25A-AEA6-4D04-BD99-04D2CC63C7CE' sourceRef='_59E8CAF7-2A07-4492-8FE0-412210C31B50' targetRef='_5611FC4F-D21D-465F-B319-EA7C46681824'/>
-    <bpmn2:endEvent id='_5611FC4F-D21D-465F-B319-EA7C46681824' name=''/>
+    
+    
+    
+    <bpmn2:startEvent id='_A176EE94-8688-46D3-8C3F-B7C01CA73782' name='start doing'/>
+    
+    <bpmn2:sequenceFlow id='_EE84FA5C-6CF8-4FA0-AD6C-2F40E8D07824' sourceRef='_A176EE94-8688-46D3-8C3F-B7C01CA73782' targetRef='_A20D381B-15D5-4874-8514-EBEB9472D55B'/>
+    
+    
+    <bpmn2:userTask id='_A20D381B-15D5-4874-8514-EBEB9472D55B' name='think it'>
+      <bpmn2:ioSpecification>
+        <bpmn2:inputSet>
+          <bpmn2:dataInputRefs>_A20D381B-15D5-4874-8514-EBEB9472D55B_codehref</bpmn2:dataInputRefs>
+        </bpmn2:inputSet>
+        <bpmn2:outputSet>
+          <bpmn2:dataOutputRefs>_A20D381B-15D5-4874-8514-EBEB9472D55B_PreviousOwner</bpmn2:dataOutputRefs>
+        </bpmn2:outputSet>
+        <bpmn2:dataInput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_INCO' name='input'/>
+        <bpmn2:dataOutput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_PreviousOwner' name='output'/>
+        <bpmn2:dataOutput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_OUTCO' name='companionobject'/>
+        <bpmn2:dataInput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_codehref' name='codehref'/>
+      </bpmn2:ioSpecification>
+      <bpmn2:dataOutputAssociation>
+        <bpmn2:sourceRef>_A20D381B-15D5-4874-8514-EBEB9472D55B_PreviousOwner</bpmn2:sourceRef>
+        <bpmn2:targetRef>instanceMetadata</bpmn2:targetRef>
+        <bpmn2:assignment>
+          <bpmn2:from>@primaryname</bpmn2:from>
+          <bpmn2:to>instanceMetadata/previoustasksowner</bpmn2:to>
+        </bpmn2:assignment>
+      </bpmn2:dataOutputAssociation>
+      <bpmn2:dataInputAssociation>
+        <bpmn2:targetRef>_A20D381B-15D5-4874-8514-EBEB9472D55B_codehref</bpmn2:targetRef>
+        <bpmn2:assignment>
+          <bpmn2:from/>
+          <bpmn2:to>.</bpmn2:to>
+        </bpmn2:assignment>
+      </bpmn2:dataInputAssociation>
+      <bpmn2:humanPerformer resourceRef='xrm:user'>
+        <bpmn2:resourceAssignmentExpression>
+          <bpmn2:formalExpression>System Administrator</bpmn2:formalExpression>
+        </bpmn2:resourceAssignmentExpression>
+      </bpmn2:humanPerformer>
+    </bpmn2:userTask>
+    
+    
+    
+        <bpmn2:sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef='_A20D381B-15D5-4874-8514-EBEB9472D55B' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>
+    
+  
+  
+  
+  
+    <bpmn2:userTask id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' name='do it'>
+      <bpmn2:ioSpecification>
+        <bpmn2:inputSet>
+          <bpmn2:dataInputRefs>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_codehref</bpmn2:dataInputRefs>
+        </bpmn2:inputSet>
+        <bpmn2:outputSet>
+          <bpmn2:dataOutputRefs>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_PreviousOwner</bpmn2:dataOutputRefs>
+        </bpmn2:outputSet>
+        <bpmn2:dataInput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_INCO' name='input'/>
+        <bpmn2:dataOutput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_PreviousOwner' name='output'/>
+        <bpmn2:dataOutput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_OUTCO' name='companionobject'/>
+        <bpmn2:dataInput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_codehref' name='codehref'/>
+      </bpmn2:ioSpecification>
+      <bpmn2:dataOutputAssociation>
+        <bpmn2:sourceRef>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_PreviousOwner</bpmn2:sourceRef>
+        <bpmn2:targetRef>instanceMetadata</bpmn2:targetRef>
+        <bpmn2:assignment>
+          <bpmn2:from>@primaryname</bpmn2:from>
+          <bpmn2:to>instanceMetadata/previoustasksowner</bpmn2:to>
+        </bpmn2:assignment>
+      </bpmn2:dataOutputAssociation>
+      <bpmn2:dataInputAssociation>
+        <bpmn2:targetRef>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_codehref</bpmn2:targetRef>
+        <bpmn2:assignment>
+          <bpmn2:from/>
+          <bpmn2:to>.</bpmn2:to>
+        </bpmn2:assignment>
+      </bpmn2:dataInputAssociation>
+      <bpmn2:humanPerformer resourceRef='xrm:user'>
+        <bpmn2:resourceAssignmentExpression>
+          <bpmn2:formalExpression>System Administrator</bpmn2:formalExpression>
+        </bpmn2:resourceAssignmentExpression>
+      </bpmn2:humanPerformer>
+    </bpmn2:userTask>
+    
+    
+    
+        <bpmn2:sequenceFlow id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
+    
+    
+    
+    <bpmn2:endEvent id='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1' name='stop doing'/>
+    
+    
+ 
+ 
+ 
   </bpmn2:process>
 </bpmn2:definitions>
