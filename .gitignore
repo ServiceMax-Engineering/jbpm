@@ -9,3 +9,7 @@ MANIFEST.MF
 *.iws
 *.iml
 *.tlog
+jbpm-bpmn2/JPADroolsFlow.h2.db
+jbpm-bpmn2/JPADroolsFlow.lobs.db/
+
+
