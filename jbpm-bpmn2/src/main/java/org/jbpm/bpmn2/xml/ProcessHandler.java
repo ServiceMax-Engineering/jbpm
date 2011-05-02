@@ -34,6 +34,7 @@ import org.jbpm.bpmn2.core.Escalation;
 import org.jbpm.bpmn2.core.Interface;
 import org.jbpm.bpmn2.core.ItemDefinition;
 import org.jbpm.bpmn2.core.Lane;
+import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Message;
 import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;
@@ -59,8 +60,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 public class ProcessHandler extends BaseAbstractHandler implements Handler {
-	
+
 	public static final String CONNECTIONS = "BPMN.Connections";
+	public static final String INTERMEDIATE_LINKS = "BPMN.Links";
 
 	@SuppressWarnings("unchecked")
 	public ProcessHandler() {
@@ -70,34 +72,36 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 			this.validPeers = new HashSet();
 			this.validPeers.add(null);
-            this.validPeers.add(ItemDefinition.class);
-            this.validPeers.add(Message.class);
-            this.validPeers.add(Interface.class);
-            this.validPeers.add(Escalation.class);
-            this.validPeers.add(Error.class);
-            this.validPeers.add(DataStore.class);
-            this.validPeers.add(RuleFlowProcess.class);
+			this.validPeers.add(ItemDefinition.class);
+			this.validPeers.add(Message.class);
+			this.validPeers.add(Interface.class);
+			this.validPeers.add(Escalation.class);
+			this.validPeers.add(Error.class);
+			this.validPeers.add(DataStore.class);
+			this.validPeers.add(RuleFlowProcess.class);
 
 			this.allowNesting = false;
 		}
 	}
 
 	public Object start(final String uri, final String localName,
-			            final Attributes attrs, final ExtensibleXmlParser parser)
+			final Attributes attrs, final ExtensibleXmlParser parser)
 			throws SAXException {
 		parser.startElementBuilder(localName, attrs);
 
 		String id = attrs.getValue("id");
 		String name = attrs.getValue("name");
-		String packageName = attrs.getValue("http://www.jboss.org/drools", "packageName");
+		String packageName = attrs.getValue("http://www.jboss.org/drools",
+				"packageName");
 		String dynamic = attrs.getValue("http://www.jboss.org/drools", "adHoc");
-		String version = attrs.getValue("http://www.jboss.org/drools", "version");
+		String version = attrs.getValue("http://www.jboss.org/drools",
+				"version");
 
 		RuleFlowProcess process = new RuleFlowProcess();
 		process.setAutoComplete(true);
 		process.setId(id);
 		if (name == null) {
-		    name = id;
+			name = id;
 		}
 		process.setName(name);
 		process.setType("RuleFlow");
@@ -113,7 +117,8 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 			process.setVersion(version);
 		}
 
-		((ProcessBuildData) parser.getData()).addProcess(process);
+		ProcessBuildData data = (ProcessBuildData) parser.getData();
+		data.addProcess(process);
 		// register the definitions object as metadata of process.
 		process.setMetaData("Definitions", parser.getParent());
 		return process;
@@ -121,77 +126,95 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	@SuppressWarnings("unchecked")
 	public Object end(final String uri, final String localName,
-			          final ExtensibleXmlParser parser) throws SAXException {
+			final ExtensibleXmlParser parser) throws SAXException {
 		parser.endElementBuilder();
 		RuleFlowProcess process = (RuleFlowProcess) parser.getCurrent();
-		List<SequenceFlow> connections = (List<SequenceFlow>)
-			process.getMetaData(CONNECTIONS);
+		List<SequenceFlow> connections = (List<SequenceFlow>) process
+				.getMetaData(CONNECTIONS);
+
+		List<IntermediateLink> intermediateLink = (List<IntermediateLink>) process
+				.getMetaData(INTERMEDIATE_LINKS);
+
+		linkIntermediateLinks(process, intermediateLink);
 		linkConnections(process, connections);
 		linkBoundaryEvents(process);
-        List<Lane> lanes = (List<Lane>)
-            process.getMetaData(LaneHandler.LANES);
-        assignLanes(process, lanes);
-        postProcessNodes(process);
+		List<Lane> lanes = (List<Lane>) process.getMetaData(LaneHandler.LANES);
+		assignLanes(process, lanes);
+		postProcessNodes(process);
 		return process;
+	}
+
+	private static void linkIntermediateLinks(RuleFlowProcess process,
+			List<IntermediateLink> intermediateLinks) {
+		if (null == intermediateLinks) {
+			
+			for (IntermediateLink intermediateLink : intermediateLinks) {
+				
+			}
+
+		}
+
 	}
 
 	public Class<?> generateNodeFor() {
 		return org.drools.definition.process.Process.class;
 	}
-	
-	public static void linkConnections(NodeContainer nodeContainer, List<SequenceFlow> connections) {
+
+	public static void linkConnections(NodeContainer nodeContainer,
+			List<SequenceFlow> connections) {
 		if (connections != null) {
-			for (SequenceFlow connection: connections) {
+			for (SequenceFlow connection : connections) {
 				String sourceRef = connection.getSourceRef();
 				String targetRef = connection.getTargetRef();
 				Node source = null;
 				Node target = null;
 				try {
-    				// remove starting _
-    				sourceRef = sourceRef.substring(1);
-    				// remove ids of parent nodes
-    				sourceRef = sourceRef.substring(sourceRef.lastIndexOf("-") + 1);
-    				source = nodeContainer.getNode(new Integer(sourceRef));
+					// remove starting _
+					sourceRef = sourceRef.substring(1);
+					// remove ids of parent nodes
+					sourceRef = sourceRef
+							.substring(sourceRef.lastIndexOf("-") + 1);
+					source = nodeContainer.getNode(new Integer(sourceRef));
 				} catch (NumberFormatException e) {
-				    // try looking for a node with same "UniqueId" (in metadata)
-				    for (Node node: nodeContainer.getNodes()) {
-				        if (connection.getSourceRef().equals(node.getMetaData().get("UniqueId"))) {
-				            source = node;
-				            break;
-				        }
-				    }
-                    if (source == null) {
-                        throw new IllegalArgumentException("Could not find source node for connection:" + connection.getSourceRef());
-                    }
+					// try looking for a node with same "UniqueId" (in metadata)
+					source = findNodeByUniqueId(nodeContainer,
+							connection.getSourceRef());
+					if (source == null) {
+						throw new IllegalArgumentException(
+								"Could not find source node for connection:"
+										+ connection.getSourceRef());
+					}
 				}
 				try {
-    				// remove starting _
-    				targetRef = targetRef.substring(1);
-    		        // remove ids of parent nodes
-    				targetRef = targetRef.substring(targetRef.lastIndexOf("-") + 1);
-    				target = nodeContainer.getNode(new Integer(targetRef));
+					// remove starting _
+					targetRef = targetRef.substring(1);
+					// remove ids of parent nodes
+					targetRef = targetRef
+							.substring(targetRef.lastIndexOf("-") + 1);
+					target = nodeContainer.getNode(new Integer(targetRef));
 				} catch (NumberFormatException e) {
-				    // try looking for a node with same "UniqueId" (in metadata)
-                    for (Node node: nodeContainer.getNodes()) {
-                        if (connection.getTargetRef().equals(node.getMetaData().get("UniqueId"))) {
-                            target = node;
-                            break;
-                        }
-                    }
-                    if (target == null) {
-                        throw new IllegalArgumentException("Could not find target node for connection:" + connection.getTargetRef());
-                    }
+					// try looking for a node with same "UniqueId" (in metadata)
+					target = findNodeByUniqueId(nodeContainer,
+							connection.getTargetRef());
+
+					if (target == null) {
+						throw new IllegalArgumentException(
+								"Could not find target node for connection:"
+										+ connection.getTargetRef());
+					}
 				}
-				Connection result = new ConnectionImpl(
-					source, NodeImpl.CONNECTION_DEFAULT_TYPE, 
-					target, NodeImpl.CONNECTION_DEFAULT_TYPE);
+				Connection result = new ConnectionImpl(source,
+						NodeImpl.CONNECTION_DEFAULT_TYPE, target,
+						NodeImpl.CONNECTION_DEFAULT_TYPE);
 				result.setMetaData("bendpoints", connection.getBendpoints());
 				result.setMetaData("UniqueId", connection.getId());
 				if (source instanceof Split) {
 					Split split = (Split) source;
 					Constraint constraint = new ConstraintImpl();
-					String defaultConnection = (String) split.getMetaData("Default");
-					if (defaultConnection != null && defaultConnection.equals(connection.getId())) {
+					String defaultConnection = (String) split
+							.getMetaData("Default");
+					if (defaultConnection != null
+							&& defaultConnection.equals(connection.getId())) {
 						constraint.setDefault(true);
 					}
 					if (connection.getName() != null) {
@@ -211,146 +234,194 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 						constraint.setConstraint(connection.getExpression());
 					}
 					constraint.setPriority(connection.getPriority());
-					split.addConstraint(
-						new ConnectionRef(target.getId(), NodeImpl.CONNECTION_DEFAULT_TYPE),
-						constraint);
+					split.addConstraint(new ConnectionRef(target.getId(),
+							NodeImpl.CONNECTION_DEFAULT_TYPE), constraint);
 				}
 			}
 		}
 	}
-	
-    public static void linkBoundaryEvents(NodeContainer nodeContainer) {
-        for (Node node: nodeContainer.getNodes()) {
-            if (node instanceof EventNode) {
-                String attachedTo = (String) node.getMetaData().get("AttachedTo");
-                if (attachedTo != null) {
-                	String type = ((EventTypeFilter)
-                        ((EventNode) node).getEventFilters().get(0)).getType();
-                    Node attachedNode = null;
-                    try {
-                        // remove starting _
-                        String attachedToString = attachedTo.substring(1);
-                        // remove ids of parent nodes
-                        attachedToString = attachedToString.substring(attachedToString.lastIndexOf("-") + 1);
-                        attachedNode = nodeContainer.getNode(new Integer(attachedToString));
-                    } catch (NumberFormatException e) {
-                        // try looking for a node with same "UniqueId" (in metadata)
-                        for (Node subnode: nodeContainer.getNodes()) {
-                            if (attachedTo.equals(subnode.getMetaData().get("UniqueId"))) {
-                                attachedNode = subnode;
-                                break;
-                            }
-                        }
-                        if (attachedNode == null) {
-                            throw new IllegalArgumentException("Could not find node to attach to: " + attachedTo);
-                        }
-                    }
-                    if (type.startsWith("Escalation-")) {
-                        boolean cancelActivity = (Boolean) node.getMetaData().get("CancelActivity");
-                        CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
-                        ExceptionScope exceptionScope = (ExceptionScope) 
-                            compositeNode.getDefaultContext(ExceptionScope.EXCEPTION_SCOPE);
-                        if (exceptionScope == null) {
-                            exceptionScope = new ExceptionScope();
-                            compositeNode.addContext(exceptionScope);
-                            compositeNode.setDefaultContext(exceptionScope);
-                        }
-                        String escalationCode = (String) node.getMetaData().get("EscalationEvent");
-                        ActionExceptionHandler exceptionHandler = new ActionExceptionHandler();
-                        exceptionHandler.setAction(new DroolsConsequenceAction("java",
-                            (cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();" : "") +
-                            "kcontext.getProcessInstance().signalEvent(\"Escalation-" + attachedTo + "-" + escalationCode + "\", null);"));
-                        exceptionScope.setExceptionHandler(escalationCode, exceptionHandler);
-                    } else if (type.startsWith("Error-")) {
-                        CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
-                        ExceptionScope exceptionScope = (ExceptionScope) 
-                            compositeNode.getDefaultContext(ExceptionScope.EXCEPTION_SCOPE);
-                        if (exceptionScope == null) {
-                            exceptionScope = new ExceptionScope();
-                            compositeNode.addContext(exceptionScope);
-                            compositeNode.setDefaultContext(exceptionScope);
-                        }
-                        String errorCode = (String) node.getMetaData().get("ErrorEvent");
-                        ActionExceptionHandler exceptionHandler = new ActionExceptionHandler();
-                        exceptionHandler.setAction(new DroolsConsequenceAction("java",
-                            "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();" +
-                            "kcontext.getProcessInstance().signalEvent(\"Error-" + attachedTo + "-" + errorCode + "\", null);"));
-                        exceptionScope.setExceptionHandler(errorCode, exceptionHandler);
-                    } else if (type.startsWith("Timer-")) {
-                        boolean cancelActivity = (Boolean) node.getMetaData().get("CancelActivity");
-                        CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
-                        String timeCycle = (String) node.getMetaData().get("TimeCycle");
-                        Timer timer = new Timer();
-                        timer.setDelay(timeCycle);
-                        compositeNode.addTimer(timer, new DroolsConsequenceAction("java",
-                            (cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();" : "") +
-                            "kcontext.getProcessInstance().signalEvent(\"Timer-" + attachedTo + "-" + timeCycle + "\", null);"));
-                    } else if (type.startsWith("Compensate-")) {
-                    	String uniqueId = (String) node.getMetaData().get("UniqueId");
-            	        String eventType = "Compensate-" + uniqueId;
-            	        ((EventTypeFilter) ((EventNode) node).getEventFilters().get(0)).setType(eventType);
-                    }
-                }
-            }
-        }
-    }
-    
-	private void assignLanes(RuleFlowProcess process, List<Lane> lanes) {
-	    List<String> laneNames = new ArrayList<String>();
-	    Map<String, String> laneMapping = new HashMap<String, String>();
-	    if (lanes != null) {
-	        for (Lane lane: lanes) {
-	            String name = lane.getName();
-	            if (name != null) {
-	                Swimlane swimlane = new Swimlane();
-	                swimlane.setName(name);
-	                process.getSwimlaneContext().addSwimlane(swimlane);
-	                laneNames.add(name);
-	                for (String flowElementRef: lane.getFlowElements()) {
-	                    laneMapping.put(flowElementRef, name);
-	                }
-	            }
-	        }
-	    }
-	    assignLanes(process, laneMapping);
+
+	/**
+	 * 
+	 * @param nodeContainer
+	 * @param refUniqueId
+	 * @return null if it didn't find any node or a node
+	 */
+	private static Node findNodeByUniqueId(NodeContainer nodeContainer,
+			String refUniqueId) {
+		for (Node node : nodeContainer.getNodes()) {
+			if (refUniqueId.equals(node.getMetaData().get("UniqueId"))) {
+				return node;
+			}
+		}
+		return null;
 	}
-	
-    private void postProcessNodes(NodeContainer container) {
-        for (Node node: container.getNodes()) {
-            if (node instanceof StateNode) {
-                StateNode stateNode = (StateNode) node;
-                String condition = (String) stateNode.getMetaData("Condition");
-                Constraint constraint = new ConstraintImpl();
-                constraint.setConstraint(condition);
-                constraint.setType("rule");
-                for (org.drools.definition.process.Connection connection: stateNode.getDefaultOutgoingConnections()) {
-                    stateNode.setConstraint(connection, constraint);
-                }
-            } else if (node instanceof NodeContainer) {
-                postProcessNodes((NodeContainer) node);
-            }
-        }
-    }
-    
-	private void assignLanes(NodeContainer nodeContainer, Map<String, String> laneMapping) {
-	    for (Node node: nodeContainer.getNodes()) {
-	        String lane = null;
-	        String uniqueId = (String) node.getMetaData().get("UniqueId");
-	        if (uniqueId != null) {
-	            lane = laneMapping.get(uniqueId);
-	        } else {
-	            lane = laneMapping.get(XmlBPMNProcessDumper.getUniqueNodeId(node));
-	        }
-	        if (lane != null) {
-	            ((NodeImpl) node).setMetaData("Lane", lane);
-	            if (node instanceof HumanTaskNode) {
-	                ((HumanTaskNode) node).setSwimlane(lane);
-	            }
-	        }
-	        if (node instanceof NodeContainer) {
-	            assignLanes((NodeContainer) node, laneMapping);
-	        }
-	    }
+
+	public static void linkBoundaryEvents(NodeContainer nodeContainer) {
+		for (Node node : nodeContainer.getNodes()) {
+			if (node instanceof EventNode) {
+				String attachedTo = (String) node.getMetaData().get(
+						"AttachedTo");
+				if (attachedTo != null) {
+					String type = ((EventTypeFilter) ((EventNode) node)
+							.getEventFilters().get(0)).getType();
+					Node attachedNode = null;
+					try {
+						// remove starting _
+						String attachedToString = attachedTo.substring(1);
+						// remove ids of parent nodes
+						attachedToString = attachedToString
+								.substring(attachedToString.lastIndexOf("-") + 1);
+						attachedNode = nodeContainer.getNode(new Integer(
+								attachedToString));
+					} catch (NumberFormatException e) {
+						attachedNode = findNodeByUniqueId(nodeContainer,
+								attachedTo);
+						if (attachedNode == null) {
+							throw new IllegalArgumentException(
+									"Could not find node to attach to: "
+											+ attachedTo);
+						}
+					}
+					if (type.startsWith("Escalation-")) {
+						boolean cancelActivity = (Boolean) node.getMetaData()
+								.get("CancelActivity");
+						CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
+						ExceptionScope exceptionScope = (ExceptionScope) compositeNode
+								.getDefaultContext(ExceptionScope.EXCEPTION_SCOPE);
+						if (exceptionScope == null) {
+							exceptionScope = new ExceptionScope();
+							compositeNode.addContext(exceptionScope);
+							compositeNode.setDefaultContext(exceptionScope);
+						}
+						String escalationCode = (String) node.getMetaData()
+								.get("EscalationEvent");
+						ActionExceptionHandler exceptionHandler = new ActionExceptionHandler();
+						exceptionHandler
+								.setAction(new DroolsConsequenceAction(
+										"java",
+										(cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();"
+												: "")
+												+ "kcontext.getProcessInstance().signalEvent(\"Escalation-"
+												+ attachedTo
+												+ "-"
+												+ escalationCode + "\", null);"));
+						exceptionScope.setExceptionHandler(escalationCode,
+								exceptionHandler);
+					} else if (type.startsWith("Error-")) {
+						CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
+						ExceptionScope exceptionScope = (ExceptionScope) compositeNode
+								.getDefaultContext(ExceptionScope.EXCEPTION_SCOPE);
+						if (exceptionScope == null) {
+							exceptionScope = new ExceptionScope();
+							compositeNode.addContext(exceptionScope);
+							compositeNode.setDefaultContext(exceptionScope);
+						}
+						String errorCode = (String) node.getMetaData().get(
+								"ErrorEvent");
+						ActionExceptionHandler exceptionHandler = new ActionExceptionHandler();
+						exceptionHandler
+								.setAction(new DroolsConsequenceAction(
+										"java",
+										"((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();"
+												+ "kcontext.getProcessInstance().signalEvent(\"Error-"
+												+ attachedTo
+												+ "-"
+												+ errorCode
+												+ "\", null);"));
+						exceptionScope.setExceptionHandler(errorCode,
+								exceptionHandler);
+					} else if (type.startsWith("Timer-")) {
+						boolean cancelActivity = (Boolean) node.getMetaData()
+								.get("CancelActivity");
+						CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
+						String timeCycle = (String) node.getMetaData().get(
+								"TimeCycle");
+						Timer timer = new Timer();
+						timer.setDelay(timeCycle);
+						compositeNode
+								.addTimer(
+										timer,
+										new DroolsConsequenceAction(
+												"java",
+												(cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();"
+														: "")
+														+ "kcontext.getProcessInstance().signalEvent(\"Timer-"
+														+ attachedTo
+														+ "-"
+														+ timeCycle
+														+ "\", null);"));
+					} else if (type.startsWith("Compensate-")) {
+						String uniqueId = (String) node.getMetaData().get(
+								"UniqueId");
+						String eventType = "Compensate-" + uniqueId;
+						((EventTypeFilter) ((EventNode) node).getEventFilters()
+								.get(0)).setType(eventType);
+					}
+				}
+			}
+		}
+	}
+
+	private void assignLanes(RuleFlowProcess process, List<Lane> lanes) {
+		List<String> laneNames = new ArrayList<String>();
+		Map<String, String> laneMapping = new HashMap<String, String>();
+		if (lanes != null) {
+			for (Lane lane : lanes) {
+				String name = lane.getName();
+				if (name != null) {
+					Swimlane swimlane = new Swimlane();
+					swimlane.setName(name);
+					process.getSwimlaneContext().addSwimlane(swimlane);
+					laneNames.add(name);
+					for (String flowElementRef : lane.getFlowElements()) {
+						laneMapping.put(flowElementRef, name);
+					}
+				}
+			}
+		}
+		assignLanes(process, laneMapping);
+	}
+
+	private void postProcessNodes(NodeContainer container) {
+		for (Node node : container.getNodes()) {
+			if (node instanceof StateNode) {
+				StateNode stateNode = (StateNode) node;
+				String condition = (String) stateNode.getMetaData("Condition");
+				Constraint constraint = new ConstraintImpl();
+				constraint.setConstraint(condition);
+				constraint.setType("rule");
+				for (org.drools.definition.process.Connection connection : stateNode
+						.getDefaultOutgoingConnections()) {
+					stateNode.setConstraint(connection, constraint);
+				}
+			} else if (node instanceof NodeContainer) {
+				postProcessNodes((NodeContainer) node);
+			}
+		}
+	}
+
+	private void assignLanes(NodeContainer nodeContainer,
+			Map<String, String> laneMapping) {
+		for (Node node : nodeContainer.getNodes()) {
+			String lane = null;
+			String uniqueId = (String) node.getMetaData().get("UniqueId");
+			if (uniqueId != null) {
+				lane = laneMapping.get(uniqueId);
+			} else {
+				lane = laneMapping.get(XmlBPMNProcessDumper
+						.getUniqueNodeId(node));
+			}
+			if (lane != null) {
+				((NodeImpl) node).setMetaData("Lane", lane);
+				if (node instanceof HumanTaskNode) {
+					((HumanTaskNode) node).setSwimlane(lane);
+				}
+			}
+			if (node instanceof NodeContainer) {
+				assignLanes((NodeContainer) node, laneMapping);
+			}
+		}
 	}
 
 }

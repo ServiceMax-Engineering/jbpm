@@ -1,115 +1,54 @@
-
-<bpmn2:definitions xmlns:bpmn2='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:xrm='http://www.intalio.com/cloud/xrm' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' typeLanguage='http://www.java.com/javaTypes' expressionLanguage='http://www.mvel.org/2.0' id='698320704338395684' targetNamespace=''>
-  <bpmn2:import importType='xrm' namespace='http://www.intalio.com/cloud/xrm'/>
-  <bpmn2:itemDefinition id='objectType' structureRef='java.lang.Object'/>
-  <bpmn2:process id='698320704338395684 + Wed Apr 27 15:13:21 -0300 2011'>
-    <bpmn2:property id='instanceMetadata' itemSubjectRef='objectType'/>
-    <bpmn2:property id='processMetadata' itemSubjectRef='objectType'/>
-    <bpmn2:property id='startMessage' itemSubjectRef='objectType'/>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="Definition"
+             targetNamespace="http://www.example.org/MinimalExample"
+             typeLanguage="http://www.java.com/javaTypes"
+             expressionLanguage="http://www.mvel.org/2.0"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             xmlns:tns="http://www.jboss.org/drools">
+ 
+ 
+  <process id='_linkEventProcessExample'>
     
     
+    <startEvent id='_A176EE94-8688-46D3-8C3F-B7C01CA73782' name='start jump'/>
     
-    <bpmn2:startEvent id='_A176EE94-8688-46D3-8C3F-B7C01CA73782' name='start doing'/>
-    
-    <bpmn2:sequenceFlow id='_EE84FA5C-6CF8-4FA0-AD6C-2F40E8D07824' sourceRef='_A176EE94-8688-46D3-8C3F-B7C01CA73782' targetRef='_A20D381B-15D5-4874-8514-EBEB9472D55B'/>
-    
-    
-    <bpmn2:userTask id='_A20D381B-15D5-4874-8514-EBEB9472D55B' name='think it'>
-      <bpmn2:ioSpecification>
-        <bpmn2:inputSet>
-          <bpmn2:dataInputRefs>_A20D381B-15D5-4874-8514-EBEB9472D55B_codehref</bpmn2:dataInputRefs>
-        </bpmn2:inputSet>
-        <bpmn2:outputSet>
-          <bpmn2:dataOutputRefs>_A20D381B-15D5-4874-8514-EBEB9472D55B_PreviousOwner</bpmn2:dataOutputRefs>
-        </bpmn2:outputSet>
-        <bpmn2:dataInput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_INCO' name='input'/>
-        <bpmn2:dataOutput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_PreviousOwner' name='output'/>
-        <bpmn2:dataOutput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_OUTCO' name='companionobject'/>
-        <bpmn2:dataInput id='_A20D381B-15D5-4874-8514-EBEB9472D55B_codehref' name='codehref'/>
-      </bpmn2:ioSpecification>
-      <bpmn2:dataOutputAssociation>
-        <bpmn2:sourceRef>_A20D381B-15D5-4874-8514-EBEB9472D55B_PreviousOwner</bpmn2:sourceRef>
-        <bpmn2:targetRef>instanceMetadata</bpmn2:targetRef>
-        <bpmn2:assignment>
-          <bpmn2:from>@primaryname</bpmn2:from>
-          <bpmn2:to>instanceMetadata/previoustasksowner</bpmn2:to>
-        </bpmn2:assignment>
-      </bpmn2:dataOutputAssociation>
-      <bpmn2:dataInputAssociation>
-        <bpmn2:targetRef>_A20D381B-15D5-4874-8514-EBEB9472D55B_codehref</bpmn2:targetRef>
-        <bpmn2:assignment>
-          <bpmn2:from/>
-          <bpmn2:to>.</bpmn2:to>
-        </bpmn2:assignment>
-      </bpmn2:dataInputAssociation>
-      <bpmn2:humanPerformer resourceRef='xrm:user'>
-        <bpmn2:resourceAssignmentExpression>
-          <bpmn2:formalExpression>System Administrator</bpmn2:formalExpression>
-        </bpmn2:resourceAssignmentExpression>
-      </bpmn2:humanPerformer>
-    </bpmn2:userTask>
+    <sequenceFlow id='_EE84FA5C-6CF8-4FA0-AD6C-2F40E8D07824' sourceRef='_A176EE94-8688-46D3-8C3F-B7C01CA73782' targetRef="_scriptTask-about-to-jump-id"/>
     
     
+    <scriptTask id="_scriptTask-about-to-jump-id" name="task before link">
+      <script>System.out.println("about to jump");</script>
+    </scriptTask>
     
-     <bpmn2:sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef='_A20D381B-15D5-4874-8514-EBEB9472D55B' targetRef='id_1'/>
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_scriptTask-about-to-jump-id" targetRef='_id_1'/>
      
      
      <!-- throw link event -->
-     <bpmn2:linkEventDefinition id="id_1"  name="nextPage">
-     	<bpmn2:source>id_2</bpmn2:source>
-     </bpmn2:linkEventDefinition>
+     <linkEventDefinition id="_id_1"  name="nextPage">
+     	<source>_id_2</source>
+     </linkEventDefinition>
      
      <!-- catch link event -->
-     <bpmn2:linkEventDefinition id="id_2" name="nextPage">
-     	<bpmn2:target>id_1</bpmn2:target>
-     </bpmn2:linkEventDefinition>   
+     <linkEventDefinition id="_id_2" name="nextPage">
+     	<target>_id_1</target>
+     </linkEventDefinition>   
      
      
-     <bpmn2:sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='id_2' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='_id_2' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>
   
   
-    <bpmn2:userTask id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' name='do it'>
-      <bpmn2:ioSpecification>
-        <bpmn2:inputSet>
-          <bpmn2:dataInputRefs>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_codehref</bpmn2:dataInputRefs>
-        </bpmn2:inputSet>
-        <bpmn2:outputSet>
-          <bpmn2:dataOutputRefs>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_PreviousOwner</bpmn2:dataOutputRefs>
-        </bpmn2:outputSet>
-        <bpmn2:dataInput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_INCO' name='input'/>
-        <bpmn2:dataOutput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_PreviousOwner' name='output'/>
-        <bpmn2:dataOutput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_OUTCO' name='companionobject'/>
-        <bpmn2:dataInput id='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_codehref' name='codehref'/>
-      </bpmn2:ioSpecification>
-      <bpmn2:dataOutputAssociation>
-        <bpmn2:sourceRef>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_PreviousOwner</bpmn2:sourceRef>
-        <bpmn2:targetRef>instanceMetadata</bpmn2:targetRef>
-        <bpmn2:assignment>
-          <bpmn2:from>@primaryname</bpmn2:from>
-          <bpmn2:to>instanceMetadata/previoustasksowner</bpmn2:to>
-        </bpmn2:assignment>
-      </bpmn2:dataOutputAssociation>
-      <bpmn2:dataInputAssociation>
-        <bpmn2:targetRef>_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E_codehref</bpmn2:targetRef>
-        <bpmn2:assignment>
-          <bpmn2:from/>
-          <bpmn2:to>.</bpmn2:to>
-        </bpmn2:assignment>
-      </bpmn2:dataInputAssociation>
-      <bpmn2:humanPerformer resourceRef='xrm:user'>
-        <bpmn2:resourceAssignmentExpression>
-          <bpmn2:formalExpression>System Administrator</bpmn2:formalExpression>
-        </bpmn2:resourceAssignmentExpression>
-      </bpmn2:humanPerformer>
-    </bpmn2:userTask>
+  
+  <scriptTask id="_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E" name="task after link">
+      <script>System.out.println("jumped");</script>
+    </scriptTask>
+    
+    
+        <sequenceFlow id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
     
     
     
-        <bpmn2:sequenceFlow id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
+    <endEvent id='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1' name='stop doing'/>
     
-    
-    
-    <bpmn2:endEvent id='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1' name='stop doing'/>
-    
-  </bpmn2:process>
-</bpmn2:definitions>
+  </process>
+</definitions>
