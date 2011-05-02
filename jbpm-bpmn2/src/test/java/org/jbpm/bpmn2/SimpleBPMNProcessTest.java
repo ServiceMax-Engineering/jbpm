@@ -1566,6 +1566,8 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
 
 		KnowledgeBase kbase = createKnowledgeBase("BPMN2-IntermediateLinkEvent.bpmn2");
 		StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+		ProcessInstance processInstance = ksession.startProcess("Minimal");
+		assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
 		
 	}
 
