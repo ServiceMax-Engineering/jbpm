@@ -30,7 +30,9 @@ import org.jbpm.process.core.timer.Timer;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
+import org.jbpm.workflow.core.node.CatchLinkNode;
 import org.jbpm.workflow.core.node.EventNode;
+import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.TimerNode;
 import org.w3c.dom.Element;
@@ -87,7 +89,11 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
 				handleStateNode(node, element, uri, localName, parser);
 				break;
 			} else if ("linkEventDefinition".equals(nodeName)) {
-				handleLinkNode(xmlNode, parser);
+				CatchLinkNode linkNode = new CatchLinkNode();
+				linkNode.setId(node.getId());
+				linkNode.setName(node.getName());
+				node = linkNode;
+				handleLinkNode(node, xmlNode, parser);
 				break;
 			}
 			xmlNode = xmlNode.getNextSibling();
@@ -97,54 +103,30 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
 		return node;
 	}
 
-	protected void handleLinkNode(org.w3c.dom.Node xmlLinkNode,
+	protected void handleLinkNode(Node node, org.w3c.dom.Node xmlLinkNode,
 			ExtensibleXmlParser parser) {
 		NamedNodeMap linkAttr = xmlLinkNode.getAttributes();
+
 		String id = linkAttr.getNamedItem("id").getNodeValue();
 		String name = linkAttr.getNamedItem("name").getNodeValue();
-		IntermediateLink link = new IntermediateLink();
-		link.setId(id);
-		link.setName(name);
+
+		node.setName(name);
+		node.setMetaData("UniqueId", id);
 
 		org.w3c.dom.Node xmlNode = xmlLinkNode.getFirstChild();
 
 		while (null != xmlNode) {
-
 			String nodeName = xmlNode.getNodeName();
-
 			if ("target".equals(nodeName)) {
 				String target = xmlNode.getTextContent();
-				link.setTarget(target);
+				node.setMetaData("target", target);
 			}
-
 			if ("source".equals(nodeName)) {
 				String source = xmlNode.getTextContent();
-				link.setSources(source);
+				node.setMetaData("source", source);
 			}
-
 			xmlNode = xmlNode.getNextSibling();
 		}
-
-		NodeContainer parentNode = (NodeContainer) parser.getParent();
-		List<IntermediateLink> intermediateLinks = null;
-		if (parentNode instanceof RuleFlowProcess) {
-			RuleFlowProcess process = (RuleFlowProcess) parentNode;
-			intermediateLinks = (List<IntermediateLink>) process
-					.getMetaData(ProcessHandler.CATCH_LINKS);
-
-			if (intermediateLinks == null) {
-				intermediateLinks = new ArrayList<IntermediateLink>();
-				process.setMetaData(ProcessHandler.CATCH_LINKS,
-						intermediateLinks);
-			}
-
-		} else {
-			throw new RuntimeException(
-					"Wrong process type assumption. We need a object of type RuleFlowProcess and we have: "
-							+ parentNode.getClass().getSimpleName());
-		}
-
-		intermediateLinks.add(link);
 
 	}
 
