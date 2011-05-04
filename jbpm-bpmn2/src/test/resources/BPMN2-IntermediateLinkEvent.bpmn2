@@ -9,7 +9,11 @@
              xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
              xmlns:tns="http://www.jboss.org/drools">
  
+ <!--
  
+ {1=org.jbpm.workflow.core.node.StartNode@36fb2f8, 2=org.jbpm.workflow.core.node.ActionNode@1a4eb98b, 3=org.jbpm.workflow.core.node.ActionNode@2677622b, 4=org.jbpm.workflow.core.node.EventNode@67ce08c7, 5=org.jbpm.workflow.core.node.ActionNode@7a2760f, 6=org.jbpm.workflow.core.node.EndNode@3af4d6b3}
+ 
+  -->
   <process id='_linkEventProcessExample'>
     
     
@@ -23,17 +27,18 @@
     </scriptTask>
     
      <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_scriptTask-about-to-jump-id" targetRef='_id_1'/>
+          
+     <intermediateThrowEvent id="_id_1">
+	     <linkEventDefinition id="_id_1l"  name="nextPage">
+	     	<source>_id_2l</source>
+	     </linkEventDefinition>
+     </intermediateThrowEvent>
      
-     
-     <!-- throw link event -->
-     <linkEventDefinition id="_id_1"  name="nextPage">
-     	<source>_id_2</source>
-     </linkEventDefinition>
-     
-     <!-- catch link event -->
-     <linkEventDefinition id="_id_2" name="nextPage">
-     	<target>_id_1</target>
-     </linkEventDefinition>   
+     <intermediateCatchEvent id="_id_2">
+	     <linkEventDefinition id="_id_2l" name="nextPage">
+	     	<target>_id_1l</target>
+	     </linkEventDefinition>  
+     </intermediateCatchEvent> 
      
      
      <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='_id_2' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>

@@ -56,13 +56,15 @@ import org.jbpm.workflow.core.node.EventNode;
 import org.jbpm.workflow.core.node.HumanTaskNode;
 import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StateNode;
+import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	public static final String CONNECTIONS = "BPMN.Connections";
-	public static final String INTERMEDIATE_LINKS = "BPMN.Links";
+	public static final String CATCH_LINKS = "BPMN.CatchLinks";
+	public static final String THROW_LINKS = "BPMN.ThrowLinks";
 
 	@SuppressWarnings("unchecked")
 	public ProcessHandler() {
@@ -127,15 +129,17 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 	@SuppressWarnings("unchecked")
 	public Object end(final String uri, final String localName,
 			final ExtensibleXmlParser parser) throws SAXException {
-		parser.endElementBuilder();
+		Element element = parser.endElementBuilder();
 		RuleFlowProcess process = (RuleFlowProcess) parser.getCurrent();
+
 		List<SequenceFlow> connections = (List<SequenceFlow>) process
 				.getMetaData(CONNECTIONS);
+		List<IntermediateLink> throwLinks = (List<IntermediateLink>) process
+				.getMetaData(THROW_LINKS);
+		List<IntermediateLink> catchLinks = (List<IntermediateLink>) process
+				.getMetaData(CATCH_LINKS);
 
-		List<IntermediateLink> intermediateLink = (List<IntermediateLink>) process
-				.getMetaData(INTERMEDIATE_LINKS);
-
-		linkIntermediateLinks(process, intermediateLink);
+//		linkIntermediateLinks(process, throwLinks, catchLinks);
 		linkConnections(process, connections);
 		linkBoundaryEvents(process);
 		List<Lane> lanes = (List<Lane>) process.getMetaData(LaneHandler.LANES);
@@ -144,12 +148,35 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 		return process;
 	}
 
-	private static void linkIntermediateLinks(RuleFlowProcess process,
-			List<IntermediateLink> intermediateLinks) {
-		if (null == intermediateLinks) {
-			
-			for (IntermediateLink intermediateLink : intermediateLinks) {
-				
+	private static void linkIntermediateLinks(NodeContainer process,
+			List<IntermediateLink> throwLinks, List<IntermediateLink> catchLinks) {
+		if (null != throwLinks) {
+
+			for (IntermediateLink aThrowLink : throwLinks) {
+
+				for (IntermediateLink aCatchLink : catchLinks) {
+
+					if (aThrowLink.getName().equals(aCatchLink.getName())) {
+
+						Node[] nodes = process.getNodes();
+						for (Node node : nodes) {
+							String name = node.getName();
+							
+						}
+						
+						
+						Node source = findNodeByUniqueId(process,
+								aThrowLink.getId());
+						Node target = findNodeByUniqueId(process,
+								aCatchLink.getId());
+
+						Connection result = new ConnectionImpl(source,
+								NodeImpl.CONNECTION_DEFAULT_TYPE, target,
+								NodeImpl.CONNECTION_DEFAULT_TYPE);
+
+					}
+				}
+
 			}
 
 		}
@@ -174,7 +201,8 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 					// remove ids of parent nodes
 					sourceRef = sourceRef
 							.substring(sourceRef.lastIndexOf("-") + 1);
-					source = nodeContainer.getNode(new Integer(sourceRef));
+					Integer id = new Integer(sourceRef);
+					source = nodeContainer.getNode(id);
 				} catch (NumberFormatException e) {
 					// try looking for a node with same "UniqueId" (in metadata)
 					source = findNodeByUniqueId(nodeContainer,
