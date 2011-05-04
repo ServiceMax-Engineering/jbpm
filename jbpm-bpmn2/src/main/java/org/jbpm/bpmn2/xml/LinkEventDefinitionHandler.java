@@ -69,11 +69,11 @@ public class LinkEventDefinitionHandler extends BaseAbstractHandler implements
 		if (parentNode instanceof RuleFlowProcess) {
 			RuleFlowProcess process = (RuleFlowProcess) parentNode;
 			intermediateLinks = (List<IntermediateLink>) process
-					.getMetaData(ProcessHandler.INTERMEDIATE_LINKS);
+					.getMetaData(ProcessHandler.CATCH_LINKS);
 
 			if (intermediateLinks == null) {
 				intermediateLinks = new ArrayList<IntermediateLink>();
-				process.setMetaData(ProcessHandler.INTERMEDIATE_LINKS,
+				process.setMetaData(ProcessHandler.CATCH_LINKS,
 						intermediateLinks);
 			}
 
