@@ -129,7 +129,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 	@SuppressWarnings("unchecked")
 	public Object end(final String uri, final String localName,
 			final ExtensibleXmlParser parser) throws SAXException {
-		Element element = parser.endElementBuilder();
+		parser.endElementBuilder();
 		RuleFlowProcess process = (RuleFlowProcess) parser.getCurrent();
 
 		List<SequenceFlow> connections = (List<SequenceFlow>) process
@@ -139,7 +139,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 		List<IntermediateLink> catchLinks = (List<IntermediateLink>) process
 				.getMetaData(CATCH_LINKS);
 
-//		linkIntermediateLinks(process, throwLinks, catchLinks);
+		linkIntermediateLinks(process, throwLinks, catchLinks);
 		linkConnections(process, connections);
 		linkBoundaryEvents(process);
 		List<Lane> lanes = (List<Lane>) process.getMetaData(LaneHandler.LANES);
@@ -150,36 +150,13 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	private static void linkIntermediateLinks(NodeContainer process,
 			List<IntermediateLink> throwLinks, List<IntermediateLink> catchLinks) {
-		if (null != throwLinks) {
-
-			for (IntermediateLink aThrowLink : throwLinks) {
-
-				for (IntermediateLink aCatchLink : catchLinks) {
-
-					if (aThrowLink.getName().equals(aCatchLink.getName())) {
-
-						Node[] nodes = process.getNodes();
-						for (Node node : nodes) {
-							String name = node.getName();
-							
-						}
-						
-						
-						Node source = findNodeByUniqueId(process,
-								aThrowLink.getId());
-						Node target = findNodeByUniqueId(process,
-								aCatchLink.getId());
-
-						Connection result = new ConnectionImpl(source,
-								NodeImpl.CONNECTION_DEFAULT_TYPE, target,
-								NodeImpl.CONNECTION_DEFAULT_TYPE);
-
-					}
-				}
-
-			}
-
-		}
+		
+//		Node t = findNodeByUniqueId(process, "_id_1l");
+//		Node c = findNodeByUniqueId(process, "_id_2l");
+//
+//		Connection result = new ConnectionImpl(t,
+//				NodeImpl.CONNECTION_DEFAULT_TYPE, c,
+//				NodeImpl.CONNECTION_DEFAULT_TYPE);
 
 	}
 
