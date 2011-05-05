@@ -9,38 +9,34 @@
              xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
              xmlns:tns="http://www.jboss.org/drools">
  
- <!--
- 
-{1=org.jbpm.workflow.core.node.StartNode@a32087b, 2=org.jbpm.workflow.core.node.ActionNode@5acac877, 3=org.jbpm.workflow.core.node.ActionNode@372f2b32, 4=org.jbpm.workflow.core.node.LinkNode@79bcfbeb, 5=org.jbpm.workflow.core.node.ActionNode@663f3fbd, 6=org.jbpm.workflow.core.node.EndNode@4271c5bc} 
-  -->
-  <process id='_linkEventProcessExample'>
+  <process id='linkEventProcessExample' name="link event process example" >
     
     
     <startEvent id='_A176EE94-8688-46D3-8C3F-B7C01CA73782' name='start jump'/>
     
-    <sequenceFlow id='_EE84FA5C-6CF8-4FA0-AD6C-2F40E8D07824' sourceRef='_A176EE94-8688-46D3-8C3F-B7C01CA73782' targetRef="_scriptTask-about-to-jump-id"/>
+    <sequenceFlow id='_EE84FA5C-6CF8-4FA0-AD6C-2F40E8D07824' sourceRef='_A176EE94-8688-46D3-8C3F-B7C01CA73782' targetRef="_seqid123" name="" />
     
     
-    <scriptTask id="_scriptTask-about-to-jump-id" name="task before link">
+    <scriptTask id="_seqid123" name="task before link">
       <script>System.out.println("about to jump");</script>
     </scriptTask>
     
-     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_scriptTask-about-to-jump-id" targetRef='_id_1l'/>
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_seqid123" targetRef='_id_1' name="" />
           
-     <intermediateThrowEvent id="_zaraza>
-	     <linkEventDefinition id="_id_1l"  name="nextPage">
-	     	<source>_id_2l</source>
+     <intermediateThrowEvent id="_zaraza" name="" >
+	     <linkEventDefinition id="_id_1"  name="nextPage">
+	     	<source>_id_2</source>
 	     </linkEventDefinition>
      </intermediateThrowEvent>
      
-     <intermediateCatchEvent id="_zaraza3">
-	     <linkEventDefinition id="_id_2l" name="nextPage">
-	     	<target>_id_1l</target>
+     <intermediateCatchEvent id="_zaraza3" name="" >
+	     <linkEventDefinition id="_id_2" name="nextPage">
+	     	<target>_id_1</target>
 	     </linkEventDefinition>  
      </intermediateCatchEvent> 
      
      
-     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='_id_2l' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E'/>
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='_id_2' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' name=""  />
   
   
   
@@ -49,7 +45,7 @@
     </scriptTask>
     
     
-        <sequenceFlow id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
+        <sequenceFlow name="" id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
     
     
     
