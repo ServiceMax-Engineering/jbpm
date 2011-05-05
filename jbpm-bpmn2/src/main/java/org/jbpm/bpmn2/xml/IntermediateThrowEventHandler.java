@@ -16,21 +16,16 @@
 
 package org.jbpm.bpmn2.xml;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Escalation;
-import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Message;
 import org.jbpm.compiler.xml.ProcessBuildData;
-import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.node.ActionNode;
-import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.xml.sax.Attributes;
@@ -50,7 +45,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 	public Object end(final String uri, final String localName,
 			final ExtensibleXmlParser parser) throws SAXException {
 		final Element element = parser.endElementBuilder();
-		Node node = (Node) parser.getCurrent();
+		ActionNode node = (ActionNode) parser.getCurrent();
 		// determine type of event definition, so the correct type of node
 		// can be generated
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
@@ -73,23 +68,15 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 				handleCompensationNode(node, element, uri, localName, parser);
 				break;
 			} else if ("linkEventDefinition".equals(nodeName)) {
-				ThrowLinkNode linkNode = new ThrowLinkNode();
-				linkNode.setId(node.getId());
-				linkNode.setName(node.getName());
-				node = linkNode;
-				handleLinkNode(linkNode, xmlNode, parser);
+				handleLinkNode(node, xmlNode, parser);
 				break;
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
-
-		if (node instanceof ActionNode) {
-			ActionNode actionNode = (ActionNode) node;  
-			// none event definition
-			if (actionNode.getAction() == null) {
-				actionNode.setAction(new DroolsConsequenceAction("mvel", ""));
-				actionNode.setMetaData("NodeType", "IntermediateThrowEvent-None");
-			}
+		// none event definition
+		if (node.getAction() == null) {
+			node.setAction(new DroolsConsequenceAction("mvel", ""));
+			node.setMetaData("NodeType", "IntermediateThrowEvent-None");
 		}
 		NodeContainer nodeContainer = (NodeContainer) parser.getParent();
 		nodeContainer.addNode(node);
