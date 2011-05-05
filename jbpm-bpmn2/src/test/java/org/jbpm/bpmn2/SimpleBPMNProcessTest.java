@@ -1566,9 +1566,10 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
 
 		KnowledgeBase kbase = createKnowledgeBase("BPMN2-IntermediateLinkEvent.bpmn2");
 		StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
-		ProcessInstance processInstance = ksession.startProcess("Minimal");
+		ProcessInstance processInstance = ksession
+				.startProcess("linkEventProcessExample");
 		assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
-		
+
 	}
 
 	private KnowledgeBase createKnowledgeBase(String process) throws Exception {
@@ -1576,16 +1577,14 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
 				.setKnowledgeBaseServiceFactory(new KnowledgeBaseFactoryServiceImpl());
 		KnowledgeBuilderConfiguration conf = KnowledgeBuilderFactory
 				.newKnowledgeBuilderConfiguration();
-		((PackageBuilderConfiguration) conf).initSemanticModules();
-		((PackageBuilderConfiguration) conf)
-				.addSemanticModule(new BPMNSemanticModule());
-		((PackageBuilderConfiguration) conf)
-				.addSemanticModule(new BPMNDISemanticModule());
-		((PackageBuilderConfiguration) conf)
-				.addSemanticModule(new BPMNExtensionsSemanticModule());
+		PackageBuilderConfiguration conf2 = (PackageBuilderConfiguration) conf;
+		conf2.initSemanticModules();
+		conf2.addSemanticModule(new BPMNSemanticModule());
+		conf2.addSemanticModule(new BPMNDISemanticModule());
+		conf2.addSemanticModule(new BPMNExtensionsSemanticModule());
 		// ProcessDialectRegistry.setDialect("XPath", new XPathDialect());
 		XmlProcessReader processReader = new XmlProcessReader(
-				((PackageBuilderConfiguration) conf).getSemanticModules());
+				conf2.getSemanticModules());
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory
 				.newKnowledgeBuilder(conf);
 		List<Process> processes = processReader

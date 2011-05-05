@@ -21,18 +21,19 @@ public class ThrowLinkNodeHandler extends AbstractNodeHandler {
 	public void writeNode(Node node, StringBuilder xmlDump, int metaDataType) {
 
 		ThrowLinkNode linkNode = (ThrowLinkNode) node;
-		writeNode("intermediateThrowEvent", linkNode, xmlDump, metaDataType);
+
+		xmlDump.append("<intermediateThrowEvent id=\"_666\" name=\"\"  >" + EOL);
+		writeNode("linkEventDefinition", linkNode, xmlDump, metaDataType);
 		xmlDump.append(">" + EOL);
-		xmlDump.append(String.format(
-				"<linkEventDefinition id=\"%s\"  name=\"%s\">",
-				linkNode.getMetaData("UniqueId"), linkNode.getName())
-				+ EOL);
+		
 		// TODO:should append a list of more sources
 		xmlDump.append(String.format("<source>%s</source>",
 				linkNode.getMetaData("source"))
 				+ EOL);
-		xmlDump.append("</linkEventDefinition>" + EOL);
-		endNode("intermediateThrowEvent", xmlDump);
+		endNode("linkEventDefinition", xmlDump);
+
+		xmlDump.append("</intermediateThrowEvent>" + EOL);
+
 	}
 
 }
