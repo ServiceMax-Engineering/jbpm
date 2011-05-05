@@ -151,12 +151,12 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 	private static void linkIntermediateLinks(NodeContainer process,
 			List<IntermediateLink> throwLinks, List<IntermediateLink> catchLinks) {
 		
-//		Node t = findNodeByUniqueId(process, "_id_1l");
-//		Node c = findNodeByUniqueId(process, "_id_2l");
-//
-//		Connection result = new ConnectionImpl(t,
-//				NodeImpl.CONNECTION_DEFAULT_TYPE, c,
-//				NodeImpl.CONNECTION_DEFAULT_TYPE);
+		Node t = findNodeByUniqueId(process, "_id_1");
+		Node c = findNodeByUniqueId(process, "_id_2");
+
+		Connection result = new ConnectionImpl(t,
+				NodeImpl.CONNECTION_DEFAULT_TYPE, c,
+				NodeImpl.CONNECTION_DEFAULT_TYPE);
 
 	}
 
