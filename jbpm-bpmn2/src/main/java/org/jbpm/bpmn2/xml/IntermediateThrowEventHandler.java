@@ -26,6 +26,7 @@ import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.node.ActionNode;
+import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.xml.sax.Attributes;
@@ -68,8 +69,12 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 				handleCompensationNode(node, element, uri, localName, parser);
 				break;
 			} else if ("linkEventDefinition".equals(nodeName)) {
-				handleLinkNode(node, xmlNode, parser);
-				break;
+				ThrowLinkNode linkNode = new ThrowLinkNode();
+				linkNode.setId(node.getId());
+				handleLinkNode(linkNode, xmlNode, parser);
+				NodeContainer nodeContainer = (NodeContainer) parser.getParent();
+				nodeContainer.addNode(linkNode);
+				return linkNode;
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
