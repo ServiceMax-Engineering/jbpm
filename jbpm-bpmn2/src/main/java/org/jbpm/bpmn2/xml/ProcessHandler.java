@@ -158,6 +158,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 			Connection result = new ConnectionImpl(t,
 					NodeImpl.CONNECTION_DEFAULT_TYPE, c,
 					NodeImpl.CONNECTION_DEFAULT_TYPE);
+			result.setMetaData("linkNodeHidden", "yes");
 		}
 	}
 
