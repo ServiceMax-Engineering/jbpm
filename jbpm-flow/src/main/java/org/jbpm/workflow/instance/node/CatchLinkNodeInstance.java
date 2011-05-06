@@ -9,7 +9,13 @@ public class CatchLinkNodeInstance extends NodeInstanceImpl {
 
 	@Override
 	public void internalTrigger(NodeInstance from, String type) {
+		this.triggerCompleted();
 
+	}
+
+	public void triggerCompleted() {
+		this.triggerCompleted(
+				org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, true);
 	}
 
 }
