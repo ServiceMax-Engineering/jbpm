@@ -164,8 +164,9 @@ public abstract class NodeInstanceImpl implements
 		}
 		InternalKnowledgeRuntime kruntime = getProcessInstance()
 				.getKnowledgeRuntime();
+		InternalProcessRuntime processRuntime = (InternalProcessRuntime) kruntime.getProcessRuntime();
 		if (!hidden) {
-			((InternalProcessRuntime) kruntime.getProcessRuntime())
+			processRuntime
 					.getProcessEventSupport()
 					.fireBeforeNodeLeft(this, kruntime);
 		}
@@ -195,19 +196,21 @@ public abstract class NodeInstanceImpl implements
 				}
 			}
 		}
-		// trigger next node
-		triggerNextNode(connection);
-		
+		// here it triggers next node. inside connection is the from and to
+		// node.
+		this.triggerNextNode(connection);
+
 		if (!hidden) {
-			((InternalProcessRuntime) kruntime.getProcessRuntime())
-					.getProcessEventSupport().fireAfterNodeLeft(this, kruntime);
+			processRuntime.getProcessEventSupport().fireAfterNodeLeft(this,
+					kruntime);
 		}
 	}
 
 	private void triggerNextNode(Connection connection) {
 		org.jbpm.workflow.instance.NodeInstanceContainer nodeContainer = (org.jbpm.workflow.instance.NodeInstanceContainer) getNodeInstanceContainer();
 		Node goToNode = connection.getTo();
-		org.jbpm.workflow.instance.NodeInstance goToNodeInstance = nodeContainer.getNodeInstance(goToNode);
+		org.jbpm.workflow.instance.NodeInstance goToNodeInstance = nodeContainer
+				.getNodeInstance(goToNode);
 		goToNodeInstance.trigger(this, connection.getToType());
 	}
 
