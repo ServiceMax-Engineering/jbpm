@@ -16,16 +16,22 @@
 
 package org.jbpm.bpmn2.xml;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Escalation;
+import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Message;
+import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;
+import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.node.ActionNode;
+import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -33,6 +39,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 public class IntermediateThrowEventHandler extends AbstractNodeHandler {
+
+	public static final String LINK_SOURCE = "source";
+	public static final String LINK_TARGET = "target";
 
 	protected Node createNode(Attributes attrs) {
 		return new ActionNode();
@@ -72,7 +81,8 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 				ThrowLinkNode linkNode = new ThrowLinkNode();
 				linkNode.setId(node.getId());
 				handleLinkNode(linkNode, xmlNode, parser);
-				NodeContainer nodeContainer = (NodeContainer) parser.getParent();
+				NodeContainer nodeContainer = (NodeContainer) parser
+						.getParent();
 				nodeContainer.addNode(linkNode);
 				return linkNode;
 			}
@@ -92,26 +102,56 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 			ExtensibleXmlParser parser) {
 
 		NamedNodeMap linkAttr = xmlLinkNode.getAttributes();
-		String id = linkAttr.getNamedItem("id").getNodeValue();
+		String uniqueId = linkAttr.getNamedItem("id").getNodeValue();
 		String name = linkAttr.getNamedItem("name").getNodeValue();
 
-		node.setMetaData("UniqueId", id);
+		node.setMetaData("UniqueId", uniqueId);
 		node.setName(name);
 
 		org.w3c.dom.Node xmlNode = xmlLinkNode.getFirstChild();
 
+		NodeContainer nodeContainer = (NodeContainer) parser.getParent();
+
+		IntermediateLink aLink = new IntermediateLink();
+		aLink.setUniqueId(uniqueId);
 		while (null != xmlNode) {
 			String nodeName = xmlNode.getNodeName();
-			if ("target".equals(nodeName)) {
+
+			if (LINK_TARGET.equals(nodeName)) {
 				String target = xmlNode.getTextContent();
-				node.setMetaData("target", target);
+				node.setMetaData(LINK_TARGET, target);
+				aLink.setTarget(target);
 			}
-			if ("source".equals(nodeName)) {
+
+			if (LINK_SOURCE.equals(nodeName)) {
 				String source = xmlNode.getTextContent();
-				node.setMetaData("source", source);
+				ArrayList<String> sources = (ArrayList<String>) node
+						.getMetaData().get(LINK_SOURCE);
+
+				// if there is no list, create one
+				if (null == sources) {
+					sources = new ArrayList<String>();
+				}
+
+				// to connect nodes.
+				aLink.addSource(source);
+
+				// to do the xml dump
+				sources.add(source);
+				node.setMetaData(LINK_SOURCE, sources);
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
+
+		RuleFlowProcess process = (RuleFlowProcess) nodeContainer;
+		List<IntermediateLink> links = (List<IntermediateLink>) process
+				.getMetaData().get(ProcessHandler.THROW_LINKS);
+		if (null == links) {
+			links = new ArrayList<IntermediateLink>();
+		}
+		links.add(aLink);
+		process.setMetaData(ProcessHandler.THROW_LINKS, links);
+
 	}
 
 	public void handleSignalNode(final Node node, final Element element,

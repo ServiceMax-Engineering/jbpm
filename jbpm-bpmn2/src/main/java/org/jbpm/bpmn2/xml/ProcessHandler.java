@@ -63,7 +63,6 @@ import org.xml.sax.SAXException;
 public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	public static final String CONNECTIONS = "BPMN.Connections";
-	public static final String CATCH_LINKS = "BPMN.CatchLinks";
 	public static final String THROW_LINKS = "BPMN.ThrowLinks";
 
 	@SuppressWarnings("unchecked")
@@ -136,10 +135,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 				.getMetaData(CONNECTIONS);
 		List<IntermediateLink> throwLinks = (List<IntermediateLink>) process
 				.getMetaData(THROW_LINKS);
-		List<IntermediateLink> catchLinks = (List<IntermediateLink>) process
-				.getMetaData(CATCH_LINKS);
-
-		linkIntermediateLinks(process, throwLinks, catchLinks);
+		linkIntermediateLinks(process, throwLinks);
 		linkConnections(process, connections);
 		linkBoundaryEvents(process);
 		List<Lane> lanes = (List<Lane>) process.getMetaData(LaneHandler.LANES);
@@ -149,17 +145,22 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 	}
 
 	private static void linkIntermediateLinks(NodeContainer process,
-			List<IntermediateLink> throwLinks, List<IntermediateLink> catchLinks) {
+			List<IntermediateLink> throwLinks) {
 
-		Node t = findNodeByUniqueId(process, "_id_1");
-		Node c = findNodeByUniqueId(process, "_id_2");
-
-		if (t != null && c != null) {
-			Connection result = new ConnectionImpl(t,
-					NodeImpl.CONNECTION_DEFAULT_TYPE, c,
-					NodeImpl.CONNECTION_DEFAULT_TYPE);
-			result.setMetaData("linkNodeHidden", "yes");
+		for (IntermediateLink intermediateLink : throwLinks) {
+			Node t = findNodeByUniqueId(process, intermediateLink.getUniqueId());
+			List<String> sources = intermediateLink.getSources();
+			for (String sourceUniqueId : sources) {
+				Node c = findNodeByUniqueId(process, sourceUniqueId);
+				if (t != null && c != null) {
+					Connection result = new ConnectionImpl(t,
+							NodeImpl.CONNECTION_DEFAULT_TYPE, c,
+							NodeImpl.CONNECTION_DEFAULT_TYPE);
+					result.setMetaData("linkNodeHidden", "yes");
+				}
+			}
 		}
+
 	}
 
 	public Class<?> generateNodeFor() {

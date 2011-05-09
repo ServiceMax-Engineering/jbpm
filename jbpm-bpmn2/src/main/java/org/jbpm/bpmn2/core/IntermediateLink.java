@@ -1,32 +1,29 @@
 package org.jbpm.bpmn2.core;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IntermediateLink implements Serializable {
 
-	private String id;
-	private String name;
+	private static final long serialVersionUID = 201105091147L;
+
+	private String uniqueId;
+
 	private String target;
-	// TODO: should be a list of sources
-	private String sources;
+
+	private List<String> sources;
 
 	public IntermediateLink() {
+		this.sources = new ArrayList<String>();
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setUniqueId(String id) {
+		this.uniqueId = id;
 	}
 
-	public String getId() {
-		return id;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return name;
+	public String getUniqueId() {
+		return uniqueId;
 	}
 
 	public void setTarget(String target) {
@@ -37,11 +34,11 @@ public class IntermediateLink implements Serializable {
 		return target;
 	}
 
-	public void setSources(String sources) {
-		this.sources = sources;
+	public void addSource(String sources) {
+		this.sources.add(sources);
 	}
 
-	public String getSources() {
+	public List<String> getSources() {
 		return sources;
 	}
 
