@@ -24,7 +24,7 @@ public class ThrowLinkNodeHandler extends AbstractNodeHandler {
 
 		ThrowLinkNode linkNode = (ThrowLinkNode) node;
 
-		xmlDump.append("<intermediateThrowEvent id=\"_666\" name=\"\"  >" + EOL);
+		xmlDump.append("<intermediateThrowEvent id=\"_" + XmlBPMNProcessDumper.getUniqueNodeId(node) + "_ThrowEvent\" name=\"\"  >" + EOL);
 		writeNode("linkEventDefinition", linkNode, xmlDump, metaDataType);
 		xmlDump.append(">" + EOL);
 
