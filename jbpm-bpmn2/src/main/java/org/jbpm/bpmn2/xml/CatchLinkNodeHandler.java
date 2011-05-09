@@ -22,14 +22,15 @@ public class CatchLinkNodeHandler extends AbstractNodeHandler implements
 	@Override
 	public void writeNode(Node node, StringBuilder xmlDump, int metaDataType) {
 		CatchLinkNode linkNode = (CatchLinkNode) node;
-		//TODO: hardcoded id and name
-		xmlDump.append("<intermediateCatchEvent id=\"_667\" name=\"\" >" + EOL);
-			writeNode("linkEventDefinition", linkNode, xmlDump, metaDataType);
-			xmlDump.append(">" + EOL);
-			xmlDump.append(String.format("<target>%s</target>",
-					linkNode.getMetaData("target"))
-					+ EOL);
-			endNode("linkEventDefinition", xmlDump);
+		xmlDump.append("<intermediateCatchEvent id=\""
+				+ XmlBPMNProcessDumper.getUniqueNodeId(node)
+				+ "_ThrowEvent\" name=\"\" >" + EOL);
+		writeNode("linkEventDefinition", linkNode, xmlDump, metaDataType);
+		xmlDump.append(">" + EOL);
+		xmlDump.append(String.format("<target>%s</target>",
+				linkNode.getMetaData("target"))
+				+ EOL);
+		endNode("linkEventDefinition", xmlDump);
 		xmlDump.append("</intermediateCatchEvent>" + EOL);
 
 	}
