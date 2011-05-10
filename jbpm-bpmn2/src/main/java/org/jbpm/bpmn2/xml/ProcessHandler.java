@@ -144,7 +144,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 		return process;
 	}
 
-	private static void linkIntermediateLinks(NodeContainer process,
+	public static void linkIntermediateLinks(NodeContainer process,
 			List<IntermediateLink> throwLinks) {
 		if (null != throwLinks) {
 			for (IntermediateLink intermediateLink : throwLinks) {
