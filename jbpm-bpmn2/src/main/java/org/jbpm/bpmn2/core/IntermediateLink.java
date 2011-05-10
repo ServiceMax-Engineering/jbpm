@@ -11,6 +11,8 @@ public class IntermediateLink implements Serializable {
 	private String uniqueId;
 
 	private String target;
+	
+	private String name;
 
 	private List<String> sources;
 
@@ -40,6 +42,19 @@ public class IntermediateLink implements Serializable {
 
 	public List<String> getSources() {
 		return sources;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+	
+	
+	public boolean isThrowLink(){
+		return this.target == null;
 	}
 
 }

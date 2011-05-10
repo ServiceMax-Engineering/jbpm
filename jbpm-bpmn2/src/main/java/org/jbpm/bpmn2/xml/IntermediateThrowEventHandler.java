@@ -113,6 +113,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 		NodeContainer nodeContainer = (NodeContainer) parser.getParent();
 
 		IntermediateLink aLink = new IntermediateLink();
+		aLink.setName(name);
 		aLink.setUniqueId(uniqueId);
 		while (null != xmlNode) {
 			String nodeName = xmlNode.getNodeName();
@@ -120,7 +121,6 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 			if (LINK_TARGET.equals(nodeName)) {
 				String target = xmlNode.getTextContent();
 				node.setMetaData(LINK_TARGET, target);
-				aLink.setTarget(target);
 			}
 
 			if (LINK_SOURCE.equals(nodeName)) {
@@ -146,21 +146,21 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 		if (nodeContainer instanceof RuleFlowProcess) {
 			RuleFlowProcess process = (RuleFlowProcess) nodeContainer;
 			List<IntermediateLink> links = (List<IntermediateLink>) process
-					.getMetaData().get(ProcessHandler.THROW_LINKS);
+					.getMetaData().get(ProcessHandler.LINKS);
 			if (null == links) {
 				links = new ArrayList<IntermediateLink>();
 			}
 			links.add(aLink);
-			process.setMetaData(ProcessHandler.THROW_LINKS, links);
+			process.setMetaData(ProcessHandler.LINKS, links);
 		} else if (nodeContainer instanceof CompositeNode) {
 			CompositeNode subprocess = (CompositeNode) nodeContainer;
 			List<IntermediateLink> links = (List<IntermediateLink>) subprocess
-					.getMetaData().get(ProcessHandler.THROW_LINKS);
+					.getMetaData().get(ProcessHandler.LINKS);
 			if (null == links) {
 				links = new ArrayList<IntermediateLink>();
 			}
 			links.add(aLink);
-			subprocess.setMetaData(ProcessHandler.THROW_LINKS, links);
+			subprocess.setMetaData(ProcessHandler.LINKS, links);
 		}
 
 	}

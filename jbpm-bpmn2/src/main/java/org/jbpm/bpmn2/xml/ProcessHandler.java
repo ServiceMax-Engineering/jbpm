@@ -63,7 +63,7 @@ import org.xml.sax.SAXException;
 public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	public static final String CONNECTIONS = "BPMN.Connections";
-	public static final String THROW_LINKS = "BPMN.ThrowLinks";
+	public static final String LINKS = "BPMN.ThrowLinks";
 
 	@SuppressWarnings("unchecked")
 	public ProcessHandler() {
@@ -134,7 +134,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 		List<SequenceFlow> connections = (List<SequenceFlow>) process
 				.getMetaData(CONNECTIONS);
 		List<IntermediateLink> throwLinks = (List<IntermediateLink>) process
-				.getMetaData(THROW_LINKS);
+				.getMetaData(LINKS);
 		linkIntermediateLinks(process, throwLinks);
 		linkConnections(process, connections);
 		linkBoundaryEvents(process);
@@ -145,12 +145,44 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 	}
 
 	public static void linkIntermediateLinks(NodeContainer process,
-			List<IntermediateLink> throwLinks) {
-		if (null != throwLinks) {
-			for (IntermediateLink intermediateLink : throwLinks) {
-				Node t = findNodeByUniqueId(process,
-						intermediateLink.getUniqueId());
-				List<String> sources = intermediateLink.getSources();
+			List<IntermediateLink> links) {
+		if (null != links) {
+
+			IntermediateLink candidate = links.get(0);
+			ArrayList<IntermediateLink> linksWithSameName = new ArrayList<IntermediateLink>();
+			
+			// Search link with same name
+			for (IntermediateLink aLink : links) {
+				if (aLink.getName().equals(candidate.getName())) {
+					linksWithSameName.add(aLink);
+				}
+			}
+
+			if (linksWithSameName.size() <= 2) {
+				throw new IllegalArgumentException(
+						"There should be at least 2 link events to make a connection");
+			}
+
+			// Search throw link
+			IntermediateLink throwLink = null;
+			for (IntermediateLink linkWithSameName : linksWithSameName) {
+				if (linkWithSameName.isThrowLink()) {
+					throwLink = linkWithSameName;
+				}
+			}
+
+			if (throwLink == null) {
+				throw new IllegalArgumentException(
+						"There is no throw element for link events with shared name");
+			}
+
+			linksWithSameName.remove(throwLink);
+			
+			// Make the connections
+			Node t = findNodeByUniqueId(process, throwLink.getUniqueId());
+			for (IntermediateLink catchLinks : linksWithSameName) {
+
+				List<String> sources = catchLinks.getSources();
 				for (String sourceUniqueId : sources) {
 					Node c = findNodeByUniqueId(process, sourceUniqueId);
 					if (t != null && c != null) {
@@ -161,6 +193,11 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 					}
 				}
 			}
+			
+			//remove connected links
+			links.remove(throwLink);
+			links.removeAll(linksWithSameName);
+
 		}
 	}
 

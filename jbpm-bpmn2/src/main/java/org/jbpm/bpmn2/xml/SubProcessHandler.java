@@ -258,7 +258,7 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		List<SequenceFlow> connections = (List<SequenceFlow>) compositeNode
 				.getMetaData(ProcessHandler.CONNECTIONS);
 		List<IntermediateLink> throwLinks = (List<IntermediateLink>) compositeNode
-				.getMetaData(ProcessHandler.THROW_LINKS);
+				.getMetaData(ProcessHandler.LINKS);
 
 		ProcessHandler.linkIntermediateLinks(compositeNode, throwLinks);
 		ProcessHandler.linkConnections(compositeNode, connections);
