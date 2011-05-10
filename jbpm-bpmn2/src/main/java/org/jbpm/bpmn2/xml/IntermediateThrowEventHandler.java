@@ -143,14 +143,25 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 			xmlNode = xmlNode.getNextSibling();
 		}
 
-		RuleFlowProcess process = (RuleFlowProcess) nodeContainer;
-		List<IntermediateLink> links = (List<IntermediateLink>) process
-				.getMetaData().get(ProcessHandler.THROW_LINKS);
-		if (null == links) {
-			links = new ArrayList<IntermediateLink>();
+		if (nodeContainer instanceof RuleFlowProcess) {
+			RuleFlowProcess process = (RuleFlowProcess) nodeContainer;
+			List<IntermediateLink> links = (List<IntermediateLink>) process
+					.getMetaData().get(ProcessHandler.THROW_LINKS);
+			if (null == links) {
+				links = new ArrayList<IntermediateLink>();
+			}
+			links.add(aLink);
+			process.setMetaData(ProcessHandler.THROW_LINKS, links);
+		} else if (nodeContainer instanceof CompositeNode) {
+			CompositeNode subprocess = (CompositeNode) nodeContainer;
+			List<IntermediateLink> links = (List<IntermediateLink>) subprocess
+					.getMetaData().get(ProcessHandler.THROW_LINKS);
+			if (null == links) {
+				links = new ArrayList<IntermediateLink>();
+			}
+			links.add(aLink);
+			subprocess.setMetaData(ProcessHandler.THROW_LINKS, links);
 		}
-		links.add(aLink);
-		process.setMetaData(ProcessHandler.THROW_LINKS, links);
 
 	}
 

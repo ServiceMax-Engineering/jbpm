@@ -146,21 +146,22 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	private static void linkIntermediateLinks(NodeContainer process,
 			List<IntermediateLink> throwLinks) {
-
-		for (IntermediateLink intermediateLink : throwLinks) {
-			Node t = findNodeByUniqueId(process, intermediateLink.getUniqueId());
-			List<String> sources = intermediateLink.getSources();
-			for (String sourceUniqueId : sources) {
-				Node c = findNodeByUniqueId(process, sourceUniqueId);
-				if (t != null && c != null) {
-					Connection result = new ConnectionImpl(t,
-							NodeImpl.CONNECTION_DEFAULT_TYPE, c,
-							NodeImpl.CONNECTION_DEFAULT_TYPE);
-					result.setMetaData("linkNodeHidden", "yes");
+		if (null != throwLinks) {
+			for (IntermediateLink intermediateLink : throwLinks) {
+				Node t = findNodeByUniqueId(process,
+						intermediateLink.getUniqueId());
+				List<String> sources = intermediateLink.getSources();
+				for (String sourceUniqueId : sources) {
+					Node c = findNodeByUniqueId(process, sourceUniqueId);
+					if (t != null && c != null) {
+						Connection result = new ConnectionImpl(t,
+								NodeImpl.CONNECTION_DEFAULT_TYPE, c,
+								NodeImpl.CONNECTION_DEFAULT_TYPE);
+						result.setMetaData("linkNodeHidden", "yes");
+					}
 				}
 			}
 		}
-
 	}
 
 	public Class<?> generateNodeFor() {
