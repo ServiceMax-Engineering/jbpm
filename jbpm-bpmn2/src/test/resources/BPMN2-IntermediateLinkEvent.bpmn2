@@ -7,102 +7,49 @@
              xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
-             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-             xmlns:g="http://www.jboss.org/drools/flow/gpd"
-             xmlns:tns="http://www.example.org/MinimalExample">
-
-  <process id="Composite" name="Composite Process" >
-
-    <!-- nodes -->
-    <startEvent id="_1" name="StartProcess" />
+             xmlns:tns="http://www.jboss.org/drools">
+ 
+  <process id='linkEventProcessExample' name="link event process example" >
     
-    <subProcess id="_2" name="Sub-Process" >
     
-        <startEvent id='_2-1' name='start jump'/>
+    <startEvent id='_A176EE94-8688-46D3-8C3F-B7C01CA73782' name='start jump'/>
     
-	    <scriptTask id="_2-2" name="task before link">
-	      <script>System.out.println("about to jump");</script>
-	    </scriptTask>
+    <sequenceFlow id='_EE84FA5C-6CF8-4FA0-AD6C-2F40E8D07824' sourceRef='_A176EE94-8688-46D3-8C3F-B7C01CA73782' targetRef="_seqid123" name="" />
     
-	     <sequenceFlow id='_2-3' sourceRef="_2-2" targetRef='_2-4' name="" />
-	          
-	     <intermediateThrowEvent id="_2-4TH" name="" >
-		     <linkEventDefinition id="_2-4"  name="nextPage">
-		     	<source>_2-6</source>
-		     </linkEventDefinition>
-	     </intermediateThrowEvent>
+    
+    <scriptTask id="_seqid123" name="task before link">
+      <script>System.out.println("about to jump");</script>
+    </scriptTask>
+    
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_seqid123" targetRef='_id_1' name="" />
+          
+     <intermediateThrowEvent id="_zaraza" name="" >
+	     <linkEventDefinition id="_id_1"  name="nextPage">
+	     	<source>_id_2</source>
+	     </linkEventDefinition>
+     </intermediateThrowEvent>
      
-	     <intermediateCatchEvent id="_2-6CH" name="" >
-		     <linkEventDefinition id="_2-6" name="nextPage">
-		     	<target>_2-4</target>
-		     </linkEventDefinition>  
-	     </intermediateCatchEvent> 
+     <intermediateCatchEvent id="_zaraza3" name="" >
+	     <linkEventDefinition id="_id_2" name="nextPage">
+	     	<target>_id_1</target>
+	     </linkEventDefinition>  
+     </intermediateCatchEvent> 
      
-     	<sequenceFlow id='_2-8' sourceRef='_2-6' targetRef='_2-9' name=""  />
-
-	    <scriptTask id="_2-9" name="task after link">
-	      <script>System.out.println("jumped");</script>
-	    </scriptTask>
-    
-        <sequenceFlow name="" id='_2-10' sourceRef='_2-9' targetRef='_2-11'/>
-  		<endEvent id='_2-11' name='stop doing'/>
-        <sequenceFlow id='_2-12' sourceRef='_2-1' targetRef="_2-2" name="" />
-    </subProcess>
+     
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='_id_2' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' name=""  />
+  
+  
+  
+  <scriptTask id="_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E" name="task after link">
+      <script>System.out.println("jumped");</script>
+    </scriptTask>
     
     
+        <sequenceFlow name="" id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
     
     
-
-    <endEvent id="_3" name="EndProcess" >
-        <terminateEventDefinition/>
-    </endEvent>
-
-    <!-- connections -->
-    <sequenceFlow id="_1-_2" sourceRef="_1" targetRef="_2" />
-    <sequenceFlow id="_2-_3" sourceRef="_2" targetRef="_3" />
-
+    
+    <endEvent id='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1' name='stop doing'/>
+    
   </process>
-
-  <bpmndi:BPMNDiagram id="CompositeDiagram">
-    <bpmndi:BPMNPlane bpmnElement="Composite">
-      <bpmndi:BPMNShape bpmnElement="_1">
-        <dc:Bounds x="16" y="101" width="48" height="48"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_2">
-        <dc:Bounds x="96" y="16" width="243" height="218"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_2-1">
-        <dc:Bounds x="113" y="54" width="48" height="48"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_2-2">
-        <dc:Bounds x="207" y="55" width="80" height="48"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_2-3">
-        <dc:Bounds x="118" y="147" width="48" height="48"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_3">
-        <dc:Bounds x="371" y="101" width="48" height="48"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge bpmnElement="_1-_2">
-        <di:waypoint x="40" y="125"/>
-        <di:waypoint x="217" y="125"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_2-1-_2-2">
-        <di:waypoint x="137" y="78"/>
-        <di:waypoint x="247" y="79"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_2-2-_2-3">
-        <di:waypoint x="247" y="79"/>
-        <di:waypoint x="247" y="171"/>
-        <di:waypoint x="142" y="171"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_2-_3">
-        <di:waypoint x="217" y="125"/>
-        <di:waypoint x="395" y="125"/>
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-
 </definitions>
