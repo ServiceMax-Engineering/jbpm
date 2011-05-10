@@ -116,6 +116,8 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
 		ProcessInstance processInstance = ksession.startProcess("Composite");
 		assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
 	}
+	
+	
 
 	public void testScriptTask() throws Exception {
 		KnowledgeBase kbase = createKnowledgeBase("BPMN2-ScriptTask.bpmn2");
@@ -1570,6 +1572,14 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
 				.startProcess("linkEventProcessExample");
 		assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
 
+	}
+	
+	
+	public void testCompositeProcessAndLinkEventl() throws Exception {
+		KnowledgeBase kbase = createKnowledgeBase("BPMN2-CompositeProcessAndLinkEvent.bpmn2");
+		StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+		ProcessInstance processInstance = ksession.startProcess("Composite");
+		assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
 	}
 
 	private KnowledgeBase createKnowledgeBase(String process) throws Exception {
