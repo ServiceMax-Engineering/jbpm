@@ -24,8 +24,8 @@ import org.drools.xml.BaseAbstractHandler;
 import org.drools.xml.ExtensibleXmlParser;
 import org.drools.xml.Handler;
 import org.jbpm.bpmn2.core.Association;
-import org.jbpm.bpmn2.core.Lane;
 import org.jbpm.bpmn2.core.IntermediateLink;
+import org.jbpm.bpmn2.core.Lane;
 import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
@@ -88,7 +88,10 @@ public class SequenceFlowHandler extends BaseAbstractHandler implements Handler 
 				connections = new ArrayList<SequenceFlow>();
 				process.setMetaData(ProcessHandler.CONNECTIONS, connections);
 			}
-		} else if (nodeContainer instanceof CompositeNode) {
+		} 
+
+		else if (nodeContainer instanceof CompositeNode) {
+
 			CompositeNode compositeNode = (CompositeNode) nodeContainer;
 			connections = (List<SequenceFlow>) compositeNode
 					.getMetaData(ProcessHandler.CONNECTIONS);
@@ -98,6 +101,7 @@ public class SequenceFlowHandler extends BaseAbstractHandler implements Handler 
 						connections);
 			}
 		}
+
 		SequenceFlow connection = new SequenceFlow(id, sourceRef, targetRef);
 		connection.setBendpoints(bendpoints);
 		connection.setName(name);
