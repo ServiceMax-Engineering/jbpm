@@ -31,6 +31,7 @@ import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.node.CatchLinkNode;
+import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.EventNode;
 import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.jbpm.workflow.core.node.StateNode;
@@ -106,28 +107,51 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
 	protected void handleLinkNode(Node node, org.w3c.dom.Node xmlLinkNode,
 			ExtensibleXmlParser parser) {
 		NamedNodeMap linkAttr = xmlLinkNode.getAttributes();
-
+		NodeContainer nodeContainer = (NodeContainer) parser.getParent();
 		String id = linkAttr.getNamedItem("id").getNodeValue();
 		String name = linkAttr.getNamedItem("name").getNodeValue();
 
 		node.setName(name);
 		node.setMetaData("UniqueId", id);
-
 		org.w3c.dom.Node xmlNode = xmlLinkNode.getFirstChild();
+
+		IntermediateLink aLink = new IntermediateLink();
+		aLink.setName(name);
 
 		while (null != xmlNode) {
 			String nodeName = xmlNode.getNodeName();
 			if ("target".equals(nodeName)) {
 				String target = xmlNode.getTextContent();
 				node.setMetaData("target", target);
+				aLink.setTarget(target);
 			}
 			if ("source".equals(nodeName)) {
 				String source = xmlNode.getTextContent();
 				node.setMetaData("source", source);
+				aLink.addSource(source);
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
 
+		if (nodeContainer instanceof RuleFlowProcess) {
+			RuleFlowProcess process = (RuleFlowProcess) nodeContainer;
+			List<IntermediateLink> links = (List<IntermediateLink>) process
+					.getMetaData().get(ProcessHandler.LINKS);
+			if (null == links) {
+				links = new ArrayList<IntermediateLink>();
+			}
+			links.add(aLink);
+			process.setMetaData(ProcessHandler.LINKS, links);
+		} else if (nodeContainer instanceof CompositeNode) {
+			CompositeNode subprocess = (CompositeNode) nodeContainer;
+			List<IntermediateLink> links = (List<IntermediateLink>) subprocess
+					.getMetaData().get(ProcessHandler.LINKS);
+			if (null == links) {
+				links = new ArrayList<IntermediateLink>();
+			}
+			links.add(aLink);
+			subprocess.setMetaData(ProcessHandler.LINKS, links);
+		}
 	}
 
 	protected void handleSignalNode(final Node node, final Element element,
