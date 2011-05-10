@@ -1575,8 +1575,8 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
 	}
 	
 	
-	public void testCompositeProcessAndLinkEventl() throws Exception {
-		KnowledgeBase kbase = createKnowledgeBase("BPMN2-CompositeProcessAndLinkEvent.bpmn2");
+	public void testLinkEventCompositeProcess() throws Exception {
+		KnowledgeBase kbase = createKnowledgeBase("BPMN2-LinkEventCompositeProcess.bpmn2");
 		StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
 		ProcessInstance processInstance = ksession.startProcess("Composite");
 		assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);

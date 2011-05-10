@@ -17,51 +17,38 @@
     <!-- nodes -->
     <startEvent id="_1" name="StartProcess" />
     
-    
-    
-    
     <subProcess id="_2" name="Sub-Process" >
-    
-       <startEvent id='_2-1' name='start jump'/>
-    
-    
-    
-    
-    <scriptTask id="_2-2" name="task before link">
-      <script>System.out.println("about to jump");</script>
-    </scriptTask>
-    
-     <sequenceFlow id='_2-3' sourceRef="_2-2" targetRef='_2-4' name="" />
-          
-     <intermediateThrowEvent id="_2-zaraza" name="" >
-	     <linkEventDefinition id="_2-4"  name="nextPage">
-	     	<source>_2-5</source>
-	     </linkEventDefinition>
-     </intermediateThrowEvent>
-     
-     <intermediateCatchEvent id="_2-zaraza3" name="" >
-	     <linkEventDefinition id="_2-5" name="nextPage">
-	     	<target>_2-4</target>
-	     </linkEventDefinition>  
-     </intermediateCatchEvent> 
-     
-     
-     <sequenceFlow id='_2-6' sourceRef='_2-5' targetRef='_2-7' name=""  />
   
-  
-  
-  <scriptTask id="_2-7" name="task after link">
-      <script>System.out.println("jumped");</script>
-    </scriptTask>
+ 
+        <startEvent id='_2-1' name='start jump'/>
     
+	    <scriptTask id="_2-2" name="task before link">
+	      <script>System.out.println("about to jump");</script>
+	    </scriptTask>
     
-        <sequenceFlow name="" id='_2-8' sourceRef='_2-7' targetRef='_2-9'/>
+	     <sequenceFlow id='_2-2-_2-3' sourceRef="_2-2" targetRef='_2-3' name="" />
+	          
+	     <intermediateThrowEvent id="_2-4TH" name="" >
+		     <linkEventDefinition id="_2-3"  name="nextPage">
+		     	<source>_2-4</source>
+		     </linkEventDefinition>
+	     </intermediateThrowEvent>
+     
+	     <intermediateCatchEvent id="_2-6CH" name="" >
+		     <linkEventDefinition id="_2-4" name="nextPage">
+		     	<target>_2-3</target>
+		     </linkEventDefinition>  
+	     </intermediateCatchEvent> 
+     
+     	<sequenceFlow id='_2-8-LINK' sourceRef='_2-4' targetRef='_2-9' name=""  />
+
+	    <scriptTask id="_2-9" name="task after link">
+	      <script>System.out.println("jumped");</script>
+	    </scriptTask>
     
-    
-    
-    <endEvent id='_2-9' name='stop doing'/>
-    
-      <sequenceFlow id='_2-10' sourceRef='_2-1' targetRef="_2-2" name="" />
+        <sequenceFlow name="" id='_2-10' sourceRef='_2-9' targetRef='_2-11'/>
+  		<endEvent id='_2-11' name='stop doing'/>
+        <sequenceFlow id='_2-12' sourceRef='_2-1' targetRef="_2-2" name="" />
     </subProcess>
     
     
