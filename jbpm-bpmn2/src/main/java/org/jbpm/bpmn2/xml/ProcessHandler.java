@@ -32,9 +32,9 @@ import org.jbpm.bpmn2.core.Definitions;
 import org.jbpm.bpmn2.core.Error;
 import org.jbpm.bpmn2.core.Escalation;
 import org.jbpm.bpmn2.core.Interface;
+import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.ItemDefinition;
 import org.jbpm.bpmn2.core.Lane;
-import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Message;
 import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;
@@ -56,7 +56,6 @@ import org.jbpm.workflow.core.node.EventNode;
 import org.jbpm.workflow.core.node.HumanTaskNode;
 import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StateNode;
-import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -171,23 +170,24 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 							"There should be at least 2 link events to make a connection");
 				}
 
-				
 				linksWithSharedNames.remove(throwLink);
 
 				// a validation
 				for (IntermediateLink catchLink : linksWithSharedNames) {
-					if (!catchLink.getTarget().equals(
-							throwLink.getUniqueId())) {
+					if (!catchLink.getTarget().equals(throwLink.getUniqueId())) {
 						throw new IllegalArgumentException(
 								"Catch links should target the same throw link");
 					}
 				}
 
 				// Make the connections
-				Node t = findNodeByUniqueId(process, throwLink.getUniqueId());
+				Node t = findNodeByIdOrUniqueIdInMetadata(process,
+						throwLink.getUniqueId());
+				
 				List<String> sources = throwLink.getSources();
 				for (String sourceUniqueId : sources) {
-					Node c = findNodeByUniqueId(process, sourceUniqueId);
+					Node c = findNodeByIdOrUniqueIdInMetadata(process,
+							sourceUniqueId);
 					if (t != null && c != null) {
 						Connection result = new ConnectionImpl(t,
 								NodeImpl.CONNECTION_DEFAULT_TYPE, c,
@@ -217,49 +217,17 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 			List<SequenceFlow> connections) {
 		if (connections != null) {
 			for (SequenceFlow connection : connections) {
-				String sourceRef = connection.getSourceRef();
-				String targetRef = connection.getTargetRef();
-				Node source = null;
-				Node target = null;
-				try {
-					// remove starting _
-					sourceRef = sourceRef.substring(1);
-					// remove ids of parent nodes
-					sourceRef = sourceRef
-							.substring(sourceRef.lastIndexOf("-") + 1);
-					Integer id = new Integer(sourceRef);
-					source = nodeContainer.getNode(id);
-				} catch (NumberFormatException e) {
-					// try looking for a node with same "UniqueId" (in metadata)
-					source = findNodeByUniqueId(nodeContainer,
-							connection.getSourceRef());
-					if (source == null) {
-						throw new IllegalArgumentException(
-								"Could not find source node for connection:"
-										+ connection.getSourceRef());
-					}
-				}
-				try {
-					// remove starting _
-					targetRef = targetRef.substring(1);
-					// remove ids of parent nodes
-					targetRef = targetRef
-							.substring(targetRef.lastIndexOf("-") + 1);
-					target = nodeContainer.getNode(new Integer(targetRef));
-				} catch (NumberFormatException e) {
-					// try looking for a node with same "UniqueId" (in metadata)
-					target = findNodeByUniqueId(nodeContainer,
-							connection.getTargetRef());
 
-					if (target == null) {
-						throw new IllegalArgumentException(
-								"Could not find target node for connection:"
-										+ connection.getTargetRef());
-					}
-				}
+				Node source = findNodeByIdOrUniqueIdInMetadata(nodeContainer,
+						connection.getSourceRef());
+
+				Node target = findNodeByIdOrUniqueIdInMetadata(nodeContainer,
+						connection.getTargetRef());
+
 				Connection result = new ConnectionImpl(source,
 						NodeImpl.CONNECTION_DEFAULT_TYPE, target,
 						NodeImpl.CONNECTION_DEFAULT_TYPE);
+
 				result.setMetaData("bendpoints", connection.getBendpoints());
 				result.setMetaData("UniqueId", connection.getId());
 				if (source instanceof Split) {
@@ -295,20 +263,34 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 		}
 	}
 
-	/**
-	 * 
-	 * @param nodeContainer
-	 * @param refUniqueId
-	 * @return null if it didn't find any node or a node
-	 */
-	private static Node findNodeByUniqueId(NodeContainer nodeContainer,
-			String refUniqueId) {
-		for (Node node : nodeContainer.getNodes()) {
-			if (refUniqueId.equals(node.getMetaData().get("UniqueId"))) {
-				return node;
+	private static Node findNodeByIdOrUniqueIdInMetadata(
+			NodeContainer nodeContainer, String targetRef) {
+
+		try {
+			// remove starting _
+			String targetId = targetRef.substring(1);
+			// remove ids of parent nodes
+			targetId = targetId.substring(targetId.lastIndexOf("-") + 1);
+			return nodeContainer.getNode(new Integer(targetId));
+		} catch (NumberFormatException e) {
+			// try looking for a node with same "UniqueId" (in metadata)
+			Node targetNode = null;
+			for (Node node : nodeContainer.getNodes()) {
+				if (targetRef.equals(node.getMetaData().get("UniqueId"))) {
+					targetNode = node;
+					break;
+				}
+			}
+
+			if (targetNode != null) {
+				return targetNode;
+			} else {
+				throw new IllegalArgumentException(
+						"Could not find target node for connection:"
+								+ targetRef);
 			}
 		}
-		return null;
+
 	}
 
 	public static void linkBoundaryEvents(NodeContainer nodeContainer) {
@@ -321,21 +303,13 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 							.getEventFilters().get(0)).getType();
 					Node attachedNode = null;
 					try {
-						// remove starting _
-						String attachedToString = attachedTo.substring(1);
-						// remove ids of parent nodes
-						attachedToString = attachedToString
-								.substring(attachedToString.lastIndexOf("-") + 1);
-						attachedNode = nodeContainer.getNode(new Integer(
-								attachedToString));
-					} catch (NumberFormatException e) {
-						attachedNode = findNodeByUniqueId(nodeContainer,
-								attachedTo);
-						if (attachedNode == null) {
-							throw new IllegalArgumentException(
-									"Could not find node to attach to: "
-											+ attachedTo);
-						}
+						attachedNode = findNodeByIdOrUniqueIdInMetadata(
+								nodeContainer, attachedTo);
+					} catch (IllegalArgumentException e) {
+						// re-throw exception with more information
+						throw new IllegalArgumentException(
+								"Could not find node to attach to: "
+										+ attachedTo);
 					}
 					if (type.startsWith("Escalation-")) {
 						boolean cancelActivity = (Boolean) node.getMetaData()
