@@ -148,41 +148,44 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 			List<IntermediateLink> links) {
 		if (null != links) {
 
-			IntermediateLink candidate = links.get(0);
-			ArrayList<IntermediateLink> linksWithSameName = new ArrayList<IntermediateLink>();
-			
-			// Search link with same name
-			for (IntermediateLink aLink : links) {
-				if (aLink.getName().equals(candidate.getName())) {
-					linksWithSameName.add(aLink);
+			// Search throw links
+			ArrayList<IntermediateLink> throwLinks = new ArrayList<IntermediateLink>();
+			for (IntermediateLink aLinks : links) {
+				if (aLinks.isThrowLink()) {
+					throwLinks.add(aLinks);
 				}
 			}
 
-			if (linksWithSameName.size() <= 2) {
-				throw new IllegalArgumentException(
-						"There should be at least 2 link events to make a connection");
-			}
+			// Look for catch links for a throw link
+			for (IntermediateLink throwLink : throwLinks) {
 
-			// Search throw link
-			IntermediateLink throwLink = null;
-			for (IntermediateLink linkWithSameName : linksWithSameName) {
-				if (linkWithSameName.isThrowLink()) {
-					throwLink = linkWithSameName;
+				ArrayList<IntermediateLink> linksWithSharedNames = new ArrayList<IntermediateLink>();
+				for (IntermediateLink aLink : links) {
+					if (throwLink.getName().equals(aLink.getName())) {
+						linksWithSharedNames.add(aLink);
+					}
 				}
-			}
 
-			if (throwLink == null) {
-				throw new IllegalArgumentException(
-						"There is no throw element for link events with shared name");
-			}
+				if (linksWithSharedNames.size() < 2) {
+					throw new IllegalArgumentException(
+							"There should be at least 2 link events to make a connection");
+				}
 
-			linksWithSameName.remove(throwLink);
-			
-			// Make the connections
-			Node t = findNodeByUniqueId(process, throwLink.getUniqueId());
-			for (IntermediateLink catchLinks : linksWithSameName) {
+				
+				linksWithSharedNames.remove(throwLink);
 
-				List<String> sources = catchLinks.getSources();
+				// a validation
+				for (IntermediateLink catchLink : linksWithSharedNames) {
+					if (!catchLink.getTarget().equals(
+							throwLink.getUniqueId())) {
+						throw new IllegalArgumentException(
+								"Catch links should target the same throw link");
+					}
+				}
+
+				// Make the connections
+				Node t = findNodeByUniqueId(process, throwLink.getUniqueId());
+				List<String> sources = throwLink.getSources();
 				for (String sourceUniqueId : sources) {
 					Node c = findNodeByUniqueId(process, sourceUniqueId);
 					if (t != null && c != null) {
@@ -192,11 +195,16 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 						result.setMetaData("linkNodeHidden", "yes");
 					}
 				}
+
+				// Remove processed links
+				links.remove(throwLink);
+				links.removeAll(linksWithSharedNames);
 			}
-			
-			//remove connected links
-			links.remove(throwLink);
-			links.removeAll(linksWithSameName);
+
+			if (links.size() > 0) {
+				throw new IllegalArgumentException(links.size()
+						+ " links were not processed");
+			}
 
 		}
 	}
