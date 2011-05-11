@@ -954,15 +954,38 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
     
     public void testSignalStart() throws Exception {
         KnowledgeBase kbase = createKnowledgeBase("BPMN2-SignalStart.bpmn2");
-		StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        KnowledgeBase kbase2 = createKnowledgeBase("BPMN2-SignalStart2.bpmn2");
+		
+        kbase.addKnowledgePackages(kbase2.getKnowledgePackages());
+        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
 		final List<Long> list = new ArrayList<Long>();
 		ksession.addEventListener(new DefaultProcessEventListener() {
 			public void afterProcessStarted(ProcessStartedEvent event) {
 				list.add(event.getProcessInstance().getId());
 			}
 		});
-        ksession.signalEvent("MyStartSignal", "NewValue");
-		assertEquals(1, list.size());
+		ksession.signalEvent("MyStartSignal", "NewValue");
+        ksession.signalEvent("MyStartSignal2", "NewValue");
+		assertEquals(2, list.size());
+    }
+    
+    public void testSignalStart2() throws Exception {
+        KnowledgeBase kbase = createKnowledgeBase("BPMN2-SignalStart.bpmn2");
+        KnowledgeBase kbase2 = createKnowledgeBase("BPMN2-SignalStart2.bpmn2");
+		
+        
+        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        ksession.getKnowledgeBase().addKnowledgePackages(kbase2.getKnowledgePackages());
+		final List<Long> list = new ArrayList<Long>();
+		ksession.addEventListener(new DefaultProcessEventListener() {
+			public void afterProcessStarted(ProcessStartedEvent event) {
+				list.add(event.getProcessInstance().getId());
+			}
+		});
+		ksession.signalEvent("MyStartSignal", "NewValue");
+        ksession.signalEvent("MyStartSignal2", "NewValue");
+		//ksession.startProcess("Minimal2");
+		assertEquals(2, list.size());
     }
     
     public void testSignalEnd() throws Exception {

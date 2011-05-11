@@ -61,6 +61,10 @@ public class TaskHandler extends AbstractNodeHandler {
 	private Map<String, String> dataInputs = new HashMap<String, String>();
 	private Map<String, String> dataOutputs = new HashMap<String, String>();
 
+	protected void testMethod(){
+		System.out.println("===FEDE===");
+	}
+
     protected Node createNode(Attributes attrs) {
         return new WorkItemNode();
     }
