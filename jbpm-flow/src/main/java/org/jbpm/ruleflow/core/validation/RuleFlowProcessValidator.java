@@ -598,11 +598,13 @@ public class RuleFlowProcessValidator implements ProcessValidator {
 					validateTimer(timerNode.getTimer(), node, process, errors);
 				}
 			} else if (node instanceof CatchLinkNode) {
-				System.out.println("//TODO: add validation for CatchLinkNode ");
+				// catchlink validation here, there also are validations in
+				// ProcessHandler regarding connection issues
 			}
 
 			else if (node instanceof ThrowLinkNode) {
-				System.out.println("//TODO: add validation for ThrowLinkNode ");
+				// throw validation here, there also are validations in
+				// ProcessHandler regarding connection issues
 			}
 
 			else {
