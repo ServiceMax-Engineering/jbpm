@@ -45,7 +45,34 @@
     </scriptTask>
     
     
-        <sequenceFlow name="" id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
+    
+    
+        <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E" targetRef='_id_3' name="" />
+          
+     <intermediateThrowEvent id="_id78" name="" >
+	     <linkEventDefinition id="_id_3"  name="2ndPage">
+	     	<source>_id_4</source>
+	     </linkEventDefinition>
+     </intermediateThrowEvent>
+     
+     <intermediateCatchEvent id="_id65" name="" >
+	     <linkEventDefinition id="_id_4" name="2ndPage">
+	     	<target>_id_3</target>
+	     </linkEventDefinition>  
+     </intermediateCatchEvent> 
+     
+     
+     <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A81' sourceRef='_id_4' targetRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D97999' name=""  />
+    
+    
+    
+     <scriptTask id="_6381BCBA-B49A-4BC1-AC3D-AEA745D97999" name=" 2nd TASK AFTER LINK">
+      <script>System.out.println("jumped 2");</script>
+    </scriptTask>
+    
+    
+    
+        <sequenceFlow name="" id='_325E4E04-60D2-4E0A-89FC-CBFA2304D401' sourceRef='_6381BCBA-B49A-4BC1-AC3D-AEA745D97999' targetRef='_8E0F0FAD-6087-4FA2-80BE-6976C87A4CE1'/>
     
     
     
