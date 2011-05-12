@@ -33,7 +33,6 @@ import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.node.CatchLinkNode;
 import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.EventNode;
-import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.TimerNode;
 import org.w3c.dom.Element;
@@ -42,6 +41,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 public class IntermediateCatchEventHandler extends AbstractNodeHandler {
+
+	public static final String LINK_NAME = "LinkName";
 
 	protected Node createNode(Attributes attrs) {
 		return new EventNode();
@@ -92,9 +93,8 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
 			} else if ("linkEventDefinition".equals(nodeName)) {
 				CatchLinkNode linkNode = new CatchLinkNode();
 				linkNode.setId(node.getId());
-				linkNode.setName(node.getName());
 				node = linkNode;
-				handleLinkNode(node, xmlNode, parser);
+				handleLinkNode(element, node, xmlNode, parser);
 				break;
 			}
 			xmlNode = xmlNode.getNextSibling();
@@ -104,19 +104,25 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
 		return node;
 	}
 
-	protected void handleLinkNode(Node node, org.w3c.dom.Node xmlLinkNode,
-			ExtensibleXmlParser parser) {
-		NamedNodeMap linkAttr = xmlLinkNode.getAttributes();
+	protected void handleLinkNode(Element element, Node node,
+			org.w3c.dom.Node xmlLinkNode, ExtensibleXmlParser parser) {
 		NodeContainer nodeContainer = (NodeContainer) parser.getParent();
-		String id = linkAttr.getNamedItem("id").getNodeValue();
-		String name = linkAttr.getNamedItem("name").getNodeValue();
+		
+		node.setName(element.getAttribute("name"));
 
-		node.setName(name);
+		NamedNodeMap linkAttr = xmlLinkNode.getAttributes();
+		String name = linkAttr.getNamedItem("name").getNodeValue();
+		String id = element.getAttribute("id");
+
 		node.setMetaData("UniqueId", id);
+		node.setMetaData(LINK_NAME, name);
+
+
 		org.w3c.dom.Node xmlNode = xmlLinkNode.getFirstChild();
 
 		IntermediateLink aLink = new IntermediateLink();
 		aLink.setName(name);
+		aLink.setUniqueId(id);
 
 		while (null != xmlNode) {
 			String nodeName = xmlNode.getNodeName();

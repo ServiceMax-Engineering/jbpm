@@ -40,6 +40,7 @@ import org.xml.sax.SAXException;
 
 public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 
+	public static final String LINK_NAME = "linkName";
 	public static final String LINK_SOURCE = "source";
 	public static final String LINK_TARGET = "target";
 
@@ -80,7 +81,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 			} else if ("linkEventDefinition".equals(nodeName)) {
 				ThrowLinkNode linkNode = new ThrowLinkNode();
 				linkNode.setId(node.getId());
-				handleLinkNode(linkNode, xmlNode, parser);
+				handleLinkNode(element, linkNode, xmlNode, parser);
 				NodeContainer nodeContainer = (NodeContainer) parser
 						.getParent();
 				nodeContainer.addNode(linkNode);
@@ -98,15 +99,18 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 		return node;
 	}
 
-	protected void handleLinkNode(Node node, org.w3c.dom.Node xmlLinkNode,
-			ExtensibleXmlParser parser) {
+	protected void handleLinkNode(Element element, Node node,
+			org.w3c.dom.Node xmlLinkNode, ExtensibleXmlParser parser) {
+
+		node.setName(element.getAttribute("name"));
 
 		NamedNodeMap linkAttr = xmlLinkNode.getAttributes();
-		String uniqueId = linkAttr.getNamedItem("id").getNodeValue();
 		String name = linkAttr.getNamedItem("name").getNodeValue();
 
-		node.setMetaData("UniqueId", uniqueId);
-		node.setName(name);
+		
+		String id = element.getAttribute("id");
+		node.setMetaData("UniqueId", id);
+		node.setMetaData(LINK_NAME, name);
 
 		org.w3c.dom.Node xmlNode = xmlLinkNode.getFirstChild();
 
@@ -114,7 +118,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 
 		IntermediateLink aLink = new IntermediateLink();
 		aLink.setName(name);
-		aLink.setUniqueId(uniqueId);
+		aLink.setUniqueId(id);
 		while (null != xmlNode) {
 			String nodeName = xmlNode.getNodeName();
 
@@ -142,6 +146,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
+		aLink.configureThrow();
 
 		if (nodeContainer instanceof RuleFlowProcess) {
 			RuleFlowProcess process = (RuleFlowProcess) nodeContainer;

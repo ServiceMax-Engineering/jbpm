@@ -28,15 +28,15 @@
     
 	     <sequenceFlow id='_2-2-_2-3' sourceRef="_2-2" targetRef='_2-3' name="" />
 	          
-	     <intermediateThrowEvent id="_2-4TH" name="" >
-		     <linkEventDefinition id="_2-3"  name="nextPage">
-		     	<source>_2-4</source>
+	     <intermediateThrowEvent id="_2-3" name="" >
+		     <linkEventDefinition   name="nextPage">
+		     <source>_2-4</source>
 		     </linkEventDefinition>
 	     </intermediateThrowEvent>
      
-	     <intermediateCatchEvent id="_2-6CH" name="" >
-		     <linkEventDefinition id="_2-4" name="nextPage">
-		     	<target>_2-3</target>
+	     <intermediateCatchEvent id="_2-4" name="" >
+		     <linkEventDefinition  name="nextPage">
+		     <target>_2-3</target>
 		     </linkEventDefinition>  
 	     </intermediateCatchEvent> 
      

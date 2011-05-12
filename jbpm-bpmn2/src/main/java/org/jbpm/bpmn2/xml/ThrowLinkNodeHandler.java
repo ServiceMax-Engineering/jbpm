@@ -24,20 +24,25 @@ public class ThrowLinkNodeHandler extends AbstractNodeHandler {
 
 		ThrowLinkNode linkNode = (ThrowLinkNode) node;
 
-		xmlDump.append("<intermediateThrowEvent id=\"_" + XmlBPMNProcessDumper.getUniqueNodeId(node) + "_ThrowEvent\" name=\"\"  >" + EOL);
-		writeNode("linkEventDefinition", linkNode, xmlDump, metaDataType);
+		writeNode("intermediateThrowEvent", linkNode, xmlDump, metaDataType);
 		xmlDump.append(">" + EOL);
+
+		String name = (String) node.getMetaData().get(
+				IntermediateThrowEventHandler.LINK_NAME);
+
+		xmlDump.append("<linkEventDefinition name=\"" + name + "\" >" + EOL);
 
 		List<String> sources = (List<String>) linkNode
 				.getMetaData(IntermediateThrowEventHandler.LINK_SOURCE);
 
-		for (String s : sources) {
-			xmlDump.append(String.format("<source>%s</source>", s) + EOL);
+		if (null != sources) {
+			for (String s : sources) {
+				xmlDump.append(String.format("<source>%s</source>", s) + EOL);
+			}
 		}
-		endNode("linkEventDefinition", xmlDump);
+		xmlDump.append("</linkEventDefinition>" + EOL);
 
-		xmlDump.append("</intermediateThrowEvent>" + EOL);
+		endNode("intermediateThrowEvent", xmlDump);
 
 	}
-
 }

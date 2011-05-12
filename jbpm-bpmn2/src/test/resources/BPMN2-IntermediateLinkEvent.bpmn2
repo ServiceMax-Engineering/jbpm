@@ -23,15 +23,13 @@
     
      <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_seqid123" targetRef='_id_1' name="" />
           
-     <intermediateThrowEvent id="_zaraza" name="" >
-	     <linkEventDefinition id="_id_1"  name="nextPage">
-	     	<source>_id_2</source>
+     <intermediateThrowEvent id="_id_1" name="" >
+	     <linkEventDefinition  name="nextPage">
 	     </linkEventDefinition>
      </intermediateThrowEvent>
      
-     <intermediateCatchEvent id="_zaraza3" name="" >
-	     <linkEventDefinition id="_id_2" name="nextPage">
-	     	<target>_id_1</target>
+     <intermediateCatchEvent id="_id_2" name="" >
+	     <linkEventDefinition name="nextPage">
 	     </linkEventDefinition>  
      </intermediateCatchEvent> 
      
@@ -44,20 +42,16 @@
       <script>System.out.println("jumped");</script>
     </scriptTask>
     
-    
-    
-    
+  
         <sequenceFlow id='_481A2782-FC17-41CB-BC28-5799B6866A80' sourceRef="_6381BCBA-B49A-4BC1-AC3D-AEA745D9738E" targetRef='_id_3' name="" />
           
-     <intermediateThrowEvent id="_id78" name="" >
-	     <linkEventDefinition id="_id_3"  name="2ndPage">
-	     	<source>_id_4</source>
+     <intermediateThrowEvent id="_id_3" name="" >
+	     <linkEventDefinition  name="2ndPage">
 	     </linkEventDefinition>
      </intermediateThrowEvent>
      
-     <intermediateCatchEvent id="_id65" name="" >
-	     <linkEventDefinition id="_id_4" name="2ndPage">
-	     	<target>_id_3</target>
+     <intermediateCatchEvent id="_id_4" name="" >
+	     <linkEventDefinition  name="2ndPage">
 	     </linkEventDefinition>  
      </intermediateCatchEvent> 
      

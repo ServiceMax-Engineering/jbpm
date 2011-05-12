@@ -8,11 +8,15 @@ public class IntermediateLink implements Serializable {
 
 	private static final long serialVersionUID = 201105091147L;
 
+	private static final String THROW = "throw";
+
 	private String uniqueId;
 
 	private String target;
-	
+
 	private String name;
+
+	private String type = null;
 
 	private List<String> sources;
 
@@ -51,10 +55,15 @@ public class IntermediateLink implements Serializable {
 	public String getName() {
 		return name;
 	}
-	
-	
-	public boolean isThrowLink(){
-		return this.target == null;
+
+	public boolean isThrowLink() {
+		return THROW.equals(type);
 	}
 
+	/**
+	 * Turn this link into a throw link.
+	 */
+	public void configureThrow() {
+		this.type = THROW;
+	}
 }

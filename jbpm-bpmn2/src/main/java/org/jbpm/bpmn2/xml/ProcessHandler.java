@@ -145,6 +145,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 	public static void linkIntermediateLinks(NodeContainer process,
 			List<IntermediateLink> links) {
+
 		if (null != links) {
 
 			// Search throw links
@@ -172,22 +173,15 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 
 				linksWithSharedNames.remove(throwLink);
 
-				// a validation
-				for (IntermediateLink catchLink : linksWithSharedNames) {
-					if (!catchLink.getTarget().equals(throwLink.getUniqueId())) {
-						throw new IllegalArgumentException(
-								"Catch links should target the same throw link");
-					}
-				}
-
 				// Make the connections
 				Node t = findNodeByIdOrUniqueIdInMetadata(process,
 						throwLink.getUniqueId());
-				
-				List<String> sources = throwLink.getSources();
-				for (String sourceUniqueId : sources) {
+
+				// connect throw to catch
+				for (IntermediateLink catchLink : linksWithSharedNames) {
+
 					Node c = findNodeByIdOrUniqueIdInMetadata(process,
-							sourceUniqueId);
+							catchLink.getUniqueId());
 					if (t != null && c != null) {
 						Connection result = new ConnectionImpl(t,
 								NodeImpl.CONNECTION_DEFAULT_TYPE, c,
