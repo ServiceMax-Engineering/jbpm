@@ -41,18 +41,26 @@ import org.drools.builder.KnowledgeBuilderConfiguration;
 import org.drools.builder.KnowledgeBuilderError;
 import org.drools.builder.KnowledgeBuilderFactory;
 import org.drools.builder.ResourceType;
+import org.drools.command.Command;
+import org.drools.command.Context;
+import org.drools.command.impl.CommandBasedStatefulKnowledgeSession;
+import org.drools.command.impl.GenericCommand;
+import org.drools.command.impl.KnowledgeCommandContext;
+import org.drools.common.InternalKnowledgeRuntime;
 import org.drools.compiler.PackageBuilderConfiguration;
 import org.drools.definition.process.Process;
 import org.drools.event.process.DefaultProcessEventListener;
 import org.drools.event.process.ProcessStartedEvent;
 import org.drools.event.process.ProcessVariableChangedEvent;
 import org.drools.impl.KnowledgeBaseFactoryServiceImpl;
+import org.drools.impl.StatefulKnowledgeSessionImpl;
 import org.drools.io.ResourceFactory;
 import org.drools.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.process.instance.WorkItemHandler;
 import org.drools.runtime.Environment;
 import org.drools.runtime.KnowledgeSessionConfiguration;
 import org.drools.runtime.StatefulKnowledgeSession;
+import org.drools.runtime.process.InternalProcessRuntime;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkItem;
 import org.drools.runtime.process.WorkItemManager;
@@ -69,6 +77,7 @@ import org.jbpm.bpmn2.xml.BPMNExtensionsSemanticModule;
 import org.jbpm.bpmn2.xml.BPMNSemanticModule;
 import org.jbpm.bpmn2.xml.XmlBPMNProcessDumper;
 import org.jbpm.compiler.xml.XmlProcessReader;
+import org.jbpm.process.instance.ProcessRuntimeImpl;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
 import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
@@ -974,17 +983,25 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
         KnowledgeBase kbase2 = createKnowledgeBase("BPMN2-SignalStart2.bpmn2");
 		
         
-        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        CommandBasedStatefulKnowledgeSession ksession = (CommandBasedStatefulKnowledgeSession) createKnowledgeSession(kbase);
         ksession.getKnowledgeBase().addKnowledgePackages(kbase2.getKnowledgePackages());
-		final List<Long> list = new ArrayList<Long>();
+        
+        
+        Context context = ksession.getCommandService().getContext();
+		StatefulKnowledgeSessionImpl sessionImpl = (StatefulKnowledgeSessionImpl)((KnowledgeCommandContext) context).getStatefulKnowledgesession();
+		ProcessRuntimeImpl impl = (ProcessRuntimeImpl) sessionImpl.getProcessRuntime();
+        Process process = ksession.getKnowledgeBase().getProcess("Minimal2");
+		impl.initProcessEventListener(process);            
+
+        final List<Long> list = new ArrayList<Long>();
 		ksession.addEventListener(new DefaultProcessEventListener() {
 			public void afterProcessStarted(ProcessStartedEvent event) {
 				list.add(event.getProcessInstance().getId());
 			}
 		});
-		ksession.signalEvent("MyStartSignal", "NewValue");
-        ksession.signalEvent("MyStartSignal2", "NewValue");
-		//ksession.startProcess("Minimal2");
+		//ksession.signalEvent("MyStartSignal", "NewValue");
+		ksession.signalEvent("MyStartSignal2", "NewValue");
+		ksession.startProcess("Minimal2");
 		assertEquals(2, list.size());
     }
     
