@@ -24,7 +24,6 @@ import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Escalation;
 import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Message;
-import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.Node;
@@ -85,6 +84,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 				NodeContainer nodeContainer = (NodeContainer) parser
 						.getParent();
 				nodeContainer.addNode(linkNode);
+				// we break the while and stop the execution of this method.
 				return linkNode;
 			}
 			xmlNode = xmlNode.getNextSibling();
