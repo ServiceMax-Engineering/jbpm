@@ -4,5 +4,7 @@
 	<classpathentry kind="src" path="src/main/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="JBPM/jbpm"/>
+	<classpathentry kind="var" path="M2_REPO/org/drools/knowledge-api/5.3.0-SNAPSHOT/knowledge-api-5.3.0-SNAPSHOT.jar"/>
+	<classpathentry kind="src" path="/jbpm-human-task"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

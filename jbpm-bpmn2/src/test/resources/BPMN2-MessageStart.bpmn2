@@ -25,12 +25,12 @@
     <startEvent id="_1" name="StartProcess" >
       <dataOutput id="_1_Output" />
       <dataOutputAssociation>
-        <sourceRef>_1_Output</sourceRef>
         <targetRef>x</targetRef>
+        <assignment>
+          <from>@field</from>
+          <to>.</to>
+        </assignment>
       </dataOutputAssociation>
-      <outputSet>
-        <dataOutputRefs>_1_Output</dataOutputRefs>
-      </outputSet>
       <messageEventDefinition messageRef="HelloMessage"/>
     </startEvent>
     <scriptTask id="_2" name="Hello" >

@@ -82,6 +82,7 @@ public abstract class JbpmJUnitTestCase extends TestCase {
 	    	ds1.getDriverProperties().setProperty("password", "");
 	        ds1.init();
 	        emf = Persistence.createEntityManagerFactory( "org.jbpm.persistence.jpa" );
+	        System.setProperty("drools.schema.validating", "false");
     	}
     }
 

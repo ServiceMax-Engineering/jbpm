@@ -1041,7 +1041,17 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
     public void testMessageStart() throws Exception {
         KnowledgeBase kbase = createKnowledgeBase("BPMN2-MessageStart.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
-        ksession.signalEvent("Message-HelloMessage", "NewValue");
+        final List<ProcessInstance> list = new ArrayList<ProcessInstance>();
+        ksession.addEventListener(new DefaultProcessEventListener() {
+            public void afterProcessStarted(ProcessStartedEvent event) {
+                list.add(event.getProcessInstance());
+            }
+        });        
+        ksession.signalEvent("Message-HelloMessage", "<message field='value'>");
+        assertEquals(1, list.size());
+        ProcessInstance processInstance = list.get(0);
+        assertEquals("value", ((WorkflowProcessInstance) processInstance).getVariable("x"));
+
     }
     
     public void testMessageEnd() throws Exception {
