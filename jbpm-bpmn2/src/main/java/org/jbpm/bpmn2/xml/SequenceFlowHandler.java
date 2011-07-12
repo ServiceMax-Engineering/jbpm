@@ -23,6 +23,7 @@ import java.util.List;
 import org.drools.xml.BaseAbstractHandler;
 import org.drools.xml.ExtensibleXmlParser;
 import org.drools.xml.Handler;
+import org.eclipse.jdt.internal.compiler.lookup.ExtraCompilerModifiers;
 import org.jbpm.bpmn2.core.Association;
 import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Lane;
@@ -136,6 +137,9 @@ public class SequenceFlowHandler extends BaseAbstractHandler implements Handler 
 					} else if (XmlBPMNProcessDumper.XPATH_LANGUAGE
 							.equals(language)) {
 						sequenceFlow.setLanguage("XPath");
+					} else if(XmlBPMNProcessDumper.ECMASCRIPT_DIALECT.equals(language)){	
+						//TODO: use the map of ProcessDialectRegistry
+						sequenceFlow.setLanguage("E4X");
 					} else {
 						throw new IllegalArgumentException("Unknown language "
 								+ language);
