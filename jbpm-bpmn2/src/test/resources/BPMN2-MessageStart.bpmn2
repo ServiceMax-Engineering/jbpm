@@ -12,7 +12,7 @@
              xmlns:tns="http://www.jboss.org/drools">
 
   <itemDefinition id="_xItem" />
-
+  <itemDefinition id="_yItem" />
   <itemDefinition id="HelloMessageType" />
   <message id="HelloMessage" itemRef="HelloMessageType" />
 
@@ -20,7 +20,7 @@
 
     <!-- process variables -->
     <property id="x" itemSubjectRef="_xItem"/>
-
+    <property id="y" itemSubjectRef="_yItem"/>
     <!-- nodes -->
     <startEvent id="_1" name="StartProcess" >
       <dataOutput id="_1_Output" />
@@ -28,6 +28,21 @@
         <targetRef>x</targetRef>
         <assignment>
           <from>@field</from>
+          <to>.</to>
+        </assignment>
+        <assignment>
+          <from>@field2</from>
+          <to>.</to>
+        </assignment>
+      </dataOutputAssociation>
+      <dataOutputAssociation>
+        <targetRef>y</targetRef>
+        <assignment>
+          <from>@field</from>
+          <to>.</to>
+        </assignment>
+        <assignment>
+          <from>@field2</from>
           <to>.</to>
         </assignment>
       </dataOutputAssociation>
