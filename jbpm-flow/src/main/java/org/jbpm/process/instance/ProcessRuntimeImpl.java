@@ -40,7 +40,7 @@ import org.jbpm.workflow.core.node.Trigger;
 
 public class ProcessRuntimeImpl implements InternalProcessRuntime {
 
-	public static final String START_ACTION = "startAction";
+	public static final String ASSIGNMENT_ACTION = "startAction";
 	private AbstractWorkingMemory workingMemory;
 	private InternalKnowledgeRuntime kruntime;
 
@@ -246,8 +246,8 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 			StartNode startNode = ((RuleFlowProcess) process).getStart();
 			if (startNode != null) {
 				List<Trigger> triggers = startNode.getTriggers();
-				AssignmentAction startAction = (AssignmentAction) startNode
-						.getMetaData(START_ACTION);
+				List<AssignmentAction> startAction = (List<AssignmentAction>) startNode
+						.getMetaData(ASSIGNMENT_ACTION);
 				if (triggers != null) {
 					for (Trigger trigger : triggers) {
 						if (trigger instanceof EventTrigger) {
@@ -295,15 +295,15 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 		private String processId;
 		private List<EventFilter> eventFilters;
 		private Map<String, String> inMappings;
-		private final AssignmentAction aAction;
+		private final List<AssignmentAction> actions;
 
 		public StartProcessEventListener(String processId,
 				List<EventFilter> eventFilters, Map<String, String> inMappings,
-				AssignmentAction aAction) {
+				List<AssignmentAction> actions) {
 			this.processId = processId;
 			this.eventFilters = eventFilters;
 			this.inMappings = inMappings;
-			this.aAction = aAction;
+			this.actions = actions;
 		}
 
 		public String[] getEventTypes() {
@@ -317,32 +317,39 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 				}
 			}
 
-			Map<String, Object> metadata = new HashMap<String, Object>();
 			Map<String, Object> params = null;
-			
+			// inMappings.put("x", "event");
 			if (inMappings != null && !inMappings.isEmpty()) {
 				params = new HashMap<String, Object>();
 				for (Map.Entry<String, String> entry : inMappings.entrySet()) {
 					if ("event".equals(entry.getValue())) {
-						params.put(entry.getKey(), event);
-						metadata.put("to",entry.getKey());
+						// params.put(entry.getKey(), event);
+						// metadata.put("to",entry.getKey());
 					} else {
 						params.put(entry.getKey(), entry.getValue());
 					}
 				}
 			}
-			
-			metadata.put("from", event);
+
 			org.jbpm.process.instance.ProcessInstance startProcess = (org.jbpm.process.instance.ProcessInstance) startProcess(
 					processId, params);
 
-			ProcessContext context = new ProcessContext(
-					startProcess.getKnowledgeRuntime());
+			InternalKnowledgeRuntime knowledgeRuntime = startProcess
+					.getKnowledgeRuntime();
 
-			try {
-				this.aAction.execute(null, context);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			ProcessContext context = new ProcessContext(knowledgeRuntime);
+			context.setProcessInstance(startProcess);
+
+			for (AssignmentAction assignment : actions) {
+				try {
+					Map<String, Object> metadata = new HashMap<String, Object>();
+					metadata.put("from", event);
+					assignment.execute(metadata, context);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
+
 			}
 
 		}

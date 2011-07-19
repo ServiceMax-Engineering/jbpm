@@ -1036,8 +1036,8 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
         ksession.startProcess("SignalEndEvent", params);
     }
     
-    public void testMessageStart() throws Exception {
-        KnowledgeBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MessageStart.bpmn2");
+    public void testMessageStartAssignSameMessageToXandToY() throws Exception {
+        KnowledgeBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MessageStartAssignSameMessageToXandToY.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         final List<ProcessInstance> list = new ArrayList<ProcessInstance>();
         ksession.addEventListener(new DefaultProcessEventListener() {
@@ -1049,9 +1049,17 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
         assertEquals(1, list.size());
         ProcessInstance processInstance = list.get(0);
 
+        assertEquals("value", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field")));
+        assertEquals("value2", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field2")));
+
         assertEquals("value", (((Element)((WorkflowProcessInstance) processInstance).getVariable("y")).getAttribute("field")));
-//        assertEquals("value2", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field2")));
+        assertEquals("value2", (((Element)((WorkflowProcessInstance) processInstance).getVariable("y")).getAttribute("field2")));
+    
     }
+    
+    
+    
+    
     public static Element stringToXML(String node) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory

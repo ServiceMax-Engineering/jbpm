@@ -27,22 +27,14 @@
       <dataOutputAssociation>
         <targetRef>x</targetRef>
         <assignment>
-          <from>@field</from>
-          <to>.</to>
-        </assignment>
-        <assignment>
-          <from>@field2</from>
+          <from>.</from>
           <to>.</to>
         </assignment>
       </dataOutputAssociation>
       <dataOutputAssociation>
         <targetRef>y</targetRef>
         <assignment>
-          <from>@field</from>
-          <to>.</to>
-        </assignment>
-        <assignment>
-          <from>@field2</from>
+          <from>.</from>
           <to>.</to>
         </assignment>
       </dataOutputAssociation>

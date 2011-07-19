@@ -16,11 +16,15 @@
 
 package org.jbpm.process.instance.impl;
 
+import java.util.Map;
+
 import org.drools.process.instance.WorkItem;
 import org.drools.runtime.process.ProcessContext;
 
 public interface AssignmentAction {
 
 	void execute(WorkItem workItem, ProcessContext context) throws Exception;
+	
+	void execute(Map<String,Object> metadata, ProcessContext context) throws Exception;
 
 }
