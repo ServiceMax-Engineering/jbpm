@@ -67,6 +67,7 @@ import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
     
@@ -1036,21 +1037,33 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
     }
     
     public void testMessageStart() throws Exception {
-        KnowledgeBase kbase = createKnowledgeBase("BPMN2-MessageStart.bpmn2");
+        KnowledgeBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MessageStart.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         final List<ProcessInstance> list = new ArrayList<ProcessInstance>();
         ksession.addEventListener(new DefaultProcessEventListener() {
             public void afterProcessStarted(ProcessStartedEvent event) {
                 list.add(event.getProcessInstance());
             }
-        });        
-        ksession.signalEvent("Message-HelloMessage", "<message field='value'>");
+        });       
+        ksession.signalEvent("Message-HelloMessage", stringToXML("<message field=\"value\" field2=\"value2\"/>"));
         assertEquals(1, list.size());
         ProcessInstance processInstance = list.get(0);
-        assertEquals("<message field='value'>", ((WorkflowProcessInstance) processInstance).getVariable("x"));
 
+        assertEquals("value", (((Element)((WorkflowProcessInstance) processInstance).getVariable("y")).getAttribute("field")));
+//        assertEquals("value2", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field2")));
     }
-    
+    public static Element stringToXML(String node) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory
+                    .newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document message = builder.parse(new ByteArrayInputStream((node)
+                    .getBytes("UTF-8")));
+            return message.getDocumentElement();
+        } catch (Throwable t) {
+        	throw new RuntimeException(t);
+        }
+    } 
     public void testMessageEnd() throws Exception {
         KnowledgeBase kbase = createKnowledgeBase("BPMN2-MessageEndEvent.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
