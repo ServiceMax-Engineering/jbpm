@@ -21,15 +21,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.process.instance.WorkItem;
-import org.drools.runtime.process.ProcessContext;
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Message;
 import org.jbpm.bpmn2.xpath.XPATHAssignmentAction;
 import org.jbpm.compiler.xml.ProcessBuildData;
-import org.jbpm.process.builder.dialect.ProcessDialectRegistry;
 import org.jbpm.process.core.event.EventTypeFilter;
-import org.jbpm.process.instance.impl.AssignmentAction;
 import org.jbpm.process.instance.impl.AssignmentAction;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.node.Assignment;
