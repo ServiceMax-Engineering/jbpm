@@ -16,14 +16,19 @@
 
 package org.jbpm.bpmn2.xml;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Message;
+import org.jbpm.bpmn2.xpath.XPATHAssignmentAction;
 import org.jbpm.compiler.xml.ProcessBuildData;
 import org.jbpm.process.core.event.EventTypeFilter;
+import org.jbpm.process.instance.impl.AssignmentAction;
 import org.jbpm.workflow.core.Node;
+import org.jbpm.workflow.core.node.Assignment;
 import org.jbpm.workflow.core.node.ConstraintTrigger;
 import org.jbpm.workflow.core.node.EventTrigger;
 import org.jbpm.workflow.core.node.StartNode;
@@ -54,7 +59,7 @@ public class StartEventHandler extends AbstractNodeHandler {
             if ("dataOutputAssociation".equals(nodeName)) {
                 readDataOutputAssociation(xmlNode, startNode);
             } else if ("conditionalEventDefinition".equals(nodeName)) {
-                String constraint = null;
+            	String constraint = null;
                 org.w3c.dom.Node subNode = xmlNode.getFirstChild();
                 while (subNode != null) {
                     String subnodeName = subNode.getNodeName();
@@ -82,26 +87,7 @@ public class StartEventHandler extends AbstractNodeHandler {
                     startNode.addTrigger(trigger);
                 }
             } else if ("messageEventDefinition".equals(nodeName)) {
-                String messageRef = ((Element) xmlNode).getAttribute("messageRef");
-                Map<String, Message> messages = (Map<String, Message>)
-                    ((ProcessBuildData) parser.getData()).getMetaData("Messages");
-                if (messages == null) {
-                    throw new IllegalArgumentException("No messages found");
-                }
-                Message message = messages.get(messageRef);
-                if (message == null) {
-                    throw new IllegalArgumentException("Could not find message " + messageRef);
-                }
-                startNode.setMetaData("MessageType", message.getType());
-                EventTrigger trigger = new EventTrigger();
-                EventTypeFilter eventFilter = new EventTypeFilter();
-                eventFilter.setType("Message-" + messageRef);
-                trigger.addEventFilter(eventFilter);
-                String mapping = (String) startNode.getMetaData("TriggerMapping");
-                if (mapping != null) {
-                    trigger.addInMapping(mapping, "event");
-                }
-                startNode.addTrigger(trigger);
+            	handleMessageEventDefinition(startNode, xmlNode,parser);
             } else if ("timerEventDefinition".equals(nodeName)) {
             	org.w3c.dom.Node subNode = xmlNode.getFirstChild();
                 while (subNode instanceof Element) {
@@ -132,16 +118,60 @@ public class StartEventHandler extends AbstractNodeHandler {
     }
     
     protected void readDataOutputAssociation(org.w3c.dom.Node xmlNode, StartNode startNode) {
-        // sourceRef
+    	// sourceRef
         org.w3c.dom.Node subNode = xmlNode.getFirstChild();
         if ("sourceRef".equals(subNode.getNodeName())) {
             subNode = subNode.getNextSibling();
         }
         // targetRef
-        String to = subNode.getTextContent();
-        startNode.setMetaData("TriggerMapping", to);
+        String target = subNode.getTextContent();
+        startNode.setMetaData("TriggerMapping", target);
+        
+        subNode = subNode.getNextSibling();
+		List<AssignmentAction> assignmentActions = new ArrayList<AssignmentAction>();
+        List<Assignment> assignments = new LinkedList<Assignment>();
+		while(subNode != null){
+			org.w3c.dom.Node ssubNode = subNode.getFirstChild();
+			String from = ssubNode.getTextContent();
+			String to = ssubNode.getNextSibling().getTextContent();
+			Assignment assignment = new Assignment(null, from, to);
+			AssignmentAction assignmentAction = new XPATHAssignmentAction(assignment, "", target, false);
+			assignmentActions.add(assignmentAction);
+    		subNode = subNode.getNextSibling();
+		}
+		startNode.setMetaData("AssignmentAction", assignmentActions);
     }
 
+    protected void handleMessageEventDefinition(StartNode startNode,org.w3c.dom.Node xmlNode, ExtensibleXmlParser parser){
+    	String messageRef = ((Element) xmlNode).getAttribute("messageRef");
+        Map<String, Message> messages = (Map<String, Message>)
+            ((ProcessBuildData) parser.getData()).getMetaData("Messages");
+        if (messages == null) {
+            throw new IllegalArgumentException("No messages found");
+        }
+        Message message = messages.get(messageRef);
+        if (message == null) {
+            throw new IllegalArgumentException("Could not find message " + messageRef);
+        }
+        startNode.setMetaData("MessageType", message.getType());
+        EventTrigger trigger = new EventTrigger();
+        EventTypeFilter eventFilter = new EventTypeFilter();
+        eventFilter.setType("Message-" + messageRef);
+        trigger.addEventFilter(eventFilter);
+        String mapping = (String) startNode.getMetaData("TriggerMapping");
+        if (mapping != null) {
+            trigger.addInMapping(mapping, "event");
+        }
+        List<AssignmentAction> actions = (List<AssignmentAction>) startNode.getMetaData("AssignmentAction");
+        
+        if (actions != null && !actions.isEmpty()){
+        	trigger.setActions(actions);
+        }
+        startNode.addTrigger(trigger);
+
+    }
+
+    
     public void writeNode(Node node, StringBuilder xmlDump, int metaDataType) {
 		StartNode startNode = (StartNode) node;
 		writeNode("startEvent", startNode, xmlDump, metaDataType);
