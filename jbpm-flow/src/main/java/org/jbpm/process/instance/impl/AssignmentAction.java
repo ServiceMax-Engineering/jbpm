@@ -16,11 +16,11 @@
 
 package org.jbpm.process.instance.impl;
 
-import org.drools.runtime.process.ProcessContext;
 import org.drools.process.instance.WorkItem;
+import org.drools.runtime.process.ProcessContext;
 
 public interface AssignmentAction {
-    
-    void execute(WorkItem workItem, ProcessContext context) throws Exception;
-    
+
+	void execute(WorkItem workItem, ProcessContext context) throws Exception;
+
 }
