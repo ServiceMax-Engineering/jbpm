@@ -17,7 +17,6 @@
 package org.jbpm.bpmn2.xml;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +25,6 @@ import org.jbpm.bpmn2.core.Message;
 import org.jbpm.bpmn2.xpath.XPATHAssignmentAction;
 import org.jbpm.compiler.xml.ProcessBuildData;
 import org.jbpm.process.core.event.EventTypeFilter;
-import org.jbpm.process.instance.ProcessRuntimeImpl;
 import org.jbpm.process.instance.impl.AssignmentAction;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.node.Assignment;
