@@ -138,11 +138,11 @@ public class StartEventHandler extends AbstractNodeHandler {
 		subNode = subNode.getNextSibling();
 
 		List<AssignmentAction> assignmentActions = (ArrayList<AssignmentAction>) startNode
-				.getMetaData(ProcessRuntimeImpl.ASSIGNMENT_ACTION);
+				.getMetaData(AssignmentAction.ASSIGNMENT_ACTION);
 		
 		if (null == assignmentActions) {
 			assignmentActions = new ArrayList<AssignmentAction>();
-			startNode.setMetaData(ProcessRuntimeImpl.ASSIGNMENT_ACTION,
+			startNode.setMetaData(AssignmentAction.ASSIGNMENT_ACTION,
 					assignmentActions);
 		}
 

@@ -40,7 +40,6 @@ import org.jbpm.workflow.core.node.Trigger;
 
 public class ProcessRuntimeImpl implements InternalProcessRuntime {
 
-	public static final String ASSIGNMENT_ACTION = "startAction";
 	private AbstractWorkingMemory workingMemory;
 	private InternalKnowledgeRuntime kruntime;
 
@@ -247,7 +246,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 			if (startNode != null) {
 				List<Trigger> triggers = startNode.getTriggers();
 				List<AssignmentAction> startAction = (List<AssignmentAction>) startNode
-						.getMetaData(ASSIGNMENT_ACTION);
+						.getMetaData(AssignmentAction.ASSIGNMENT_ACTION);
 				if (triggers != null) {
 					for (Trigger trigger : triggers) {
 						if (trigger instanceof EventTrigger) {
