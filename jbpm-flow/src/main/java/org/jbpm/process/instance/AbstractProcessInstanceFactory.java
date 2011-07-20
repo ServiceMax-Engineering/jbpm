@@ -47,6 +47,12 @@ public abstract class AbstractProcessInstanceFactory implements ProcessInstanceF
                     variableScopeInstance.setVariable( entry.getKey(),
                                                        entry.getValue() );
                 }
+//                
+//                List<Variable> variables = variableScope.getVariables();
+//                for (Variable variable : variables) {
+//					variableScopeInstance.setVariable(variable.getName(), variable.getValue());
+//				}
+                
             } else {
                 throw new IllegalArgumentException( "This process does not support parameters!" );
             }

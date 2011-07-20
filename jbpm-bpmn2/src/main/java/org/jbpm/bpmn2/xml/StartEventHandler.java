@@ -150,7 +150,7 @@ public class StartEventHandler extends AbstractNodeHandler {
 			String to = ssubNode.getNextSibling().getTextContent();
 			Assignment assignment = new Assignment(null, from, to);
 			AssignmentAction assignmentAction = new XPATHAssignmentAction(
-					assignment, "", target, false);
+					assignment, "message", target, false);
 			assignmentActions.add(assignmentAction);
 			subNode = subNode.getNextSibling();
 		}

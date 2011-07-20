@@ -27,6 +27,8 @@ import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkItemManager;
 import org.drools.spi.ProcessContext;
 import org.drools.util.CompositeClassLoader;
+import org.jbpm.process.core.Context;
+import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.core.event.EventFilter;
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.process.instance.event.SignalManager;
@@ -337,8 +339,10 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 					.getKnowledgeRuntime();
 
 			ProcessContext context = new ProcessContext(knowledgeRuntime);
+			
 			context.setProcessInstance(startProcess);
 
+			
 			for (AssignmentAction assignment : actions) {
 				try {
 					Map<String, Object> metadata = new HashMap<String, Object>();
