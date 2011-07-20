@@ -67,7 +67,6 @@ import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
     
