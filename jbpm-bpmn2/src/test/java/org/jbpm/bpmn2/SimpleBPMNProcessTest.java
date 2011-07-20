@@ -1047,12 +1047,40 @@ public class SimpleBPMNProcessTest extends JbpmJUnitTestCase {
         ksession.signalEvent("Message-HelloMessage", stringToXML("<message field=\"value\" field2=\"value2\"/>"));
         assertEquals(1, list.size());
         ProcessInstance processInstance = list.get(0);
+        
+        
+        WorkflowProcessInstance workflowProcessInstance = (WorkflowProcessInstance) processInstance;
+        
+        String attribute = ((Element)workflowProcessInstance.getVariable("x")).getAttribute("field");
+        
+        assertEquals("value", attribute);
+        assertEquals("value2", (((Element)workflowProcessInstance.getVariable("x")).getAttribute("field2")));
+
+        assertEquals("value", (((Element)workflowProcessInstance.getVariable("y")).getAttribute("field")));
+        assertEquals("value2", (((Element)workflowProcessInstance.getVariable("y")).getAttribute("field2")));
+    
+    }
+    
+    
+    
+    public void testMessageStartAssignSomeFieldsOfMessageToXandSomefieldsToY() throws Exception {
+        KnowledgeBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MessageStartAssignSomeFieldsOfMessageToXandSomefieldsToY.bpmn2");
+        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        final List<ProcessInstance> list = new ArrayList<ProcessInstance>();
+        ksession.addEventListener(new DefaultProcessEventListener() {
+            public void afterProcessStarted(ProcessStartedEvent event) {
+                list.add(event.getProcessInstance());
+            }
+        });       
+        ksession.signalEvent("Message-HelloMessage", stringToXML("<message field=\"value\" field2=\"value2\"/>"));
+        assertEquals(1, list.size());
+        ProcessInstance processInstance = list.get(0);
 
         assertEquals("value", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field")));
-        assertEquals("value2", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field2")));
+        assertEquals("", (((Element)((WorkflowProcessInstance) processInstance).getVariable("x")).getAttribute("field2")));
 
-        assertEquals("value", (((Element)((WorkflowProcessInstance) processInstance).getVariable("y")).getAttribute("field")));
         assertEquals("value2", (((Element)((WorkflowProcessInstance) processInstance).getVariable("y")).getAttribute("field2")));
+        assertEquals("", (((Element)((WorkflowProcessInstance) processInstance).getVariable("y")).getAttribute("field")));
     
     }
     
