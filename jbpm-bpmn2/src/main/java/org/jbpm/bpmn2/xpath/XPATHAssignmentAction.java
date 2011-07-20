@@ -16,7 +16,6 @@ import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathVariableResolver;
 
 import org.drools.process.instance.WorkItem;
-import org.drools.runtime.process.NodeInstance;
 import org.drools.runtime.process.ProcessContext;
 import org.jbpm.process.instance.impl.AssignmentAction;
 import org.jbpm.workflow.core.node.Assignment;
@@ -231,7 +230,7 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 
 		String from = assignment.getFrom();
 		String to = assignment.getTo();
-		Object source = metadata.get("from");
+		Object source = metadata.get(AssignmentAction.START_MESSAGE);
 
 		// this is the only way to change the reference itself,
 		// otherwise change only in whatever is being pointed to

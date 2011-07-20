@@ -21,7 +21,10 @@ import java.util.Map;
 import org.drools.process.instance.WorkItem;
 import org.drools.runtime.process.ProcessContext;
 
+
 public interface AssignmentAction {
+
+	public static String START_MESSAGE = "startMesage";
 
 	void execute(WorkItem workItem, ProcessContext context) throws Exception;
 	

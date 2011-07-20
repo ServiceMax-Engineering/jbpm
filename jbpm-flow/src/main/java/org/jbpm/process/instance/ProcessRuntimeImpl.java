@@ -343,7 +343,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 			for (AssignmentAction assignment : actions) {
 				try {
 					Map<String, Object> metadata = new HashMap<String, Object>();
-					metadata.put("from", event);
+					metadata.put(AssignmentAction.START_MESSAGE, event);
 					assignment.execute(metadata, context);
 				} catch (Exception e) {
 					e.printStackTrace();
