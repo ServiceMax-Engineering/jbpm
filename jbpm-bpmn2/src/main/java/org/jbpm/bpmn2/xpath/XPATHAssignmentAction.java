@@ -237,53 +237,47 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 			final ProcessContext context) throws XPathExpressionException,
 			ParserConfigurationException, FactoryConfigurationError,
 			TransformerException {
-		String from = assignment.getFrom();
-		String to = assignment.getTo();
-
-	
 
 		Object target = null;
 		Object source = null;
 
-	
-			target = context.getVariable(targetExpr);
-			source = ((WorkItem) workItem).getResult(sourceExpr);
-		
+		target = context.getVariable(targetExpr);
+		source = ((WorkItem) workItem).getResult(sourceExpr);
 
 		XPathVariableResolver xPathVariableResolver = new XPathVariableResolver() {
 			public Object resolveVariable(QName variableName) {
 				String localPart = variableName.getLocalPart();
-					Object result = ((WorkItem) workItem).getResult(localPart);
-					return result;
-				
+				Object result = ((WorkItem) workItem).getResult(localPart);
+				return result;
+
 			}
 		};
+
+		executeGeneralOutput(context, target, source, xPathVariableResolver);
+	}
+
+	private void executeGeneralOutput(final ProcessContext context,
+			Object target, Object source,
+			XPathVariableResolver xPathVariableResolver)
+			throws XPathExpressionException, ParserConfigurationException,
+			FactoryConfigurationError, TransformerException {
+
+		String from = assignment.getFrom();
+		String to = assignment.getTo();
 
 		// this is the only way to change the reference itself,
 		// otherwise change only in whatever is being pointed to
 
 		if (".".equals(from) && ".".equals(to)) {
-			target = source;	
-				context.setVariable(targetExpr, target);	
+			target = source;
+			context.setVariable(targetExpr, target);
 			return;
 		}
 
-		
-		executeGeneralOutput(context, from, to, target, source,
-				xPathVariableResolver);	
-	}
-
-	private void executeGeneralOutput(final ProcessContext context, String from,
-			String to, Object target, Object source,
-			XPathVariableResolver xPathVariableResolver)
-			throws XPathExpressionException, ParserConfigurationException,
-			FactoryConfigurationError, TransformerException {
 		XPathFactory factory = XPathFactory.newInstance();
-
 		XPath xpathTo = factory.newXPath();
-
 		XPathExpression exprTo = xpathTo.compile(to);
-		
+
 		Object targetElem = null;
 
 		// create temp as per bpm-1534,
@@ -370,7 +364,7 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 				}
 			}
 		}
-			context.setVariable(targetExpr, target);
+		context.setVariable(targetExpr, target);
 	}
 
 	public void execute(Map<String, Object> metadata, ProcessContext context)
@@ -388,49 +382,49 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 		};
 
 		DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-		.newDocumentBuilder();
+				.newDocumentBuilder();
 		Document doc = builder.newDocument();
-		
+
 		Element target = doc.createElement("var" + targetExpr.toUpperCase());
-		
-		executeGeneralOutput(context, from, to, target, source, xPathVariableResolver);
-		
-//		// this is the only way to change the reference itself,
-//		// otherwise change only in whatever is being pointed to
-//
-//		if (".".equals(from) && ".".equals(to)) {
-//			context.setVariable(targetExpr, source);
-//			return;
-//		}
-//
-//		XPathFactory factory = XPathFactory.newInstance();
-//
-//		NodeList nl = null;
-//		if (source instanceof org.w3c.dom.Node) {
-//			XPath xpathEvaluator = factory.newXPath();
-//			xpathEvaluator
-//					.setXPathVariableResolver(xPathVariableResolver);
-//
-//			DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-//					.newDocumentBuilder();
-//			nl = (NodeList) xpathEvaluator.evaluate("$" + sourceExpr + "/"
-//					+ from, builder.newDocument(), XPathConstants.NODESET);
-//		}
-//
-//		if (nl.getLength() == 0) {
-//			throw new RuntimeException(
-//					"Nothing was selected by the from expression " + from
-//							+ " on " + sourceExpr);
-//		}
-//
-//		for (int i = 0; i < nl.getLength(); i++) {
-//			Node item = nl.item(i);
-//			org.w3c.dom.Node n = target.getOwnerDocument().importNode(item,
-//					true);
-//			target.setAttributeNode((Attr) n);
-//		}
-//
-//		context.setVariable(targetExpr, target);
+
+		executeGeneralOutput(context, target, source, xPathVariableResolver);
+
+		// // this is the only way to change the reference itself,
+		// // otherwise change only in whatever is being pointed to
+		//
+		// if (".".equals(from) && ".".equals(to)) {
+		// context.setVariable(targetExpr, source);
+		// return;
+		// }
+		//
+		// XPathFactory factory = XPathFactory.newInstance();
+		//
+		// NodeList nl = null;
+		// if (source instanceof org.w3c.dom.Node) {
+		// XPath xpathEvaluator = factory.newXPath();
+		// xpathEvaluator
+		// .setXPathVariableResolver(xPathVariableResolver);
+		//
+		// DocumentBuilder builder = DocumentBuilderFactory.newInstance()
+		// .newDocumentBuilder();
+		// nl = (NodeList) xpathEvaluator.evaluate("$" + sourceExpr + "/"
+		// + from, builder.newDocument(), XPathConstants.NODESET);
+		// }
+		//
+		// if (nl.getLength() == 0) {
+		// throw new RuntimeException(
+		// "Nothing was selected by the from expression " + from
+		// + " on " + sourceExpr);
+		// }
+		//
+		// for (int i = 0; i < nl.getLength(); i++) {
+		// Node item = nl.item(i);
+		// org.w3c.dom.Node n = target.getOwnerDocument().importNode(item,
+		// true);
+		// target.setAttributeNode((Attr) n);
+		// }
+		//
+		// context.setVariable(targetExpr, target);
 
 	}
 
