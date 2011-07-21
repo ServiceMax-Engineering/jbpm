@@ -237,6 +237,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 				});
 	}
 
+	@SuppressWarnings("unchecked")
 	private void initProcessEventListener(Process process) {
 		if (process instanceof RuleFlowProcess) {
 			StartNode startNode = ((RuleFlowProcess) process).getStart();
@@ -257,7 +258,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 							}
 							StartProcessEventListener listener = new StartProcessEventListener(
 									process.getId(), filters,
-									trigger.getInMappings(), startAction,this);
+									trigger.getInMappings(), startAction, this);
 							signalManager.addEventListener(type, listener);
 							((RuleFlowProcess) process).getMetaData().put(
 									"StartProcessEventType", type);
@@ -285,8 +286,6 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 	public List<ProcessEventListener> getProcessEventListeners() {
 		return processEventSupport.getEventListeners();
 	}
-
-	
 
 	private void initProcessActivationListener() {
 		kruntime.addEventListener(new DefaultAgendaEventListener() {
