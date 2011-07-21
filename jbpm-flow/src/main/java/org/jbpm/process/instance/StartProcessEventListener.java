@@ -11,8 +11,7 @@ import org.drools.spi.ProcessContext;
 import org.jbpm.process.core.event.EventFilter;
 import org.jbpm.process.instance.impl.AssignmentAction;
 
-public class StartProcessEventListener implements EventListener,Serializable {
-
+public class StartProcessEventListener implements EventListener, Serializable {
 
 	private static final long serialVersionUID = 201107211437L;
 	private String processId;
@@ -23,7 +22,8 @@ public class StartProcessEventListener implements EventListener,Serializable {
 
 	public StartProcessEventListener(String processId,
 			List<EventFilter> eventFilters, Map<String, String> inMappings,
-			List<AssignmentAction> actions, InternalProcessRuntime processInstance) {
+			List<AssignmentAction> actions,
+			InternalProcessRuntime processInstance) {
 		this.processId = processId;
 		this.eventFilters = eventFilters;
 		this.inMappings = inMappings;
@@ -47,34 +47,36 @@ public class StartProcessEventListener implements EventListener,Serializable {
 			params = new HashMap<String, Object>();
 			for (Map.Entry<String, String> entry : inMappings.entrySet()) {
 				if ("event".equals(entry.getValue())) {
-					throw new RuntimeException("We should not use event in this way anymore, at least for start messages");
+					throw new RuntimeException(
+							"We should not use event in this way anymore, at least for start messages");
 				} else {
 					params.put(entry.getKey(), entry.getValue());
 				}
 			}
 		}
 
-		org.jbpm.process.instance.ProcessInstance startProcess = (org.jbpm.process.instance.ProcessInstance) processInstance.startProcess(
-				processId, params);
+		org.jbpm.process.instance.ProcessInstance startProcess = (org.jbpm.process.instance.ProcessInstance) processInstance
+				.startProcess(processId, params);
 
 		InternalKnowledgeRuntime knowledgeRuntime = startProcess
 				.getKnowledgeRuntime();
 
 		ProcessContext context = new ProcessContext(knowledgeRuntime);
-		
+
 		context.setProcessInstance(startProcess);
 
-		
+		Map<String, Object> metadata = null;
 		for (AssignmentAction assignment : actions) {
 			try {
-				Map<String, Object> metadata = new HashMap<String, Object>();
+				metadata = new HashMap<String, Object>();
 				metadata.put(AssignmentAction.START_MESSAGE, event);
 				assignment.execute(metadata, context);
 			} catch (Exception e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);
-			}
+				throw new RuntimeException(
+						"There is a problem executing a Assignment, the metadata associated is "
+								+ metadata, e);
 
+			}
 		}
 
 	}
