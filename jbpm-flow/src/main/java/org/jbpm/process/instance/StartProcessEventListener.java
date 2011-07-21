@@ -47,8 +47,8 @@ public class StartProcessEventListener implements EventListener, Serializable {
 			params = new HashMap<String, Object>();
 			for (Map.Entry<String, String> entry : inMappings.entrySet()) {
 				if ("event".equals(entry.getValue())) {
-					throw new RuntimeException(
-							"We should not use event in this way anymore, at least for start messages");
+//					throw new RuntimeException(
+//							"We should not use event in this way anymore, at least for start messages");
 				} else {
 					params.put(entry.getKey(), entry.getValue());
 				}
