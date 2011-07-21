@@ -26,7 +26,6 @@ import org.jbpm.workflow.core.node.Assignment;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
@@ -105,24 +104,16 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 		Object target = null;
 		Object source = null;
 
-		if (isInput) {
-			source = context.getVariable(sourceExpr);
-			target = ((WorkItem) workItem).getParameter(targetExpr);
-		} else {
-			target = context.getVariable(targetExpr);
-			source = ((WorkItem) workItem).getResult(sourceExpr);
-		}
+		source = context.getVariable(sourceExpr);
+		target = ((WorkItem) workItem).getParameter(targetExpr);
 
 		XPathVariableResolver xPathVariableResolver = new XPathVariableResolver() {
 			public Object resolveVariable(QName variableName) {
 				String localPart = variableName.getLocalPart();
-				if (isInput) {
-					Object variable = context.getVariable(localPart);
-					return variable;
-				} else {
-					Object result = ((WorkItem) workItem).getResult(localPart);
-					return result;
-				}
+
+				Object variable = context.getVariable(localPart);
+				return variable;
+
 			}
 		};
 
@@ -131,11 +122,9 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 
 		if (".".equals(from) && ".".equals(to)) {
 			target = source;
-			if (isInput) {
-				((WorkItem) workItem).setParameter(targetExpr, target);
-			} else {
-				context.setVariable(targetExpr, target);
-			}
+
+			((WorkItem) workItem).setParameter(targetExpr, target);
+
 			return;
 		}
 
@@ -226,11 +215,8 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 			}
 		}
 
-		if (isInput) {
-			((WorkItem) workItem).setParameter(targetExpr, target);
-		} else {
-			context.setVariable(targetExpr, target);
-		}
+		((WorkItem) workItem).setParameter(targetExpr, target);
+
 	}
 
 	private void executeOutput(final WorkItem workItem,
@@ -238,11 +224,8 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 			ParserConfigurationException, FactoryConfigurationError,
 			TransformerException {
 
-		Object target = null;
-		Object source = null;
-
-		target = context.getVariable(targetExpr);
-		source = ((WorkItem) workItem).getResult(sourceExpr);
+		Object target = context.getVariable(targetExpr);
+		Object source = ((WorkItem) workItem).getResult(sourceExpr);
 
 		XPathVariableResolver xPathVariableResolver = new XPathVariableResolver() {
 			public Object resolveVariable(QName variableName) {
@@ -253,11 +236,12 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 			}
 		};
 
-		executeGeneralOutput(context, target, source, xPathVariableResolver);
+		Object result = executeXPATHInterpreter(target, source,
+				xPathVariableResolver);
+		context.setVariable(targetExpr, result);
 	}
 
-	private void executeGeneralOutput(final ProcessContext context,
-			Object target, Object source,
+	private Object executeXPATHInterpreter(Object target, Object source,
 			XPathVariableResolver xPathVariableResolver)
 			throws XPathExpressionException, ParserConfigurationException,
 			FactoryConfigurationError, TransformerException {
@@ -270,8 +254,7 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 
 		if (".".equals(from) && ".".equals(to)) {
 			target = source;
-			context.setVariable(targetExpr, target);
-			return;
+			return target;
 		}
 
 		XPathFactory factory = XPathFactory.newInstance();
@@ -332,7 +315,7 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 			// don't throw errors yet ?
 			// throw new RuntimeException("Source value was null for source " +
 			// sourceExpr);
-			return;
+			return null;
 		}
 
 		if (nl.getLength() == 0) {
@@ -364,16 +347,20 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 				}
 			}
 		}
-		context.setVariable(targetExpr, target);
+
+		return target;
 	}
 
 	public void execute(Map<String, Object> metadata, ProcessContext context)
 			throws Exception {
 
-		String from = assignment.getFrom();
-		String to = assignment.getTo();
+		DocumentBuilder builder = DocumentBuilderFactory.newInstance()
+				.newDocumentBuilder();
+		Document doc = builder.newDocument();
+		Element target = doc.createElement("var" + targetExpr.toUpperCase());
 
 		final Object source = metadata.get(AssignmentAction.START_MESSAGE);
+
 		XPathVariableResolver xPathVariableResolver = new XPathVariableResolver() {
 			public Object resolveVariable(QName variableName) {
 				// This give the variables to the Interpreter
@@ -381,51 +368,9 @@ public class XPATHAssignmentAction implements AssignmentAction, Externalizable {
 			}
 		};
 
-		DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-				.newDocumentBuilder();
-		Document doc = builder.newDocument();
-
-		Element target = doc.createElement("var" + targetExpr.toUpperCase());
-
-		executeGeneralOutput(context, target, source, xPathVariableResolver);
-
-		// // this is the only way to change the reference itself,
-		// // otherwise change only in whatever is being pointed to
-		//
-		// if (".".equals(from) && ".".equals(to)) {
-		// context.setVariable(targetExpr, source);
-		// return;
-		// }
-		//
-		// XPathFactory factory = XPathFactory.newInstance();
-		//
-		// NodeList nl = null;
-		// if (source instanceof org.w3c.dom.Node) {
-		// XPath xpathEvaluator = factory.newXPath();
-		// xpathEvaluator
-		// .setXPathVariableResolver(xPathVariableResolver);
-		//
-		// DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-		// .newDocumentBuilder();
-		// nl = (NodeList) xpathEvaluator.evaluate("$" + sourceExpr + "/"
-		// + from, builder.newDocument(), XPathConstants.NODESET);
-		// }
-		//
-		// if (nl.getLength() == 0) {
-		// throw new RuntimeException(
-		// "Nothing was selected by the from expression " + from
-		// + " on " + sourceExpr);
-		// }
-		//
-		// for (int i = 0; i < nl.getLength(); i++) {
-		// Node item = nl.item(i);
-		// org.w3c.dom.Node n = target.getOwnerDocument().importNode(item,
-		// true);
-		// target.setAttributeNode((Attr) n);
-		// }
-		//
-		// context.setVariable(targetExpr, target);
-
+		Object result = executeXPATHInterpreter(target, source,
+				xPathVariableResolver);
+		context.setVariable(targetExpr, result);
 	}
 
 }
