@@ -24,6 +24,9 @@ import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Message;
 import org.jbpm.bpmn2.xpath.XPATHAssignmentAction;
 import org.jbpm.compiler.xml.ProcessBuildData;
+import org.jbpm.process.builder.AssignmentBuilder;
+import org.jbpm.process.builder.dialect.ProcessDialect;
+import org.jbpm.process.builder.dialect.ProcessDialectRegistry;
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.process.instance.impl.AssignmentAction;
 import org.jbpm.workflow.core.Node;
@@ -53,11 +56,19 @@ public class StartEventHandler extends AbstractNodeHandler {
 			final ExtensibleXmlParser parser) throws SAXException {
 		super.handleNode(node, element, uri, localName, parser);
 		StartNode startNode = (StartNode) node;
+
+		String lan = element.getAttribute("language");
+
+		if ("".equals(lan)) {
+			throw new IllegalArgumentException(
+					"Start Message should specify a language in its bpmn");
+		}
+
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();
 			if ("dataOutputAssociation".equals(nodeName)) {
-				readDataOutputAssociation(xmlNode, startNode);
+				readDataOutputAssociation(xmlNode, startNode, lan);
 			} else if ("conditionalEventDefinition".equals(nodeName)) {
 				String constraint = null;
 				org.w3c.dom.Node subNode = xmlNode.getFirstChild();
@@ -123,7 +134,7 @@ public class StartEventHandler extends AbstractNodeHandler {
 
 	@SuppressWarnings("unchecked")
 	protected void readDataOutputAssociation(org.w3c.dom.Node xmlNode,
-			StartNode startNode) {
+			StartNode startNode, String dialect) {
 		// sourceRef
 		org.w3c.dom.Node subNode = xmlNode.getFirstChild();
 		if ("sourceRef".equals(subNode.getNodeName())) {
@@ -137,20 +148,25 @@ public class StartEventHandler extends AbstractNodeHandler {
 
 		List<AssignmentAction> assignmentActions = (ArrayList<AssignmentAction>) startNode
 				.getMetaData(AssignmentAction.ASSIGNMENT_ACTION);
-		
+
 		if (null == assignmentActions) {
 			assignmentActions = new ArrayList<AssignmentAction>();
 			startNode.setMetaData(AssignmentAction.ASSIGNMENT_ACTION,
 					assignmentActions);
 		}
 
+		ProcessDialect dialectBuilder = ProcessDialectRegistry
+				.getDialect(dialect);
+
 		while (subNode != null) {
 			org.w3c.dom.Node ssubNode = subNode.getFirstChild();
 			String from = ssubNode.getTextContent();
 			String to = ssubNode.getNextSibling().getTextContent();
 			Assignment assignment = new Assignment(null, from, to);
-			AssignmentAction assignmentAction = new XPATHAssignmentAction(
-					assignment, "message", target, false);
+			dialectBuilder.getAssignmentBuilder().build(null, assignment,
+					"message", target, null, false);
+			AssignmentAction assignmentAction = (AssignmentAction) assignment
+					.getMetaData(AssignmentBuilder.ACTION);
 			assignmentActions.add(assignmentAction);
 			subNode = subNode.getNextSibling();
 		}

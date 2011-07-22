@@ -9,7 +9,7 @@ public class XPATHAssignmentBuilder implements AssignmentBuilder {
 
 	public void build(PackageBuildContext context, Assignment assignment, String sourceExpr, String targetExpr,
 					  ContextResolver contextResolver, boolean isInput) {
-		assignment.setMetaData("Action", new XPATHAssignmentAction(assignment, sourceExpr, targetExpr, isInput));
+		assignment.setMetaData(AssignmentBuilder.ACTION, new XPATHAssignmentAction(assignment, sourceExpr, targetExpr, isInput));
 	}
 
 }

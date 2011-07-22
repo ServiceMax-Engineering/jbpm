@@ -22,7 +22,7 @@
     <property id="x" itemSubjectRef="_xItem"/>
     <property id="y" itemSubjectRef="_yItem"/>
     <!-- nodes -->
-    <startEvent id="_1" name="StartProcess" >
+    <startEvent id="_1" name="StartProcess" language="XPath">
       <dataOutput id="_1_Output" />
       <dataOutputAssociation>
         <targetRef>x</targetRef>

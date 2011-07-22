@@ -6,6 +6,8 @@ import org.jbpm.workflow.core.node.Assignment;
 
 public interface AssignmentBuilder {
 
+	public static final String ACTION = "Action";
+	
     public void build(final PackageBuildContext context,
                       final Assignment assignment,
                       final String sourceExpr,
