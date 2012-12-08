@@ -347,7 +347,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         } else if (nodeInstance.getClass().getName().contains("StatusSubProcessNodeInstance")) {
             JBPMMessages.ProcessInstance.NodeInstanceContent.CompositeContextNode.Builder _composite = JBPMMessages.ProcessInstance.NodeInstanceContent.CompositeContextNode.newBuilder();
             List<Long> timerInstances =
-                    ((CompositeContextNodeInstance) nodeInstance).getTimerInstances();
+                    ((StateBasedNodeInstance) nodeInstance).getTimerInstances();
             if ( timerInstances != null ) {
                 for ( Long id : timerInstances ) {
                     _composite.addTimerInstanceId( id );
