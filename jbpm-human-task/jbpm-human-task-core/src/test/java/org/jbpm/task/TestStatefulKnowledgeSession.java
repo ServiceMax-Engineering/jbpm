@@ -3,29 +3,28 @@ package org.jbpm.task;
 import java.util.Collection;
 import java.util.Map;
 
-import org.drools.KnowledgeBase;
-import org.drools.command.Command;
-import org.drools.event.process.ProcessEventListener;
-import org.drools.event.rule.AgendaEventListener;
-import org.drools.event.rule.WorkingMemoryEventListener;
-import org.drools.runtime.Calendars;
-import org.drools.runtime.Channel;
-import org.drools.runtime.Environment;
-import org.drools.runtime.ExitPoint;
-import org.drools.runtime.Globals;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.ObjectFilter;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.ProcessInstance;
-import org.drools.runtime.process.WorkItemManager;
-import org.drools.runtime.rule.Agenda;
-import org.drools.runtime.rule.AgendaFilter;
-import org.drools.runtime.rule.FactHandle;
-import org.drools.runtime.rule.LiveQuery;
-import org.drools.runtime.rule.QueryResults;
-import org.drools.runtime.rule.ViewChangedEventListener;
-import org.drools.runtime.rule.WorkingMemoryEntryPoint;
-import org.drools.time.SessionClock;
+import org.kie.KnowledgeBase;
+import org.kie.command.Command;
+import org.kie.event.process.ProcessEventListener;
+import org.kie.event.rule.AgendaEventListener;
+import org.kie.event.rule.WorkingMemoryEventListener;
+import org.kie.runtime.Calendars;
+import org.kie.runtime.Channel;
+import org.kie.runtime.Environment;
+import org.kie.runtime.Globals;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.ObjectFilter;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.ProcessInstance;
+import org.kie.runtime.process.WorkItemManager;
+import org.kie.runtime.rule.Agenda;
+import org.kie.runtime.rule.AgendaFilter;
+import org.kie.runtime.rule.FactHandle;
+import org.kie.runtime.rule.LiveQuery;
+import org.kie.runtime.rule.QueryResults;
+import org.kie.runtime.rule.ViewChangedEventListener;
+import org.kie.runtime.rule.SessionEntryPoint;
+import org.kie.time.SessionClock;
 
 public class TestStatefulKnowledgeSession implements StatefulKnowledgeSession {
 	public static final int DEFAULT_SESSION_ID = 5;
@@ -62,7 +61,7 @@ public class TestStatefulKnowledgeSession implements StatefulKnowledgeSession {
 		return null;
 	}
 
-	public KnowledgeBase getKnowledgeBase() {
+	public KnowledgeBase getKieBase() {
 		return null;
 	}
 
@@ -70,23 +69,17 @@ public class TestStatefulKnowledgeSession implements StatefulKnowledgeSession {
 		return null;
 	}
 
-	public KnowledgeSessionConfiguration getSessionConfiguration() {
+	public KieSessionConfiguration getSessionConfiguration() {
 		return null;
 	}
 
 	public void registerChannel(String arg0, Channel arg1) {
 	}
 
-	public void registerExitPoint(String arg0, ExitPoint arg1) {
-	}
-
 	public void setGlobal(String arg0, Object arg1) {
 	}
 
 	public void unregisterChannel(String arg0) {
-	}
-
-	public void unregisterExitPoint(String arg0) {
 	}
 
 	public void addEventListener(AgendaEventListener arg0) {
@@ -161,11 +154,11 @@ public class TestStatefulKnowledgeSession implements StatefulKnowledgeSession {
 		return null;
 	}
 
-	public WorkingMemoryEntryPoint getWorkingMemoryEntryPoint(String arg0) {
+	public SessionEntryPoint getEntryPoint(String arg0) {
 		return null;
 	}
 
-	public Collection<? extends WorkingMemoryEntryPoint> getWorkingMemoryEntryPoints() {
+	public Collection<? extends SessionEntryPoint> getEntryPoints() {
 		return null;
 	}
 
@@ -249,8 +242,11 @@ public class TestStatefulKnowledgeSession implements StatefulKnowledgeSession {
 		return null;
 	}
 
-	public void retract(FactHandle arg0) {
-	}
+    public void retract(FactHandle arg0) {
+    }
+
+    public void delete(FactHandle arg0) {
+    }
 
 	public void update(FactHandle arg0, Object arg1) {
 	}

@@ -17,8 +17,8 @@
 package org.jbpm.task.service.hornetq.async;
 
 import org.jbpm.task.TaskService;
-import org.jbpm.task.service.SyncTaskServiceWrapper;
 import org.jbpm.task.service.ClaimTaskTwiceTest;
+import org.jbpm.task.service.SyncTaskServiceWrapper;
 import org.jbpm.task.service.TaskClient;
 import org.jbpm.task.service.TaskServer;
 import org.jbpm.task.service.hornetq.AsyncHornetQTaskClient;
@@ -37,7 +37,7 @@ public class ClaimTaskTwiceHornetQAsyncTest extends ClaimTaskTwiceTest {
         super.setUp();
         
         // HornetQ setup
-        server = new HornetQTaskServer(taskService, 5445);
+        server = new HornetQTaskServer(taskService, 5153);
         System.out.println("Waiting for the HornetQTask Server to come up");
         try {
             startTaskServerThread(server, false);
@@ -53,7 +53,7 @@ public class ClaimTaskTwiceHornetQAsyncTest extends ClaimTaskTwiceTest {
 
     protected TaskService createClient(String clientName) { 
         TaskClient taskClient = new AsyncHornetQTaskClient();
-        taskClient.connect("127.0.0.1", 5445);
+        taskClient.connect("127.0.0.1", 5153);
         
         TaskService client = new SyncTaskServiceWrapper(taskClient);
         return client;

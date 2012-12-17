@@ -15,10 +15,10 @@
  */
 package org.jbpm.process.workitem.wsht;
 
-import org.jbpm.task.utils.OnErrorAction;
-import org.drools.runtime.KnowledgeRuntime;
 import org.jbpm.task.AsyncTaskService;
 import org.jbpm.task.service.hornetq.AsyncHornetQTaskClient;
+import org.jbpm.task.utils.OnErrorAction;
+import org.kie.runtime.KnowledgeRuntime;
 /**
  *
  * This class provides the default configurations for a HornetQ WorkItem Handler
@@ -71,7 +71,7 @@ public class AsyncHornetQHTWorkItemHandler extends AsyncGenericHTWorkItemHandler
             setClient(new AsyncHornetQTaskClient(this.connectorName));
         }
         if(getPort() <= 0){
-            setPort(5445);
+            setPort(5153);
         }
         if(getIpAddress() == null || getIpAddress().equals("")){
             setIpAddress("127.0.0.1");

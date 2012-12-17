@@ -22,8 +22,8 @@ import java.util.Map;
 
 import org.drools.compiler.PackageBuilder;
 import org.drools.core.util.DroolsStreamUtils;
-import org.drools.definition.process.Process;
-import org.drools.io.Resource;
+import org.kie.definition.process.Process;
+import org.kie.io.Resource;
 import org.drools.lang.descr.PackageDescr;
 import org.drools.rule.Package;
 import org.jbpm.JbpmTestCase;

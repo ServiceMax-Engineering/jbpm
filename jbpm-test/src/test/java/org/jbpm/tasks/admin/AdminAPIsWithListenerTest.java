@@ -1,14 +1,12 @@
 package org.jbpm.tasks.admin;
 
 import static junit.framework.Assert.fail;
-import static org.drools.persistence.util.PersistenceUtil.cleanUp;
-import static org.drools.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
-import static org.drools.runtime.EnvironmentName.ENTITY_MANAGER_FACTORY;
+import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
+import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
+import static org.kie.runtime.EnvironmentName.ENTITY_MANAGER_FACTORY;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.util.Date;
@@ -17,28 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseFactory;
-import org.drools.SystemEventListenerFactory;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderConfiguration;
-import org.drools.builder.KnowledgeBuilderError;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
 import org.drools.io.impl.ClassPathResource;
-import org.drools.logger.KnowledgeRuntimeLoggerFactory;
-import org.drools.persistence.jpa.JPAKnowledgeService;
-import org.drools.persistence.util.PersistenceUtil;
-import org.drools.runtime.Environment;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.ProcessInstance;
-import org.jbpm.persistence.objects.MedicalRecord;
+import org.jbpm.persistence.util.PersistenceUtil;
 import org.jbpm.process.workitem.wsht.LocalHTWorkItemHandler;
 import org.jbpm.task.AccessType;
-import org.jbpm.task.Content;
 import org.jbpm.task.Group;
 import org.jbpm.task.User;
 import org.jbpm.task.UserInfo;
@@ -57,6 +41,19 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.kie.KnowledgeBase;
+import org.kie.KnowledgeBaseFactory;
+import org.kie.SystemEventListenerFactory;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderConfiguration;
+import org.kie.builder.KnowledgeBuilderError;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.io.ResourceType;
+import org.kie.logger.KnowledgeRuntimeLoggerFactory;
+import org.kie.persistence.jpa.JPAKnowledgeService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.ProcessInstance;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
 import org.mvel2.compiler.ExpressionCompiler;
@@ -194,7 +191,16 @@ public class AdminAPIsWithListenerTest {
         process = ksession.getProcessInstance(process.getId());
         Assert.assertNull(process);
 
-        Assert.assertEquals(0,emfTasks.createEntityManager().createQuery("select t from Task t").getResultList().size());
+        
+        final EntityManager em = emfTasks.createEntityManager();
+        Assert.assertEquals(0, em.createQuery("select t from Task t").getResultList().size());
+        Assert.assertEquals(0, em.createQuery("select i from I18NText i").getResultList().size());
+        Assert.assertEquals(0, em.createNativeQuery("select * from PeopleAssignments_BAs").getResultList().size());
+        Assert.assertEquals(0, em.createNativeQuery("select * from PeopleAssignments_ExclOwners").getResultList().size());
+        Assert.assertEquals(0, em.createNativeQuery("select * from PeopleAssignments_PotOwners").getResultList().size());
+        Assert.assertEquals(0, em.createNativeQuery("select * from PeopleAssignments_Recipients").getResultList().size());
+        Assert.assertEquals(0, em.createNativeQuery("select * from PeopleAssignments_Stakeholders").getResultList().size());
+        Assert.assertEquals(0, em.createQuery("select c from Content c").getResultList().size());
 
     }
 
@@ -265,16 +271,6 @@ public class AdminAPIsWithListenerTest {
 
         vars.put("now", new Date());
         return MVEL.executeExpression(compiler.compile(context), vars);
-    }
-
-    private MedicalRecord getTaskContent(TaskSummary summary) throws IOException, ClassNotFoundException {
-        logger.info(" >>> Getting Task Content = " + summary.getId());
-        Content content = this.localTaskService.getContent(summary.getId());
-
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(content.getContent()));
-        Object readObject = ois.readObject();
-        logger.info(" >>> Object = " + readObject);
-        return (MedicalRecord) readObject;
     }
 
     /**

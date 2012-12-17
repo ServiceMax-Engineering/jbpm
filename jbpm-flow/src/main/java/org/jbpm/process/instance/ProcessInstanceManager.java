@@ -18,7 +18,7 @@ package org.jbpm.process.instance;
 
 import java.util.Collection;
 
-import org.drools.runtime.process.ProcessInstance;
+import org.kie.runtime.process.ProcessInstance;
 
 public interface ProcessInstanceManager {
 
@@ -35,5 +35,7 @@ public interface ProcessInstanceManager {
     void internalRemoveProcessInstance(ProcessInstance processInstance);
     
     void clearProcessInstances();
+    
+    void clearProcessInstancesState();
 
 }

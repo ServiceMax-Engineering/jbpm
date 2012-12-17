@@ -56,7 +56,7 @@ public class MVELReturnValueEvaluatorBuilder
                                                                                        boundIdentifiers,
                                                                                        null,
                                                                                        "context",
-                                                                                       org.drools.runtime.process.ProcessContext.class );                      
+                                                                                       org.kie.runtime.process.ProcessContext.class );
             context.setTypesafe( typeSafe );
 
             Set<String> variableNames = analysis.getNotBoundedIdentifiers();
@@ -87,7 +87,7 @@ public class MVELReturnValueEvaluatorBuilder
                                                                        variables,
                                                                        context,
                                                                        "context",
-                                                                       org.drools.runtime.process.ProcessContext.class);              
+                                                                       org.kie.runtime.process.ProcessContext.class);
             //VELReturnValueExpression expr = new MVELReturnValueExpression( unit, context.getDialect().getId() );
 
             MVELReturnValueEvaluator expr = new MVELReturnValueEvaluator( unit,

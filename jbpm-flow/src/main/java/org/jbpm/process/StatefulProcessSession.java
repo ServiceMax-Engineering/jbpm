@@ -1,59 +1,58 @@
 package org.jbpm.process;
 
+import org.drools.RuntimeDroolsException;
+import org.drools.SessionConfiguration;
+import org.drools.base.MapGlobalResolver;
+import org.drools.common.EndOperationListener;
+import org.drools.common.InternalKnowledgeRuntime;
+import org.drools.common.WorkingMemoryAction;
+import org.drools.time.TimerService;
+import org.drools.time.TimerServiceFactory;
+import org.jbpm.process.instance.InternalProcessRuntime;
+import org.jbpm.process.instance.ProcessRuntimeImpl;
+import org.kie.KnowledgeBase;
+import org.kie.command.Command;
+import org.kie.event.process.ProcessEventListener;
+import org.kie.event.rule.AgendaEventListener;
+import org.kie.event.rule.WorkingMemoryEventListener;
+import org.kie.runtime.Calendars;
+import org.kie.runtime.Channel;
+import org.kie.runtime.Environment;
+import org.kie.runtime.Globals;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.ObjectFilter;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.ProcessInstance;
+import org.kie.runtime.process.WorkItemHandler;
+import org.kie.runtime.process.WorkItemManager;
+import org.kie.runtime.rule.Agenda;
+import org.kie.runtime.rule.AgendaFilter;
+import org.kie.runtime.rule.FactHandle;
+import org.kie.runtime.rule.LiveQuery;
+import org.kie.runtime.rule.QueryResults;
+import org.kie.runtime.rule.ViewChangedEventListener;
+import org.kie.runtime.rule.SessionEntryPoint;
+import org.kie.time.SessionClock;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-import org.drools.KnowledgeBase;
-import org.drools.RuntimeDroolsException;
-import org.drools.SessionConfiguration;
-import org.drools.base.MapGlobalResolver;
-import org.drools.command.Command;
-import org.drools.common.EndOperationListener;
-import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.common.WorkingMemoryAction;
-import org.drools.event.process.ProcessEventListener;
-import org.drools.event.rule.AgendaEventListener;
-import org.drools.event.rule.WorkingMemoryEventListener;
-import org.drools.runtime.Calendars;
-import org.drools.runtime.Channel;
-import org.drools.runtime.Environment;
-import org.drools.runtime.ExitPoint;
-import org.drools.runtime.Globals;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.ObjectFilter;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.ProcessInstance;
-import org.drools.runtime.process.WorkItemHandler;
-import org.drools.runtime.process.WorkItemManager;
-import org.drools.runtime.rule.Agenda;
-import org.drools.runtime.rule.AgendaFilter;
-import org.drools.runtime.rule.FactHandle;
-import org.drools.runtime.rule.LiveQuery;
-import org.drools.runtime.rule.QueryResults;
-import org.drools.runtime.rule.ViewChangedEventListener;
-import org.drools.runtime.rule.WorkingMemoryEntryPoint;
-import org.drools.time.SessionClock;
-import org.drools.time.TimerService;
-import org.drools.time.TimerServiceFactory;
-import org.jbpm.process.instance.InternalProcessRuntime;
-import org.jbpm.process.instance.ProcessRuntimeImpl;
-
 public class StatefulProcessSession implements StatefulKnowledgeSession, InternalKnowledgeRuntime {
 
 	private KnowledgeBase kbase;
 	private InternalProcessRuntime processRuntime;
 	private WorkItemManager workItemManager;
-	private KnowledgeSessionConfiguration sessionConfiguration;
+	private KieSessionConfiguration sessionConfiguration;
 	private Environment environment;
 	private TimerService timerService;
 	protected Queue<WorkingMemoryAction> actionQueue;
 	private int id;
 	private MapGlobalResolver globals = new MapGlobalResolver();
 	
-	public StatefulProcessSession(KnowledgeBase kbase, KnowledgeSessionConfiguration sessionConfiguration, Environment environment) {
+	public StatefulProcessSession(KnowledgeBase kbase, KieSessionConfiguration sessionConfiguration, Environment environment) {
 		this.kbase = kbase;
 		this.sessionConfiguration = sessionConfiguration;
 		this.environment = environment;
@@ -110,7 +109,7 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		processRuntime.removeEventListener(listener);
 	}
 
-	public KnowledgeBase getKnowledgeBase() {
+	public KnowledgeBase getKieBase() {
 		return kbase;
 	}
 
@@ -135,7 +134,7 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		return processRuntime;
 	}
 	
-	public KnowledgeSessionConfiguration getSessionConfiguration() {
+	public KieSessionConfiguration getSessionConfiguration() {
 		return sessionConfiguration;
 	}
 
@@ -245,19 +244,11 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		throw new UnsupportedOperationException();
 	}
 
-	public void registerExitPoint(String name, ExitPoint exitPoint) {
-		throw new UnsupportedOperationException();
-	}
-
 	public void setGlobal(String identifier, Object object) {
 		throw new UnsupportedOperationException();
 	}
 
 	public void unregisterChannel(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	public void unregisterExitPoint(String name) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -269,11 +260,11 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		throw new UnsupportedOperationException();
 	}
 
-	public WorkingMemoryEntryPoint getWorkingMemoryEntryPoint(String name) {
+	public SessionEntryPoint getEntryPoint(String name) {
 		throw new UnsupportedOperationException();
 	}
 
-	public Collection<? extends WorkingMemoryEntryPoint> getWorkingMemoryEntryPoints() {
+	public Collection<? extends SessionEntryPoint> getEntryPoints() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -321,9 +312,13 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		throw new UnsupportedOperationException();
 	}
 
-	public void retract(FactHandle handle) {
-		throw new UnsupportedOperationException();
-	}
+    public void retract(FactHandle handle) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void delete(FactHandle handle) {
+        throw new UnsupportedOperationException();
+    }
 
 	public void update(FactHandle handle, Object object) {
 		throw new UnsupportedOperationException();

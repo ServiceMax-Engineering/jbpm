@@ -32,27 +32,27 @@ import java.util.Properties;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseFactory;
 import org.drools.audit.WorkingMemoryLogger;
 import org.drools.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.command.impl.KnowledgeCommandContext;
-import org.drools.event.process.ProcessEventListener;
-import org.drools.event.rule.AgendaEventListener;
-import org.drools.event.rule.WorkingMemoryEventListener;
 import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.persistence.jpa.JPAKnowledgeService;
-import org.drools.runtime.Environment;
-import org.drools.runtime.EnvironmentName;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.WorkItemHandler;
 import org.jbpm.integration.console.HumanTaskService;
 import org.jbpm.integration.console.TaskClientFactory;
 import org.jbpm.integration.console.Utils;
 import org.jbpm.integration.console.shared.PropertyLoader;
 import org.jbpm.task.AsyncTaskService;
 import org.jbpm.task.service.local.LocalTaskService;
+import org.kie.KnowledgeBase;
+import org.kie.KnowledgeBaseFactory;
+import org.kie.event.process.ProcessEventListener;
+import org.kie.event.rule.AgendaEventListener;
+import org.kie.event.rule.WorkingMemoryEventListener;
+import org.kie.persistence.jpa.JPAKnowledgeService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.EnvironmentName;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.WorkItemHandler;
 import org.mvel2.MVEL;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.ParserContext;
@@ -142,7 +142,7 @@ public class MVELSingleSessionManager extends AbstractSessionManager {
                 sessionconfigproperties.setProperty(propertyName, properties.get(propertyName));
             }
         }
-        KnowledgeSessionConfiguration config = KnowledgeBaseFactory.newKnowledgeSessionConfiguration(sessionconfigproperties);
+        KieSessionConfiguration config = KnowledgeBaseFactory.newKnowledgeSessionConfiguration(sessionconfigproperties);
         
         // try to load session if id is given as part of template
         if (ksessionId > 0) {
@@ -298,8 +298,12 @@ public class MVELSingleSessionManager extends AbstractSessionManager {
         if (this.session == null) {
             this.template = loadSessionTemplate();
             this.session = loadSessionFromTemplate(template, kbase);
-            // since all was just registered fire all rules
-            this.session.fireAllRules();
+            try {
+                // since all was just registered fire all rules
+                this.session.fireAllRules();
+            } catch (Exception e) {
+               logger.error("Error when invoking fireAllRules on session initialization", e);
+            }
         }
         return this.session;
     }

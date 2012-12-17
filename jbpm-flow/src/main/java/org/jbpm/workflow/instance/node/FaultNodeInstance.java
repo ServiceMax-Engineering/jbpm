@@ -18,8 +18,8 @@ package org.jbpm.workflow.instance.node;
 
 import java.util.Collection;
 
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.WorkflowProcessInstance;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.WorkflowProcessInstance;
 import org.jbpm.process.core.context.exception.ExceptionScope;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ProcessInstance;

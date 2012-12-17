@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
 
 import org.drools.RuntimeDroolsException;
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.runtime.process.EventListener;
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.process.EventListener;
+import org.kie.runtime.process.NodeInstance;
 import org.drools.time.TimeUtils;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.core.timer.BusinessCalendar;

@@ -28,10 +28,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.drools.process.instance.impl.WorkItemImpl;
-import org.drools.runtime.Environment;
-import org.drools.runtime.process.WorkItemManager;
-import org.drools.util.ChainedProperties;
-import org.drools.util.ClassLoaderUtil;
 import org.jbpm.process.workitem.email.EmailWorkItemHandler;
 import org.jbpm.task.Content;
 import org.jbpm.task.Deadline;
@@ -49,6 +45,10 @@ import org.jbpm.task.Task;
 import org.jbpm.task.User;
 import org.jbpm.task.UserInfo;
 import org.jbpm.task.utils.ContentMarshallerHelper;
+import org.kie.internal.utils.ChainedProperties;
+import org.kie.internal.utils.ClassLoaderUtil;
+import org.kie.runtime.Environment;
+import org.kie.runtime.process.WorkItemManager;
 import org.mvel2.templates.TemplateRuntime;
 
 public class DefaultEscalatedDeadlineHandler
@@ -271,16 +271,18 @@ public class DefaultEscalatedDeadlineHandler
                        to.toString() );
 
             if ( header.getFrom() != null && header.getFrom().trim().length() > 0 ) {
+                String emailAddress = userInfo.getEmailForEntity( new User(header.getFrom()) );
                 email.put( "From",
-                           header.getFrom() );
+                        emailAddress );
             } else {
                 email.put( "From",
                            from );
             }
 
             if ( header.getReplyTo() != null && header.getReplyTo().trim().length() > 0 ) {
+                String emailAddress = userInfo.getEmailForEntity( new User(header.getReplyTo()) );
                 email.put( "Reply-To",
-                           header.getReplyTo() );
+                        emailAddress );
             } else {
                 email.put( "Reply-To",
                            replyTo );

@@ -1,23 +1,22 @@
 package org.jbpm.integrationtests;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-
-import org.antlr.grammar.v3.ANTLRv3Parser.exceptionGroup_return;
 import org.drools.RuleBase;
 import org.drools.SessionConfiguration;
 import org.drools.StatefulSession;
 import org.drools.core.util.DroolsStreamUtils;
 import org.drools.impl.EnvironmentFactory;
 import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.marshalling.Marshaller;
-import org.drools.marshalling.MarshallerFactory;
-import org.drools.marshalling.ObjectMarshallingStrategy;
 import org.drools.reteoo.ReteooStatefulSession;
-import org.drools.runtime.StatefulKnowledgeSession;
+import org.kie.marshalling.Marshaller;
+import org.kie.marshalling.MarshallerFactory;
+import org.kie.marshalling.ObjectMarshallingStrategy;
+import org.kie.runtime.StatefulKnowledgeSession;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 
 /**
  * Marshalling helper class to perform serialize/de-serialize a given object
@@ -117,7 +116,7 @@ public class SerializationHelper {
                                                                                  ObjectMarshallingStrategy [] strategies,
                                                                                  boolean dispose) throws Exception {
        
-        Marshaller marshaller = MarshallerFactory.newMarshaller( ksession.getKnowledgeBase(), strategies );
+        Marshaller marshaller = MarshallerFactory.newMarshaller( ksession.getKieBase(), strategies );
         
         final byte [] b1 = serializeKnowledgeSession(marshaller, ksession);
         StatefulKnowledgeSession ksession2 = deserializeKnowledgeSession(marshaller, b1);
@@ -156,9 +155,10 @@ public class SerializationHelper {
                                                                        throws Exception {
         
         ByteArrayInputStream bais = new ByteArrayInputStream( serializedKsession );
-        StatefulKnowledgeSession deserializedKsession = marshaller.unmarshall( bais,
-                                                                    new SessionConfiguration(),
-                                                                    EnvironmentFactory.newEnvironment() );
+        StatefulKnowledgeSession deserializedKsession = (StatefulKnowledgeSession)
+    		marshaller.unmarshall( bais,
+                                   new SessionConfiguration(),
+                                   EnvironmentFactory.newEnvironment() );
         bais.close();
         
         return deserializedKsession;

@@ -16,7 +16,7 @@
 
 package org.jbpm.workflow.core.node;
 
-import org.drools.definition.process.Connection;
+import org.kie.definition.process.Connection;
 import org.jbpm.workflow.core.impl.NodeImpl;
 
 /**
@@ -49,6 +49,8 @@ public class Join extends NodeImpl {
      * when n of its incoming connections have been triggered.
      */
     public static final int TYPE_N_OF_M = 4;
+    
+    public static final int TYPE_OR = 5;
     
     private static final long serialVersionUID = 510l;
 

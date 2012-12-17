@@ -7,7 +7,7 @@ import java.util.List;
 
 import javax.xml.parsers.SAXParser;
 
-import org.drools.definition.process.Process;
+import org.kie.definition.process.Process;
 import org.drools.xml.ExtensibleXmlParser;
 import org.drools.xml.SemanticModules;
 import org.xml.sax.InputSource;

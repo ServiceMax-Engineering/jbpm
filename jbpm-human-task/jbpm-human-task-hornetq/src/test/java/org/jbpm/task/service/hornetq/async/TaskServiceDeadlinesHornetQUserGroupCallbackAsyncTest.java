@@ -17,11 +17,10 @@
 package org.jbpm.task.service.hornetq.async;
 
 import java.util.Properties;
+
 import org.jbpm.task.service.base.async.TaskServiceDeadlinesBaseUserGroupCallbackAsyncTest;
 import org.jbpm.task.service.hornetq.AsyncHornetQTaskClient;
 import org.jbpm.task.service.hornetq.HornetQTaskServer;
-
-
 import org.subethamail.wiser.Wiser;
 
 public class TaskServiceDeadlinesHornetQUserGroupCallbackAsyncTest extends TaskServiceDeadlinesBaseUserGroupCallbackAsyncTest {
@@ -37,7 +36,7 @@ public class TaskServiceDeadlinesHornetQUserGroupCallbackAsyncTest extends TaskS
         getConf().setProperty("replyTo", "replyTo@domain.com");
         getConf().setProperty("defaultLanguage", "en-UK");
 
-        server = new HornetQTaskServer(taskService, 5445);
+        server = new HornetQTaskServer(taskService, 5153);
         System.out.println("Waiting for the HornetQTask Server to come up");
         try {
             startTaskServerThread(server, false);
@@ -46,7 +45,7 @@ public class TaskServiceDeadlinesHornetQUserGroupCallbackAsyncTest extends TaskS
         }
 
         client = new AsyncHornetQTaskClient();
-        client.connect("127.0.0.1", 5445);
+        client.connect("127.0.0.1", 5153);
 
         setWiser(new Wiser());
         getWiser().setHostname(getConf().getProperty("mail.smtp.host"));

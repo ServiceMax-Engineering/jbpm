@@ -15,66 +15,62 @@
  */
 package org.jbpm.bpmn2.persistence;
 
+import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
+import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
+import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 
-import org.drools.KnowledgeBase;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
-import org.drools.event.process.DefaultProcessEventListener;
-import org.drools.event.process.ProcessEventListener;
-import org.drools.event.process.ProcessNodeLeftEvent;
 import org.drools.impl.EnvironmentFactory;
-import org.drools.io.ResourceFactory;
-import org.drools.persistence.jpa.JPAKnowledgeService;
-import org.drools.runtime.Environment;
-import org.drools.runtime.EnvironmentName;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.ProcessInstance;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import org.kie.KnowledgeBase;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.event.process.DefaultProcessEventListener;
+import org.kie.event.process.ProcessEventListener;
+import org.kie.event.process.ProcessNodeLeftEvent;
+import org.kie.io.ResourceFactory;
+import org.kie.io.ResourceType;
+import org.kie.persistence.jpa.JPAKnowledgeService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.EnvironmentName;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.ProcessInstance;
 
 public class TimerPersistenceTest {
     
-    private PoolingDataSource ds = new PoolingDataSource();
     
+    private HashMap<String, Object> context;
+    private Environment env;
     
     @Before
     public void setUp() {
-        ds.setUniqueName("jdbc/testDS1");
-        ds.setClassName("org.h2.jdbcx.JdbcDataSource");
-        ds.setMaxPoolSize(3);
-        ds.setAllowLocalTransactions(true);
-        ds.getDriverProperties().put("user", "sa");
-        ds.getDriverProperties().put("password", "sasa");
-        ds.getDriverProperties().put("URL", "jdbc:h2:mem:mydb");
-        ds.init();
+        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME);
+
+        // load up the knowledge base
+        env = EnvironmentFactory.newEnvironment();
+        EntityManagerFactory emf = (EntityManagerFactory) context.get(EnvironmentName.ENTITY_MANAGER_FACTORY);
+        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
     }
     
     @After
     public void tearDown() {
-        ds.close();
+        env = null;
+        cleanUp(context);
     }
 
     @Test
     public void testTimerBoundaryEventCycleISO() throws Exception {
         // load up the knowledge base
         KnowledgeBase kbase = readKnowledgeBase("BPMN2-TimerBoundaryEventCycleISO.bpmn2");
-
-        Environment env = EnvironmentFactory.newEnvironment();
-        EntityManagerFactory emf = Persistence
-                .createEntityManagerFactory("org.jbpm.persistence.jpa");
-        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
 
         StatefulKnowledgeSession ksession = JPAKnowledgeService
                 .newStatefulKnowledgeSession(kbase, null, env);
@@ -113,7 +109,6 @@ public class TimerPersistenceTest {
         ksession.abortProcessInstance(processInstance.getId());
         Thread.sleep(1000);
         ksession.dispose();
-        emf.close();
         assertEquals(2, list.size());
     }
     

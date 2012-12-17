@@ -31,8 +31,8 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import org.drools.definition.process.Connection;
-import org.drools.definition.process.Node;
+import org.kie.definition.process.Connection;
+import org.kie.definition.process.Node;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.process.instance.impl.XPATHExpressionModifier;
@@ -275,7 +275,7 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
             return (ForEachJoinNode) getNode();
         }
 
-        public void internalTrigger(org.drools.runtime.process.NodeInstance from, String type) {
+        public void internalTrigger(org.kie.runtime.process.NodeInstance from, String type) {
             
             if (getForEachNode().getOutputVariableName() != null) {
                 Collection outputCollection = evaluateCollectionExpression(getForEachNode().getOutputCollectionExpression());

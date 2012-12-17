@@ -21,8 +21,8 @@ import org.drools.marshalling.impl.MarshallerReaderContext;
 import org.drools.marshalling.impl.MarshallerWriteContext;
 import org.drools.marshalling.impl.PersisterHelper;
 import org.drools.marshalling.impl.ProtobufMarshaller;
-import org.drools.runtime.Environment;
-import org.drools.runtime.process.ProcessInstance;
+import org.kie.runtime.Environment;
+import org.kie.runtime.process.ProcessInstance;
 import org.jbpm.marshalling.impl.JBPMMessages;
 import org.jbpm.marshalling.impl.ProcessInstanceMarshaller;
 import org.jbpm.marshalling.impl.ProcessMarshallerRegistry;
@@ -131,7 +131,7 @@ public class ProcessInstanceInfo{
             try {
                 ByteArrayInputStream bais = new ByteArrayInputStream( processInstanceByteArray );
                 MarshallerReaderContext context = new MarshallerReaderContext( bais,
-                                                                               (InternalRuleBase) ((InternalKnowledgeBase) kruntime.getKnowledgeBase()).getRuleBase(),
+                                                                               (InternalRuleBase) ((InternalKnowledgeBase) kruntime.getKieBase()).getRuleBase(),
                                                                                null,
                                                                                null,
                                                                                ProtobufMarshaller.TIMER_READERS,

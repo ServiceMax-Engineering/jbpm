@@ -2,8 +2,8 @@ package org.jbpm.process.builder;
 
 import java.util.Map;
 
-import org.drools.definition.process.Node;
-import org.drools.definition.process.Process;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.Process;
 import org.drools.lang.descr.ProcessDescr;
 import org.jbpm.process.core.timer.Timer;
 import org.jbpm.workflow.core.DroolsAction;

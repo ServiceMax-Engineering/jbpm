@@ -5,17 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.KnowledgeBase;
-import org.drools.SystemEventListenerFactory;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
-import org.drools.io.ResourceFactory;
-import org.drools.logger.KnowledgeRuntimeLogger;
-import org.drools.logger.KnowledgeRuntimeLoggerFactory;
-import org.drools.runtime.StatefulKnowledgeSession;
 import org.jbpm.process.workitem.wsht.HornetQHTWorkItemHandler;
-import org.jbpm.task.AccessType;
 import org.jbpm.task.Content;
 import org.jbpm.task.Task;
 import org.jbpm.task.TaskService;
@@ -24,6 +14,15 @@ import org.jbpm.task.service.ContentData;
 import org.jbpm.task.service.SyncTaskServiceWrapper;
 import org.jbpm.task.service.hornetq.AsyncHornetQTaskClient;
 import org.jbpm.task.utils.ContentMarshallerHelper;
+import org.kie.KnowledgeBase;
+import org.kie.SystemEventListenerFactory;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.io.ResourceFactory;
+import org.kie.io.ResourceType;
+import org.kie.logger.KnowledgeRuntimeLogger;
+import org.kie.logger.KnowledgeRuntimeLoggerFactory;
+import org.kie.runtime.StatefulKnowledgeSession;
 
 public class HumanTaskExample {
 
@@ -45,7 +44,7 @@ public class HumanTaskExample {
             // we can reuse the client used by the Work Item Hander.
             TaskService taskClient = new SyncTaskServiceWrapper(new AsyncHornetQTaskClient("HumanTaskExample-testClient"));
 
-            taskClient.connect("127.0.0.1", 5445);
+            taskClient.connect("127.0.0.1", 5153);
             
             Thread.sleep(1000);
             // "sales-rep" reviews request
@@ -143,7 +142,7 @@ public class HumanTaskExample {
         return kbuilder.newKnowledgeBase();
     }
 
-    private static class SystemEventListener implements org.drools.SystemEventListener {
+    private static class SystemEventListener implements org.kie.SystemEventListener {
 
         public void debug(String arg0) {
         }

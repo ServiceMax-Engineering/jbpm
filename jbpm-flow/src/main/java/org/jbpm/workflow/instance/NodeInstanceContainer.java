@@ -18,14 +18,14 @@ package org.jbpm.workflow.instance;
 
 import java.util.Collection;
 
-import org.drools.definition.process.Node;
-import org.drools.definition.process.NodeContainer;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
 
 /**
  * 
  * @author <a href="mailto:kris_verlaenen@hotmail.com">Kris Verlaenen</a>
  */
-public interface NodeInstanceContainer extends org.drools.runtime.process.NodeInstanceContainer {
+public interface NodeInstanceContainer extends org.kie.runtime.process.NodeInstanceContainer {
 
     Collection<NodeInstance> getNodeInstances(boolean recursive);
 

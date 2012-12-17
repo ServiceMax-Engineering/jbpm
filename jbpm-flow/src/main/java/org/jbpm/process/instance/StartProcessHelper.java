@@ -15,16 +15,16 @@
  */
 package org.jbpm.process.instance;
 
+import org.kie.KieBase;
+import org.kie.definition.process.Process;
+import org.kie.runtime.KnowledgeRuntime;
+import org.kie.runtime.process.ProcessInstance;
+
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
-
-import org.drools.KnowledgeBase;
-import org.drools.definition.process.Process;
-import org.drools.runtime.KnowledgeRuntime;
-import org.drools.runtime.process.ProcessInstance;
 
 public final class StartProcessHelper {
     
@@ -36,7 +36,7 @@ public final class StartProcessHelper {
 		if (name == null) {
 			throw new IllegalArgumentException("Name cannot be null");
 		}
-		String processId = findLatestProcessByName(kruntime.getKnowledgeBase(), name);
+		String processId = findLatestProcessByName(kruntime.getKieBase(), name);
 		
 		if (processId == null) {
 			throw new IllegalArgumentException("Could not find process with name " + name);
@@ -48,7 +48,7 @@ public final class StartProcessHelper {
         if (name == null) {
             throw new IllegalArgumentException("Name cannot be null");
         }
-        String processId = findLatestProcessByName(kruntime.getKnowledgeBase(), name, comparator);
+        String processId = findLatestProcessByName(kruntime.getKieBase(), name, comparator);
         
         if (processId == null) {
             throw new IllegalArgumentException("Could not find process with name " + name);
@@ -56,14 +56,14 @@ public final class StartProcessHelper {
         return kruntime.startProcess(processId, parameters);
     }
 
-	public static String findLatestProcessByName(KnowledgeBase kbase, final String processName) {
+	public static String findLatestProcessByName(KieBase kbase, final String processName) {
         if (kbase == null) {
             return null;
         }
         return findLatestProcessByName(kbase.getProcesses(), processName);
     }
 	
-	public static String findLatestProcessByName(KnowledgeBase kbase, final String processName, Comparator<Process> comparator) {
+	public static String findLatestProcessByName(KieBase kbase, final String processName, Comparator<Process> comparator) {
         if (kbase == null) {
             return null;
         }

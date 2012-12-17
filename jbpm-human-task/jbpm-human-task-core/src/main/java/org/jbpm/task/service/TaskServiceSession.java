@@ -16,7 +16,8 @@
 
 package org.jbpm.task.service;
 
-import static org.jbpm.task.service.persistence.TaskPersistenceManager.*;
+import static org.jbpm.task.service.persistence.TaskPersistenceManager.addParametersToMap;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -555,6 +556,7 @@ public class TaskServiceSession {
     }
 
     private void taskCompleteOperation(final Task task, final ContentData data) {
+        task.getTaskData().setCompletedOn(new Date());
         if (data != null) {
         	setOutput(task.getId(), task.getTaskData().getActualOwner().getId(), data);
         }
@@ -1063,8 +1065,15 @@ public class TaskServiceSession {
      * @throws EntityNotFoundException if entity not found
      */
     private <T> T getEntity(final Class<T> entityClass, final Object primaryKey) {
-        final T entity = (T) tpm.findEntity(entityClass, primaryKey);
-
+        
+        final Object [] result = new Object[1];
+        doOperationInTransaction(new TransactedOperation() {
+            public void doOperation() {
+                result[0] = tpm.findEntity(entityClass, primaryKey);
+            }
+        });
+        
+        final T entity = (T) result[0];
         if (entity == null) {
             throw new EntityNotFoundException("No " + entityClass.getSimpleName() + " with ID " + primaryKey + " was found!");
         }
@@ -1095,7 +1104,7 @@ public class TaskServiceSession {
      * 
      * @param operation operation to execute
      */
-    private void doOperationInTransaction(final TransactedOperation operation) {
+    public void doOperationInTransaction(final TransactedOperation operation) {
 
         boolean txOwner = false;
         boolean operationSuccessful = false;
@@ -1139,11 +1148,27 @@ public class TaskServiceSession {
         return (List<TaskSummary>) tpm.queryWithParametersInTransaction("TasksAssignedAsPotentialOwnerByStatusWithGroups", params);
     }
 
+    public List<TaskSummary> getTasksByStatusByProcessId(long processInstanceId, List<Status> status, String language){
+        HashMap<String, Object> params = addParametersToMap(
+                                         "processInstanceId", processInstanceId,
+                                         "status", status,
+                                         "language", language);
+        List<TaskSummary> result = (List<TaskSummary>) tpm.queryWithParametersInTransaction("TasksByStatusByProcessId", params);
+        return result;
+    }
 
+    public List<TaskSummary> getTasksByStatusByProcessIdByTaskName(long processInstanceId, List<Status> status, String taskName, String language){
+        HashMap<String, Object> params = addParametersToMap(
+                                         "processInstanceId", processInstanceId,
+                                         "status", status,
+                                         "taskName", taskName,
+                                         "language", language);
+        List<TaskSummary> result = (List<TaskSummary>) tpm.queryWithParametersInTransaction("TasksByStatusByProcessIdByTaskName", params);
+        return result;
+    }
 
-
-    private interface TransactedOperation {
-        void doOperation();
+    public interface TransactedOperation {
+        void doOperation() throws Exception;
     }
 
     public void executeEscalatedDeadline(EscalatedDeadlineHandler escalatedDeadlineHandler, TaskService service, long taskId, long deadlineId) { 

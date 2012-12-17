@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.Process;
-import org.drools.runtime.rule.Agenda;
+import org.kie.definition.process.Process;
+import org.kie.runtime.rule.Agenda;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.instance.ContextInstance;
@@ -65,7 +65,7 @@ public abstract class ProcessInstanceImpl implements ProcessInstance, Serializab
 
     public Process getProcess() {
         if (this.process == null) {
-            this.process = kruntime.getKnowledgeBase().getProcess(processId);
+            this.process = kruntime.getKieBase().getProcess(processId);
         }
         return this.process;
     }

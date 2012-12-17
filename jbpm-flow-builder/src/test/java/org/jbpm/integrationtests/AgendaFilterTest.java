@@ -1,31 +1,27 @@
 package org.jbpm.integrationtests;
 
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseFactory;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
-import org.drools.command.Command;
-import org.drools.command.CommandFactory;
 import org.drools.command.runtime.rule.FireAllRulesCommand;
-import org.drools.definition.type.FactType;
 import org.drools.event.DebugProcessEventListener;
-import org.drools.event.rule.DebugAgendaEventListener;
-import org.drools.io.ResourceFactory;
 import org.drools.rule.Rule;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.rule.Activation;
-import org.drools.runtime.rule.AgendaFilter;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.kie.KnowledgeBase;
+import org.kie.KnowledgeBaseFactory;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.command.Command;
+import org.kie.command.CommandFactory;
+import org.kie.definition.type.FactType;
+import org.kie.event.rule.DebugAgendaEventListener;
+import org.kie.io.ResourceFactory;
+import org.kie.io.ResourceType;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.rule.AgendaFilter;
+import org.kie.runtime.rule.Match;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
-
 import static org.junit.Assert.fail;
 
 public class AgendaFilterTest {
@@ -150,7 +146,7 @@ public class AgendaFilterTest {
 
         private Integer currentSalience = null;
 
-        public boolean accept(Activation activation) {
+        public boolean accept(Match activation) {
             Rule rule = (Rule)activation.getRule();
 
             if (currentSalience == null){
@@ -260,7 +256,7 @@ public class AgendaFilterTest {
     }
 
     private Object newCancelFact(StatefulKnowledgeSession ksession, boolean cancel) {
-        FactType type = ksession.getKnowledgeBase().getFactType("org.jboss.qa.brms.agendafilter", "CancelFact");
+        FactType type = ksession.getKieBase().getFactType("org.jboss.qa.brms.agendafilter", "CancelFact");
         Object instance = null;
         try {
             instance = type.newInstance();
@@ -276,7 +272,7 @@ public class AgendaFilterTest {
     }
 
     public static class CancelAgendaFilter implements AgendaFilter {
-        public boolean accept(Activation activation) {
+        public boolean accept(Match activation) {
             return !"Cancel".equals(activation.getRule().getName());
         }
     }

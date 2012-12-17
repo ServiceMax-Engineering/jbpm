@@ -2,7 +2,7 @@ package org.jbpm.workflow.instance;
 
 import java.text.MessageFormat;
 
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstance;
 
 /**
  * This exception provides the context information of the error in execution of the flow. <br/>

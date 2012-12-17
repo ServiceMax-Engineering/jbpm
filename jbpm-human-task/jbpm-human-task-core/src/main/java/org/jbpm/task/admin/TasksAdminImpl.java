@@ -15,13 +15,14 @@
  */
 package org.jbpm.task.admin;
 
-import static org.jbpm.task.service.persistence.TaskPersistenceManager.*;
+import static org.jbpm.task.service.persistence.TaskPersistenceManager.addParametersToMap;
+
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.persistence.EntityManagerFactory;
-
+import org.jbpm.task.Content;
 import org.jbpm.task.Status;
 import org.jbpm.task.Task;
 import org.jbpm.task.query.TaskSummary;
@@ -74,9 +75,9 @@ public class TasksAdminImpl implements TasksAdmin {
     }
     public List<TaskSummary> getCompletedTasksByProcessId(Long processId) {
         HashMap<String, Object> params = addParametersToMap(
-                "status", Status.Completed,
+                "status", Arrays.asList(Status.Completed),
                 "language", "en-UK",
-                "processId", processId);
+                "processInstanceId", processId);
         
         return (List<TaskSummary>) tpm.queryWithParametersInTransaction("TasksByStatusByProcessId", params);
     }
@@ -103,9 +104,12 @@ public class TasksAdminImpl implements TasksAdmin {
             long taskId = sum.getId();
             // Only remove archived tasks
             Task task = (Task) tpm.findEntity(Task.class, taskId);
+            Content content = (Content)tpm.findEntity(Content.class, task.getTaskData().getDocumentContentId());
             if (task.isArchived()) {
                 tpm.deleteEntity(task);
-
+                if(content != null){
+                    tpm.deleteEntity(content);
+                }
                 removedTasks++;
             } else {
                 logger.error(" The Task cannot be removed if it wasn't archived first !!");

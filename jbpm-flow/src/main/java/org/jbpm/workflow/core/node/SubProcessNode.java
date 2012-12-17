@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.drools.definition.process.Connection;
+import org.kie.definition.process.Connection;
 import org.jbpm.process.core.context.variable.Mappable;
 
 

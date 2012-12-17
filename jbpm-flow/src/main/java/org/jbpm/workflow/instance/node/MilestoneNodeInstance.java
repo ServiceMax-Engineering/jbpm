@@ -17,17 +17,17 @@
 package org.jbpm.workflow.instance.node;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.event.rule.ActivationCancelledEvent;
-import org.drools.event.rule.ActivationCreatedEvent;
-import org.drools.event.rule.AfterActivationFiredEvent;
-import org.drools.event.rule.AgendaEventListener;
-import org.drools.event.rule.AgendaGroupPoppedEvent;
-import org.drools.event.rule.AgendaGroupPushedEvent;
-import org.drools.event.rule.BeforeActivationFiredEvent;
-import org.drools.event.rule.RuleFlowGroupActivatedEvent;
-import org.drools.event.rule.RuleFlowGroupDeactivatedEvent;
+import org.kie.event.rule.MatchCancelledEvent;
+import org.kie.event.rule.MatchCreatedEvent;
+import org.kie.event.rule.AfterMatchFiredEvent;
+import org.kie.event.rule.AgendaEventListener;
+import org.kie.event.rule.AgendaGroupPoppedEvent;
+import org.kie.event.rule.AgendaGroupPushedEvent;
+import org.kie.event.rule.BeforeMatchFiredEvent;
+import org.kie.event.rule.RuleFlowGroupActivatedEvent;
+import org.kie.event.rule.RuleFlowGroupDeactivatedEvent;
 import org.drools.rule.Rule;
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstance;
 import org.drools.runtime.rule.impl.InternalAgenda;
 import org.drools.spi.Activation;
 import org.jbpm.workflow.core.node.MilestoneNode;
@@ -76,15 +76,15 @@ public class MilestoneNodeInstance extends StateBasedNodeInstance implements Age
         getProcessInstance().getKnowledgeRuntime().removeEventListener(this);
     }
 
-    public void activationCreated(ActivationCreatedEvent event) {
+    public void matchCreated(MatchCreatedEvent event) {
         // check whether this activation is from the DROOLS_SYSTEM agenda group
-        String ruleFlowGroup = ((Rule) event.getActivation().getRule()).getRuleFlowGroup();
+        String ruleFlowGroup = ((Rule) event.getMatch().getRule()).getRuleFlowGroup();
         if ("DROOLS_SYSTEM".equals(ruleFlowGroup)) {
             // new activations of the rule associate with a milestone node
             // trigger node instances of that milestone node
-            String ruleName = event.getActivation().getRule().getName();
+            String ruleName = event.getMatch().getRule().getName();
             String milestoneName = "RuleFlow-Milestone-" + getProcessInstance().getProcessId() + "-" + getNodeId();
-            if (milestoneName.equals(ruleName) && checkProcessInstance((Activation) event.getActivation())) {
+            if (milestoneName.equals(ruleName) && checkProcessInstance((Activation) event.getMatch())) {
         		if ( !((InternalKnowledgeRuntime) getProcessInstance().getKnowledgeRuntime()).getActionQueue().isEmpty() ) {
         			((InternalKnowledgeRuntime) getProcessInstance().getKnowledgeRuntime()).executeQueuedActions();
                 }
@@ -96,11 +96,11 @@ public class MilestoneNodeInstance extends StateBasedNodeInstance implements Age
         }
     }
 
-    public void activationCancelled(ActivationCancelledEvent event) {
+    public void matchCancelled(MatchCancelledEvent event) {
         // Do nothing
     }
 
-    public void afterActivationFired(AfterActivationFiredEvent event) {
+    public void afterMatchFired(AfterMatchFiredEvent event) {
         // Do nothing
     }
 
@@ -112,7 +112,7 @@ public class MilestoneNodeInstance extends StateBasedNodeInstance implements Age
         // Do nothing
     }
 
-    public void beforeActivationFired(BeforeActivationFiredEvent event) {
+    public void beforeMatchFired(BeforeMatchFiredEvent event) {
         // Do nothing
     }
 

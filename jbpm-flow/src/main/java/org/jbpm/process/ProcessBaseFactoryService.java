@@ -18,30 +18,31 @@ package org.jbpm.process;
 
 import java.util.Properties;
 
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseConfiguration;
-import org.drools.KnowledgeBaseFactoryService;
 import org.drools.RuleBaseConfiguration;
 import org.drools.SessionConfiguration;
 import org.drools.impl.EnvironmentFactory;
-import org.drools.runtime.Environment;
-import org.drools.runtime.KnowledgeSessionConfiguration;
+import org.kie.KnowledgeBase;
+import org.kie.KieBaseConfiguration;
+import org.kie.KnowledgeBaseFactoryService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.StatefulKnowledgeSession;
 
 public class ProcessBaseFactoryService implements KnowledgeBaseFactoryService {
 
-    public KnowledgeBaseConfiguration newKnowledgeBaseConfiguration() {
+    public KieBaseConfiguration newKnowledgeBaseConfiguration() {
         return new RuleBaseConfiguration();
     }
         
-    public KnowledgeBaseConfiguration newKnowledgeBaseConfiguration(Properties properties, ClassLoader... classLoaders) {
+    public KieBaseConfiguration newKnowledgeBaseConfiguration(Properties properties, ClassLoader... classLoaders) {
         return new RuleBaseConfiguration(properties, classLoaders);
     }        
     
-    public KnowledgeSessionConfiguration newKnowledgeSessionConfiguration() {
+    public KieSessionConfiguration newKnowledgeSessionConfiguration() {
         return new SessionConfiguration();
     }
         
-    public KnowledgeSessionConfiguration newKnowledgeSessionConfiguration(Properties properties) {
+    public KieSessionConfiguration newKnowledgeSessionConfiguration(Properties properties) {
         return new SessionConfiguration(properties);
     }        
     
@@ -53,16 +54,24 @@ public class ProcessBaseFactoryService implements KnowledgeBaseFactoryService {
         return new ProcessBaseImpl();      
     }   
     
-    public KnowledgeBase newKnowledgeBase(KnowledgeBaseConfiguration conf) {
+    public KnowledgeBase newKnowledgeBase(KieBaseConfiguration conf) {
         return new ProcessBaseImpl();
     }
 
     public KnowledgeBase newKnowledgeBase(String kbaseId, 
-                                          KnowledgeBaseConfiguration conf) {
+                                          KieBaseConfiguration conf) {
         return new ProcessBaseImpl();
     }
 
 	public Environment newEnvironment() {
 		return EnvironmentFactory.newEnvironment();
 	}
+
+    public KnowledgeBase getKnowledgeBase(String arg0) {
+        return new ProcessBaseImpl();
+    }
+
+    public StatefulKnowledgeSession getStatefulKnowlegeSession(String arg0) {
+        return new ProcessBaseImpl().newStatefulKnowledgeSession();
+    }
 }

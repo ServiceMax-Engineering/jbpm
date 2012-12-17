@@ -1,5 +1,8 @@
 package org.jbpm.bpmn2.persistence;
 
+import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
+import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
+import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -7,20 +10,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 
-import org.drools.KnowledgeBase;
 import org.drools.WorkingMemory;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
 import org.drools.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.command.impl.KnowledgeCommandContext;
 import org.drools.core.util.DroolsStreamUtils;
-import org.drools.definition.KnowledgePackage;
 import org.drools.event.ActivationCancelledEvent;
 import org.drools.event.ActivationCreatedEvent;
 import org.drools.event.AfterActivationFiredEvent;
@@ -30,54 +28,50 @@ import org.drools.event.AgendaGroupPushedEvent;
 import org.drools.event.BeforeActivationFiredEvent;
 import org.drools.event.RuleFlowGroupActivatedEvent;
 import org.drools.event.RuleFlowGroupDeactivatedEvent;
-import org.drools.event.process.DefaultProcessEventListener;
-import org.drools.event.process.ProcessStartedEvent;
 import org.drools.impl.EnvironmentFactory;
 import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.io.ResourceFactory;
-import org.drools.persistence.jpa.JPAKnowledgeService;
-import org.drools.runtime.Environment;
-import org.drools.runtime.EnvironmentName;
-import org.drools.runtime.StatefulKnowledgeSession;
 import org.jbpm.process.audit.JPAWorkingMemoryDbLogger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import org.kie.KnowledgeBase;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.definition.KnowledgePackage;
+import org.kie.event.process.DefaultProcessEventListener;
+import org.kie.event.process.ProcessStartedEvent;
+import org.kie.io.ResourceFactory;
+import org.kie.io.ResourceType;
+import org.kie.persistence.jpa.JPAKnowledgeService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.EnvironmentName;
+import org.kie.runtime.StatefulKnowledgeSession;
 
 public class TimerCycleOnBinaryPackageTest {
     
-    private PoolingDataSource ds = new PoolingDataSource();
-    
+    private HashMap<String, Object> context;
+    private Environment env;
     
     @Before
     public void setUp() {
-        ds.setUniqueName("jdbc/testDS1");
-        ds.setClassName("org.h2.jdbcx.JdbcDataSource");
-        ds.setMaxPoolSize(3);
-        ds.setAllowLocalTransactions(true);
-        ds.getDriverProperties().put("user", "sa");
-        ds.getDriverProperties().put("password", "sasa");
-        ds.getDriverProperties().put("URL", "jdbc:h2:mem:mydb");
-        ds.init();
+        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME);
+
+        // load up the knowledge base
+        env = EnvironmentFactory.newEnvironment();
+        EntityManagerFactory emf = (EntityManagerFactory) context.get(EnvironmentName.ENTITY_MANAGER_FACTORY);
+        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
     }
     
     @After
     public void tearDown() {
-        ds.close();
+        env = null;
+        cleanUp(context);
     }
     
 
     @Test
     public void testStartTimerCycleFromDisc() throws Exception {
-                
-        // load up the knowledge base
         KnowledgeBase kbase = readKnowledgeBaseFromDisc();
-        Environment env = EnvironmentFactory.newEnvironment();
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("org.jbpm.persistence.jpa");
-        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
-
         StatefulKnowledgeSession ksession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
 
         new JPAWorkingMemoryDbLogger(ksession);
@@ -122,18 +116,11 @@ public class TimerCycleOnBinaryPackageTest {
         
         assertEquals(3, list2.size());
         ksession.dispose();
-        emf.close();
     }
     
     @Test
     public void testStartTimerCycleFromClassPath() throws Exception {
-                
-        // load up the knowledge base
         KnowledgeBase kbase = readKnowledgeBase();
-        Environment env = EnvironmentFactory.newEnvironment();
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("org.jbpm.persistence.jpa");
-        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
-
         StatefulKnowledgeSession ksession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
 
         new JPAWorkingMemoryDbLogger(ksession);
@@ -178,18 +165,11 @@ public class TimerCycleOnBinaryPackageTest {
         
         assertEquals(3, list2.size());
         ksession.dispose();
-        emf.close();
     }
     
     @Test
     public void testStartTimerCycleFromDiscDRL() throws Exception {
-
-        // load up the knowledge base
         KnowledgeBase kbase = readKnowledgeBaseFromDiscDRL();
-        Environment env = EnvironmentFactory.newEnvironment();
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("org.jbpm.persistence.jpa");
-        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
-
         StatefulKnowledgeSession ksession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
 
         new JPAWorkingMemoryDbLogger(ksession);
@@ -224,18 +204,12 @@ public class TimerCycleOnBinaryPackageTest {
 
         assertEquals(3, list2.size());
         ksession.dispose();
-        emf.close();
     }
     
      @Test
     public void testStartTimerCycleFromClasspathDRL() throws Exception {
-
         // load up the knowledge base
         KnowledgeBase kbase = readKnowledgeBaseDRL();
-        Environment env = EnvironmentFactory.newEnvironment();
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("org.jbpm.persistence.jpa");
-        env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
-
         StatefulKnowledgeSession ksession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
 
         new JPAWorkingMemoryDbLogger(ksession);
@@ -270,7 +244,6 @@ public class TimerCycleOnBinaryPackageTest {
 
         assertEquals(3, list2.size());
         ksession.dispose();
-        emf.close();
     }
 
     private KnowledgeBase readKnowledgeBaseFromDisc() throws Exception {

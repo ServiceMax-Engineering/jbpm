@@ -13,7 +13,7 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.drools.time.SessionClock;
+import org.kie.time.SessionClock;
 import org.drools.time.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

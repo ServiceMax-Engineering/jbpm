@@ -9,7 +9,7 @@ import org.drools.RuleBaseFactory;
 import org.drools.StatefulSession;
 import org.drools.compiler.DroolsError;
 import org.drools.compiler.PackageBuilder;
-import org.drools.runtime.process.ProcessInstance;
+import org.kie.runtime.process.ProcessInstance;
 import org.jbpm.JbpmTestCase;
 
 public class ProcessMultiThreadTest extends JbpmTestCase {

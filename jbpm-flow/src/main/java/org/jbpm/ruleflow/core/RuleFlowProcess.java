@@ -16,8 +16,8 @@
 
 package org.jbpm.ruleflow.core;
 
-import org.drools.definition.process.Node;
-import org.drools.definition.process.NodeContainer;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
 import org.jbpm.process.core.context.exception.ExceptionScope;
 import org.jbpm.process.core.context.swimlane.SwimlaneContext;
 import org.jbpm.process.core.context.variable.VariableScope;

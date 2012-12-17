@@ -41,9 +41,9 @@
     <maven.jdbc.db.port/>
     <maven.jdbc.db.server/>     
     <maven.jdbc.driver.jar/>
-    <maven.jdbc.username></maven.jdbc.username>
-    <maven.jdbc.password></maven.jdbc.password>
-    <maven.jdbc.url>jdbc:h2:</maven.jdbc.url>
+    <maven.jdbc.username>sa</maven.jdbc.username>
+    <maven.jdbc.password>sasa</maven.jdbc.password>
+    <maven.jdbc.url>jdbc:h2:file:test;MVCC=TRUE</maven.jdbc.url>
     <maven.jdbc.schema>public</maven.jdbc.schema>
   </properties>
 
@@ -84,6 +84,7 @@
     <module>jbpm-bpmn2-emfextmodel</module>
     <module>jbpm-workitems</module>
     <module>jbpm-human-task</module>
+    <module>jbpm-services</module>
     <module>jbpm-gwt</module>
     <module>jbpm-test</module>
     <module>jbpm-examples</module>
@@ -114,7 +115,6 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.6</version>
           <configuration>
             <includes>
               <include>**/*Test.java</include>

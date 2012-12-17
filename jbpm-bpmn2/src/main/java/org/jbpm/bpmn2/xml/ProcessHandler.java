@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.definition.process.Node;
-import org.drools.definition.process.NodeContainer;
 import org.drools.xml.BaseAbstractHandler;
 import org.drools.xml.ExtensibleXmlParser;
 import org.drools.xml.Handler;
@@ -61,6 +59,8 @@ import org.jbpm.workflow.core.node.HumanTaskNode;
 import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StateBasedNode;
 import org.jbpm.workflow.core.node.StateNode;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.jbpm.workflow.core.node.StateBasedNode;
@@ -345,9 +345,9 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             
                             
                             action = new DroolsConsequenceAction("java", 
-                                    (cancelActivity ? "org.drools.runtime.process.WorkflowProcessInstance pi = (org.drools.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
+                                    (cancelActivity ? "org.kie.runtime.process.WorkflowProcessInstance pi = (org.kie.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
                                     "long nodeInstanceId = -1;"+
-                                    "for (org.drools.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
+                                    "for (org.kie.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
                                      "   if (" +attachedToNodeId +" == nodeInstance.getNodeId()) {"+
                                      "       nodeInstanceId = nodeInstance.getId();"+
                                      "       break;"+
@@ -386,9 +386,9 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             
                             
                             action = new DroolsConsequenceAction("java", 
-                                    "org.drools.runtime.process.WorkflowProcessInstance pi = (org.drools.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
+                                    "org.kie.runtime.process.WorkflowProcessInstance pi = (org.kie.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
                                     "long nodeInstanceId = -1;"+
-                                    "for (org.drools.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
+                                    "for (org.kie.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
                                     
                                      "   if (" +attachedToNodeId +" == nodeInstance.getNodeId()) {"+
                                      "       nodeInstanceId = nodeInstance.getId();"+
@@ -492,7 +492,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             actionsAttachedTo = new ArrayList<DroolsAction>();
                         }
                         DroolsConsequenceAction actionAttachedTo =  new DroolsConsequenceAction("java", "" +
-                                "org.drools.definition.process.Node node = context.getNodeInstance().getNode().getNodeContainer().getNode(" +id+ ");" +
+                                "org.kie.definition.process.Node node = context.getNodeInstance().getNode().getNodeContainer().getNode(" +id+ ");" +
                                 "if (node instanceof org.jbpm.workflow.core.node.EventNode) {" +
                                 " ((org.jbpm.workflow.core.node.EventNode)node).getEventFilters().clear();" +
                                 "((org.jbpm.workflow.core.node.EventNode)node).addEventFilter(new org.jbpm.process.core.event.EventFilter () " +
@@ -538,8 +538,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                 Constraint constraint = new ConstraintImpl();
                 constraint.setConstraint(condition);
                 constraint.setType("rule");
-                for (org.drools.definition.process.Connection connection : stateNode
-                        .getDefaultOutgoingConnections()) {
+                for (org.kie.definition.process.Connection connection: stateNode.getDefaultOutgoingConnections()) {
                     stateNode.setConstraint(connection, constraint);
                 }
             } else if (node instanceof NodeContainer) {

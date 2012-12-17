@@ -25,18 +25,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.drools.common.DefaultFactHandle;
 import org.drools.common.InternalRuleBase;
 import org.drools.common.InternalWorkingMemory;
-import org.drools.definition.process.Process;
+import org.kie.definition.process.Process;
 import org.drools.marshalling.impl.MarshallerReaderContext;
 import org.drools.marshalling.impl.MarshallerWriteContext;
 import org.drools.marshalling.impl.PersisterHelper;
 import org.drools.marshalling.impl.ProtobufMessages.Header;
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.NodeInstanceContainer;
-import org.drools.runtime.process.ProcessInstance;
-import org.drools.runtime.process.WorkflowProcessInstance;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstanceContainer;
+import org.kie.runtime.process.ProcessInstance;
+import org.kie.runtime.process.WorkflowProcessInstance;
+import org.kie.runtime.rule.FactHandle;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceContent;
+import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.TextMapEntry;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceType;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.context.exclusive.ExclusiveGroup;
@@ -166,13 +169,27 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                     .setType( NodeInstanceType.RULE_SET_NODE );
             List<Long> timerInstances =
                     ((RuleSetNodeInstance) nodeInstance).getTimerInstances();
+            JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.Builder _ruleSet = JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.newBuilder();
+            _ruleSet.setRuleFlowGroup(((RuleSetNodeInstance) nodeInstance).getRuleFlowGroup());
             if ( timerInstances != null ) {
-                JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.Builder _ruleSet = JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.newBuilder();
+                
                 for ( Long id : timerInstances ) {
                     _ruleSet.addTimerInstanceId( id );
                 }
-                _content.setRuleSet( _ruleSet.build() );
             }
+            
+           Map<String, FactHandle> facts = ((RuleSetNodeInstance) nodeInstance).getFactHandles();
+           if (facts != null && facts.size() > 0) {
+               for (Map.Entry<String, FactHandle> entry : facts.entrySet()) {
+                   JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.TextMapEntry.Builder _textMapEntry = JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.TextMapEntry.newBuilder();
+                   _textMapEntry.setName(entry.getKey());
+                   _textMapEntry.setValue(entry.getValue().toExternalForm());
+                   
+                   _ruleSet.addMapEntry(_textMapEntry.build());
+               }
+           }
+           _content.setRuleSet( _ruleSet.build() );
+           
         } else if ( nodeInstance instanceof HumanTaskNodeInstance ) {
             JBPMMessages.ProcessInstance.NodeInstanceContent.HumanTaskNode.Builder _task = JBPMMessages.ProcessInstance.NodeInstanceContent.HumanTaskNode.newBuilder()
                     .setWorkItemId( ((HumanTaskNodeInstance) nodeInstance).getWorkItemId() );
@@ -518,12 +535,23 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         switch ( _content.getType() ) {
             case  RULE_SET_NODE:
                 nodeInstance = new RuleSetNodeInstance();
+                ((RuleSetNodeInstance) nodeInstance).setRuleFlowGroup(_content.getRuleSet().getRuleFlowGroup());
                 if ( _content.getRuleSet().getTimerInstanceIdCount() > 0 ) {
                     List<Long> timerInstances = new ArrayList<Long>();
                     for ( Long _timerId : _content.getRuleSet().getTimerInstanceIdList() ) {
                         timerInstances.add( _timerId );
                     }
                     ((RuleSetNodeInstance) nodeInstance).internalSetTimerInstances( timerInstances );
+                }
+                
+                if (_content.getRuleSet().getMapEntryCount() > 0) {
+                    Map<String, FactHandle> factInfo = new HashMap<String, FactHandle>();
+                    
+                    for (TextMapEntry entry : _content.getRuleSet().getMapEntryList()) {
+                        factInfo.put(entry.getName(), new DefaultFactHandle(entry.getValue()));
+                    }
+                    
+                    ((RuleSetNodeInstance) nodeInstance).setFactHandles(factInfo);
                 }
                 break;
             case HUMAN_TASK_NODE :

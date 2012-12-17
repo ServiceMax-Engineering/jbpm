@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.RuntimeDroolsException;
-import org.drools.definition.process.Connection;
-import org.drools.definition.process.Node;
-import org.drools.definition.process.NodeContainer;
-import org.drools.definition.process.Process;
+import org.kie.definition.process.Connection;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
+import org.kie.definition.process.Process;
 import org.drools.process.core.Work;
 import org.drools.time.TimeUtils;
 import org.jbpm.process.core.context.variable.Variable;

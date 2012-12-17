@@ -16,22 +16,21 @@
 
 package org.jbpm.workflow.instance;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.WorkflowProcess;
-import org.drools.runtime.KnowledgeRuntime;
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.ProcessInstance;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
+import org.kie.definition.process.WorkflowProcess;
+import org.kie.runtime.KieRuntime;
+import org.kie.runtime.process.NodeInstance;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class WorkflowProcessInstanceUpgrader {
 
     public static void upgradeProcessInstance(
-    		KnowledgeRuntime kruntime,
+    		KieRuntime kruntime,
     		long processInstanceId,
     		String processId,
     		Map<String, Long> nodeMapping) {
@@ -50,7 +49,7 @@ public class WorkflowProcessInstanceUpgrader {
             throw new IllegalArgumentException("Null process id");
         }
         WorkflowProcess process = (WorkflowProcess)
-            kruntime.getKnowledgeBase().getProcess(processId);
+            kruntime.getKieBase().getProcess(processId);
         if (process == null) {
             throw new IllegalArgumentException("Could not find process " + processId);
         }
@@ -58,7 +57,7 @@ public class WorkflowProcessInstanceUpgrader {
             return;
         }
         synchronized (processInstance) {
-        	org.drools.definition.process.Process oldProcess = processInstance.getProcess();
+        	org.kie.definition.process.Process oldProcess = processInstance.getProcess();
 	        processInstance.disconnect();
 	        processInstance.setProcess(oldProcess);
 	        updateNodeInstances(processInstance, nodeMapping);

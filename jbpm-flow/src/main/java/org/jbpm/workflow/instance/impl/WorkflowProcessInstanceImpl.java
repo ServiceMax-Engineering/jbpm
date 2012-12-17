@@ -27,11 +27,11 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.Node;
-import org.drools.definition.process.NodeContainer;
-import org.drools.definition.process.WorkflowProcess;
-import org.drools.runtime.process.EventListener;
-import org.drools.runtime.process.NodeInstanceContainer;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
+import org.kie.definition.process.WorkflowProcess;
+import org.kie.runtime.process.EventListener;
+import org.kie.runtime.process.NodeInstanceContainer;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ContextInstance;
 import org.jbpm.process.instance.InternalProcessRuntime;
@@ -84,8 +84,8 @@ public abstract class WorkflowProcessInstanceImpl extends ProcessInstanceImpl
 		this.nodeInstances.remove(nodeInstance);
 	}
 
-	public Collection<org.drools.runtime.process.NodeInstance> getNodeInstances() {
-		return new ArrayList<org.drools.runtime.process.NodeInstance>(getNodeInstances(false));
+	public Collection<org.kie.runtime.process.NodeInstance> getNodeInstances() {
+		return new ArrayList<org.kie.runtime.process.NodeInstance>(getNodeInstances(false));
 	}
 
 	public Collection<NodeInstance> getNodeInstances(boolean recursive) {
@@ -121,7 +121,7 @@ public abstract class WorkflowProcessInstanceImpl extends ProcessInstanceImpl
 	}
 	
 	private void addActiveNodeIds(NodeInstanceContainer container, List<String> result) {
-		for (org.drools.runtime.process.NodeInstance nodeInstance: container.getNodeInstances()) {
+		for (org.kie.runtime.process.NodeInstance nodeInstance: container.getNodeInstances()) {
 			result.add(((NodeImpl) ((NodeInstanceImpl) nodeInstance).getNode()).getUniqueId());
 			if (nodeInstance instanceof NodeInstanceContainer) {
 				addActiveNodeIds((NodeInstanceContainer) nodeInstance, result);

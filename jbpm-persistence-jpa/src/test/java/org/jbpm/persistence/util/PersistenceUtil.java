@@ -15,10 +15,28 @@
  */
 package org.jbpm.persistence.util;
 
-import static org.drools.marshalling.util.MarshallingDBUtil.initializeTestDb;
-import static org.drools.runtime.EnvironmentName.*;
-import static org.junit.Assert.*;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import org.drools.base.MapGlobalResolver;
+import org.drools.impl.EnvironmentFactory;
+import org.h2.tools.DeleteDbFiles;
+import org.h2.tools.Server;
+import org.jbpm.marshalling.util.EntityManagerFactoryProxy;
+import org.jbpm.marshalling.util.UserTransactionProxy;
+import org.junit.Assert;
+import org.kie.KnowledgeBase;
+import org.kie.KnowledgeBaseFactory;
+import org.kie.persistence.jpa.JPAKnowledgeService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -26,29 +44,10 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Properties;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.transaction.UserTransaction;
-
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseFactory;
-import org.drools.base.MapGlobalResolver;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.marshalling.util.EntityManagerFactoryProxy;
-import org.drools.marshalling.util.UserTransactionProxy;
-import org.drools.persistence.jpa.JPAKnowledgeService;
-import org.drools.runtime.Environment;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.h2.tools.DeleteDbFiles;
-import org.h2.tools.Server;
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import static org.jbpm.marshalling.util.MarshallingDBUtil.initializeTestDb;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static org.kie.runtime.EnvironmentName.*;
 
 public class PersistenceUtil {
 
@@ -58,7 +57,9 @@ public class PersistenceUtil {
     
     // Persistence and data source constants
     public static final String DROOLS_PERSISTENCE_UNIT_NAME = "org.drools.persistence.jpa";
+    public static final String DROOLS_LOCAL_PERSISTENCE_UNIT_NAME = "org.drools.persistence.jpa.local";
     public static final String JBPM_PERSISTENCE_UNIT_NAME = "org.jbpm.persistence.jpa";
+    public static final String JBPM_LOCAL_PERSISTENCE_UNIT_NAME = "org.jbpm.persistence.jpa.local";
         
     protected static final String DATASOURCE_PROPERTIES = "/datasource.properties";
     
@@ -171,15 +172,6 @@ public class PersistenceUtil {
         if( ! driverClass.startsWith("org.h2") ) { 
            TEST_MARSHALLING = false; 
         }
-    }
-    
-    /**
-     * Please use {@link #cleanUp(HashMap)} because tearDown() ends up conflicting with Junit methods at times. 
-     * @see {@link PersistenceUtil#cleanUp(HashMap)}
-     */
-    @Deprecated
-    public static void tearDown(HashMap<String, Object> context) {
-       cleanUp(context);     
     }
     
     /**
@@ -415,7 +407,7 @@ public class PersistenceUtil {
         return fieldValue;
     }
 
-    public static Environment createEnvironment(HashMap<String, Object> context) { 
+    public static Environment createEnvironment(HashMap<String, Object> context) {
         Environment env = EnvironmentFactory.newEnvironment();
         
         UserTransaction ut = (UserTransaction) context.get(TRANSACTION);
@@ -460,8 +452,8 @@ public class PersistenceUtil {
 
    }
 
-   public static StatefulKnowledgeSession createKnowledgeSessionFromKBase(KnowledgeBase kbase, HashMap<String, Object> context) { 
-       KnowledgeSessionConfiguration ksconf = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
+   public static StatefulKnowledgeSession createKnowledgeSessionFromKBase(KnowledgeBase kbase, HashMap<String, Object> context) {
+       KieSessionConfiguration ksconf = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
        StatefulKnowledgeSession knowledgeSession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, ksconf, createEnvironment(context));
        return knowledgeSession;
    }

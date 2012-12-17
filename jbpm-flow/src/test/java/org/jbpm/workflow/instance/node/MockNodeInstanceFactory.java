@@ -19,9 +19,9 @@
  */
 package org.jbpm.workflow.instance.node;
 
-import org.drools.definition.process.Node;
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.NodeInstanceContainer;
+import org.kie.definition.process.Node;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstanceContainer;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.impl.NodeInstanceFactory;
 

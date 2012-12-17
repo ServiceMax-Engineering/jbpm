@@ -16,7 +16,7 @@
 
 package org.jbpm.workflow.instance.node;
 
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstance;
 import org.drools.spi.ProcessContext;
 import org.jbpm.process.instance.impl.Action;
 import org.jbpm.workflow.core.node.ActionNode;

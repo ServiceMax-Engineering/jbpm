@@ -23,16 +23,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.drools.WorkItemHandlerNotFoundException;
-import org.drools.definition.process.Node;
+import org.kie.definition.process.Node;
 import org.drools.process.core.Work;
 import org.drools.process.core.datatype.DataType;
 import org.drools.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.process.instance.WorkItem;
 import org.drools.process.instance.WorkItemManager;
 import org.drools.process.instance.impl.WorkItemImpl;
-import org.drools.runtime.KnowledgeRuntime;
-import org.drools.runtime.process.EventListener;
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.KnowledgeRuntime;
+import org.kie.runtime.process.EventListener;
+import org.kie.runtime.process.NodeInstance;
 import org.drools.spi.ProcessContext;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.context.variable.VariableScope;
@@ -208,7 +208,7 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
     public void triggerCompleted(WorkItem workItem) {
         this.workItem = workItem;
         WorkItemNode workItemNode = getWorkItemNode();
-        if (workItemNode != null) {
+        if (workItemNode != null && workItem.getState() == WorkItem.COMPLETED) {
             for (Iterator<DataAssociation> iterator = getWorkItemNode().getOutAssociations().iterator(); iterator.hasNext(); ) {
                 DataAssociation association = iterator.next();
                 if (association.getAssignments() == null || association.getAssignments().isEmpty()) {

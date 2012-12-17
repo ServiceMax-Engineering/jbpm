@@ -19,7 +19,6 @@ package org.jbpm.task.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.drools.runtime.Environment;
 
 import org.jbpm.eventmessaging.EventKey;
 import org.jbpm.eventmessaging.EventResponseHandler;
@@ -43,6 +42,7 @@ import org.jbpm.task.service.TaskClientHandler.TaskOperationResponseHandler;
 import org.jbpm.task.service.TaskClientHandler.TaskSummaryResponseHandler;
 import org.jbpm.task.service.responsehandlers.BlockingTaskSummaryResponseHandler;
 import org.jbpm.task.utils.ContentMarshallerHelper;
+import org.kie.runtime.Environment;
 
 public class TaskClient implements AsyncTaskService{
 
@@ -902,5 +902,31 @@ public class TaskClient implements AsyncTaskService{
                                     responseHandler );
         connector.write( cmd );
     }
- 
+
+    public void getTasksByStatusByProcessId(long processInstanceId, List<Status> status, String language, TaskSummaryResponseHandler responseHandler){
+        List<Object> args = new ArrayList<Object>( 3 );
+        args.add( processInstanceId );
+        args.add( status );
+        args.add( language );
+        Command cmd = new Command( counter.getAndIncrement(),
+                                   CommandName.QueryTasksByStatusByProcessId,
+                                   args );
+        handler.addResponseHandler( cmd.getId(),
+                                    responseHandler );
+        connector.write( cmd );
+    }
+
+    public void getTasksByStatusByProcessIdByTaskName(long processInstanceId, List<Status> status, String taskName, String language, TaskSummaryResponseHandler responseHandler){
+        List<Object> args = new ArrayList<Object>( 4 );
+        args.add( processInstanceId );
+        args.add( status );
+        args.add( taskName );
+        args.add( language );
+        Command cmd = new Command( counter.getAndIncrement(),
+                                   CommandName.QueryTasksByStatusByProcessIdByTaskName,
+                                   args );
+        handler.addResponseHandler( cmd.getId(),
+                                    responseHandler );
+        connector.write( cmd );
+    }
 }

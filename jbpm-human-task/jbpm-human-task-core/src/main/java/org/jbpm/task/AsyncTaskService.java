@@ -16,13 +16,9 @@
 package org.jbpm.task;
 
 import java.util.List;
+
 import org.jbpm.eventmessaging.EventKey;
 import org.jbpm.eventmessaging.EventResponseHandler;
-import org.jbpm.task.Attachment;
-import org.jbpm.task.Comment;
-import org.jbpm.task.Content;
-import org.jbpm.task.OrganizationalEntity;
-import org.jbpm.task.Task;
 import org.jbpm.task.service.ContentData;
 import org.jbpm.task.service.FaultData;
 import org.jbpm.task.service.TaskClientHandler.AddAttachmentResponseHandler;
@@ -175,4 +171,8 @@ public interface AsyncTaskService {
     
     @Deprecated
     public void getTasksAssignedAsPotentialOwnerByStatusByGroup(String userId, List<String> groupIds, List<Status> status, String language, BlockingTaskSummaryResponseHandler responseHandler);
+
+    public void getTasksByStatusByProcessId(long processInstanceId, List<Status> status, String language, TaskSummaryResponseHandler responseHandler);
+
+    public void getTasksByStatusByProcessIdByTaskName(long processInstanceId, List<Status> status, String taskName, String language, TaskSummaryResponseHandler responseHandler);
 }

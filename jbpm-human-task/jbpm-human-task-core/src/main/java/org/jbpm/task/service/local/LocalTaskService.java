@@ -15,10 +15,7 @@
  */
 package org.jbpm.task.service.local;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.drools.runtime.Environment;
 
 import org.jbpm.eventmessaging.EventKey;
 import org.jbpm.eventmessaging.EventResponseHandler;
@@ -38,6 +35,7 @@ import org.jbpm.task.service.FaultData;
 import org.jbpm.task.service.Operation;
 import org.jbpm.task.service.TaskServiceSession;
 import org.jbpm.task.utils.ContentMarshallerHelper;
+import org.kie.runtime.Environment;
 
 /**
  *
@@ -199,6 +197,14 @@ public class LocalTaskService implements TaskService {
 
     public List<TaskSummary> getTasksAssignedAsTaskStakeholder(String userId, String language) {
         return session.getTasksAssignedAsTaskStakeholder(userId, language);
+    }
+
+    public List<TaskSummary> getTasksByStatusByProcessId(long processInstanceId, List<Status> status, String language) {
+        return session.getTasksByStatusByProcessId(processInstanceId, status, language);
+    }
+
+    public List<TaskSummary> getTasksByStatusByProcessIdByTaskName(long processInstanceId, List<Status> status, String taskName, String language) {
+        return session.getTasksByStatusByProcessIdByTaskName(processInstanceId, status, taskName, language);
     }
 
     public List<TaskSummary> getTasksOwned(String userId, String language) {

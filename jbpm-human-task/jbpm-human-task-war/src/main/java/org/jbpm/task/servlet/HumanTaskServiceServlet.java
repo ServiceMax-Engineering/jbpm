@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.drools.SystemEventListenerFactory;
+import org.kie.SystemEventListenerFactory;
 import org.jbpm.task.Group;
 import org.jbpm.task.User;
 import org.jbpm.task.UserInfo;
@@ -174,7 +174,7 @@ public class HumanTaskServiceServlet extends HttpServlet {
 	        System.out.println("Apache Mina Task service running (host " + host + " port " + port + ") ...");
 	        
         } else if ("hornetq".equalsIgnoreCase(activeConfig)) {
-        	int port = Integer.parseInt(getConfigParameter("hornetq.port", "5445"));
+        	int port = Integer.parseInt(getConfigParameter("hornetq.port", "5153"));
         	String host = getConfigParameter("hornetq.host", "localhost");
         	
         	server = new HornetQTaskServer(taskService, host, port);

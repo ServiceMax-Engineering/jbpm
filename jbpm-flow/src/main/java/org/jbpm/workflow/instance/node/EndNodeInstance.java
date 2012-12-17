@@ -17,7 +17,7 @@
 package org.jbpm.workflow.instance.node;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstance;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.workflow.core.node.EndNode;

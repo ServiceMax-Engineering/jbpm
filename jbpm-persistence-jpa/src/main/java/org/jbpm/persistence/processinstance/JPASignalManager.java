@@ -7,7 +7,7 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Query;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.runtime.EnvironmentName;
+import org.kie.runtime.EnvironmentName;
 import org.jbpm.persistence.ProcessPersistenceContext;
 import org.jbpm.persistence.ProcessPersistenceContextManager;
 import org.jbpm.process.instance.event.DefaultSignalManager;

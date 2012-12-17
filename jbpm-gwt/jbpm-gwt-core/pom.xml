@@ -27,6 +27,13 @@
     </testResources>
     
     <plugins>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.12</version>
+          <configuration>
+            <forkMode>always</forkMode>
+          </configuration>
+        </plugin>
       <plugin>
         <!--  ensure that db files are deleted before _any_ run 
               otherwise we get tests failing because of leftover db's -->
@@ -169,8 +176,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-persistence-jpa</artifactId>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-persistence-jpa</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

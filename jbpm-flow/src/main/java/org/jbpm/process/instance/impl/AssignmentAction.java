@@ -16,8 +16,7 @@
 
 package org.jbpm.process.instance.impl;
 
-import java.util.Map;
-
+import org.kie.runtime.process.ProcessContext;
 import org.drools.process.instance.WorkItem;
 import org.drools.runtime.process.ProcessContext;
 

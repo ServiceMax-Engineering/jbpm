@@ -1,5 +1,8 @@
 package org.jbpm.integration;
 
+import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
+import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -13,14 +16,13 @@ import javax.persistence.Persistence;
 
 import junit.framework.Assert;
 
-import org.drools.SystemEventListenerFactory;
-import org.drools.persistence.util.PersistenceUtil;
 import org.jbpm.task.Group;
 import org.jbpm.task.User;
 import org.jbpm.task.service.TaskService;
 import org.jbpm.task.service.TaskServiceSession;
 import org.jbpm.task.service.hornetq.HornetQTaskServer;
 import org.junit.BeforeClass;
+import org.kie.SystemEventListenerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,7 @@ public abstract class JbpmGwtCoreTestCase extends Assert {
     @BeforeClass
 	public static void setUp(){
         if( context == null ) { 
-            context = PersistenceUtil.setupWithPoolingDataSource(PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME, false);
+            context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME, false);
         }
     	if (minaServerThread==null){
     	    System.setProperty("jbpm.console.directory","./src/test/resources");
@@ -78,7 +80,7 @@ public abstract class JbpmGwtCoreTestCase extends Assert {
 		} 
 		
         // start server
-        minaServer = new HornetQTaskServer(taskService, 5445);
+        minaServer = new HornetQTaskServer(taskService, 5153);
         minaServerThread = new Thread(minaServer);
         minaServerThread.start();
         taskSession.dispose();

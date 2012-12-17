@@ -18,8 +18,8 @@ package org.jbpm.process.instance.impl;
 
 import java.io.Serializable;
 
-import org.drools.definition.process.Connection;
-import org.drools.runtime.process.WorkflowProcessInstance;
+import org.kie.definition.process.Connection;
+import org.kie.runtime.process.WorkflowProcessInstance;
 import org.drools.runtime.rule.impl.InternalAgenda;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.workflow.core.Constraint;

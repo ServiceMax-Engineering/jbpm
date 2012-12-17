@@ -26,13 +26,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.Connection;
-import org.drools.definition.process.Node;
-import org.drools.event.ProcessNodeTriggeredEventImpl;
-import org.drools.event.process.ProcessEventListener;
-import org.drools.event.process.ProcessNodeTriggeredEvent;
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.NodeInstanceContainer;
+import org.kie.definition.process.Connection;
+import org.kie.definition.process.Node;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstanceContainer;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.core.context.exclusive.ExclusiveGroup;

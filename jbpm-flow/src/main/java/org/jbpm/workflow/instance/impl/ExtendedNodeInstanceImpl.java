@@ -18,7 +18,7 @@ package org.jbpm.workflow.instance.impl;
 
 import java.util.List;
 
-import org.drools.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstance;
 import org.drools.spi.ProcessContext;
 import org.jbpm.process.core.context.exception.ExceptionScope;
 import org.jbpm.process.instance.context.exception.ExceptionScopeInstance;

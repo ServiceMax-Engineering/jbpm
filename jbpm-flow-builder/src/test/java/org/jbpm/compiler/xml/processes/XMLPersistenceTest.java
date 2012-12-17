@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.drools.definition.process.Process;
+import org.kie.definition.process.Process;
 import org.drools.process.core.ParameterDefinition;
 import org.drools.process.core.Work;
 import org.drools.process.core.datatype.impl.type.IntegerDataType;
@@ -83,7 +83,7 @@ public class XMLPersistenceTest extends JbpmTestCase {
         RuleFlowProcess process = new RuleFlowProcess() {
             private static final long serialVersionUID = 510l;
             int id = 0;
-            public void addNode(org.drools.definition.process.Node node) {
+            public void addNode(org.kie.definition.process.Node node) {
                 ((Node) node).setId(++id);
                 super.addNode(node);
             }
@@ -140,7 +140,7 @@ public class XMLPersistenceTest extends JbpmTestCase {
         RuleFlowProcess process = new RuleFlowProcess() {
             private static final long serialVersionUID = 510l;
             int id = 0;
-            public void addNode(org.drools.definition.process.Node node) {
+            public void addNode(org.kie.definition.process.Node node) {
                 ((Node) node).setId(++id);
                 super.addNode(node);
             }

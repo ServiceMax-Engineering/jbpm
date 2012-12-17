@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.definition.process.Node;
-import org.drools.runtime.process.NodeInstance;
+import org.kie.definition.process.Node;
+import org.kie.runtime.process.NodeInstance;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 
 public class MockNodeInstance extends NodeInstanceImpl {

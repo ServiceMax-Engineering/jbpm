@@ -16,13 +16,13 @@
 
 package org.jbpm.task.service.hornetq.async;
 
-import org.drools.util.ChainedProperties;
-import org.drools.util.ClassLoaderUtil;
 import org.jbpm.task.service.base.async.IcalBaseAsyncTest;
 import org.jbpm.task.service.hornetq.AsyncHornetQTaskClient;
 import org.jbpm.task.service.hornetq.HornetQTaskServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.kie.internal.utils.ChainedProperties;
+import org.kie.internal.utils.ClassLoaderUtil;
 import org.subethamail.wiser.Wiser;
 
 public class IcalHornetQAsyncTest extends IcalBaseAsyncTest {
@@ -35,7 +35,7 @@ public class IcalHornetQAsyncTest extends IcalBaseAsyncTest {
         setEmailHost(props.getProperty("host", "locahost"));
         setEmailPort(props.getProperty("port", "2345"));        
         
-        server = new HornetQTaskServer(taskService, 5445);
+        server = new HornetQTaskServer(taskService, 5153);
 		System.out.println("Waiting for the HornetQTask Server to come up");
         try {
             startTaskServerThread(server, false);
@@ -44,7 +44,7 @@ public class IcalHornetQAsyncTest extends IcalBaseAsyncTest {
         }
 
         client = new AsyncHornetQTaskClient();
-        client.connect("127.0.0.1", 5445);
+        client.connect("127.0.0.1", 5153);
 
         setWiser(new Wiser());
         getWiser().setHostname(getEmailHost());

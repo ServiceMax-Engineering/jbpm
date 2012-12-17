@@ -16,6 +16,23 @@
 
 package org.jbpm.process;
 
+import org.drools.RuleBase;
+import org.drools.SessionConfiguration;
+import org.drools.impl.EnvironmentFactory;
+import org.drools.impl.InternalKnowledgeBase;
+import org.kie.definition.KiePackage;
+import org.kie.definition.KnowledgePackage;
+import org.kie.definition.process.Process;
+import org.kie.definition.rule.Query;
+import org.kie.definition.rule.Rule;
+import org.kie.definition.type.FactType;
+import org.kie.event.kiebase.KieBaseEventListener;
+import org.kie.runtime.Environment;
+import org.kie.runtime.KieSession;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.StatelessKnowledgeSession;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,36 +40,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.drools.RuleBase;
-import org.drools.SessionConfiguration;
-import org.drools.definition.KnowledgePackage;
-import org.drools.definition.process.Process;
-import org.drools.definition.rule.Query;
-import org.drools.definition.rule.Rule;
-import org.drools.definition.type.FactType;
-import org.drools.event.knowledgebase.KnowledgeBaseEventListener;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.impl.InternalKnowledgeBase;
-import org.drools.runtime.Environment;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.StatelessKnowledgeSession;
-
 public class ProcessBaseImpl implements InternalKnowledgeBase {
     
 	private Map<String, Process> processes = new HashMap<String, Process>();
 	private Map<String, KnowledgePackage> packages = new HashMap<String, KnowledgePackage>();
-	private List<KnowledgeBaseEventListener> listeners = new ArrayList<KnowledgeBaseEventListener>();
+	private List<KieBaseEventListener> listeners = new ArrayList<KieBaseEventListener>();
 
-	public void addEventListener(KnowledgeBaseEventListener listener) {
+	public void addEventListener(KieBaseEventListener listener) {
         listeners.add(listener);
     }
 
-    public void removeEventListener(KnowledgeBaseEventListener listener) {
+    public void removeEventListener(KieBaseEventListener listener) {
         listeners.remove(listener);
     }
     
-    public Collection<KnowledgeBaseEventListener> getKnowledgeBaseEventListeners() {
+    public Collection<KieBaseEventListener> getKieBaseEventListeners() {
         return listeners;
     }
 
@@ -77,7 +79,15 @@ public class ProcessBaseImpl implements InternalKnowledgeBase {
     	return newStatefulKnowledgeSession(new SessionConfiguration(), EnvironmentFactory.newEnvironment());
     }
     
-    public StatefulKnowledgeSession newStatefulKnowledgeSession(KnowledgeSessionConfiguration conf, Environment environment) {
+    public KieSession newKieSession() {
+        return newKieSession(new SessionConfiguration(), EnvironmentFactory.newEnvironment());
+    }
+    
+    public StatefulKnowledgeSession newStatefulKnowledgeSession(KieSessionConfiguration conf, Environment environment) {
+        return new StatefulProcessSession(this, conf, environment);
+    }  
+    
+    public KieSession newKieSession(KieSessionConfiguration conf, Environment environment) {
         return new StatefulProcessSession(this, conf, environment);
     }  
     
@@ -85,11 +95,23 @@ public class ProcessBaseImpl implements InternalKnowledgeBase {
         throw new UnsupportedOperationException("Getting stateful sessions not supported");
     }
     
+    public Collection<StatefulKnowledgeSession> getKieSessions() {
+        throw new UnsupportedOperationException("Getting stateful sessions not supported");
+    }
+    
     public StatelessKnowledgeSession newStatelessKnowledgeSession() {
         throw new UnsupportedOperationException("Stateless sessions not supported");
     }
     
-    public StatelessKnowledgeSession newStatelessKnowledgeSession(KnowledgeSessionConfiguration conf) {        
+    public StatelessKnowledgeSession newStatelessKieSession() {
+        throw new UnsupportedOperationException("Stateless sessions not supported");
+    }
+    
+    public StatelessKnowledgeSession newStatelessKnowledgeSession(KieSessionConfiguration conf) {        
+        throw new UnsupportedOperationException("Stateless sessions not supported");
+    } 
+
+    public StatelessKnowledgeSession newStatelessKieSession(KieSessionConfiguration conf) {        
         throw new UnsupportedOperationException("Stateless sessions not supported");
     } 
 
@@ -144,5 +166,16 @@ public class ProcessBaseImpl implements InternalKnowledgeBase {
 	public Set<String> getEntryPointIds() {
 		throw new UnsupportedOperationException("Entry points not supported");
 	}
-    
+
+    public Collection<KiePackage> getKiePackages() {
+        return getKiePackages();
+    }
+
+    public KiePackage getKiePackage(String packageName) {
+        return getKnowledgePackage(packageName);
+    }
+
+    public void removeKiePackage(String packageName) {
+        removeKnowledgePackage(packageName);
+    }
 }

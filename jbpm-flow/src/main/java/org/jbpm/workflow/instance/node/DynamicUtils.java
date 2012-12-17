@@ -16,47 +16,47 @@
 
 package org.jbpm.workflow.instance.node;
 
-import java.util.Map;
-
 import org.drools.command.CommandService;
-import org.drools.command.Context;
 import org.drools.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.command.impl.GenericCommand;
 import org.drools.command.impl.KnowledgeCommandContext;
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.Process;
 import org.drools.event.ProcessEventSupport;
 import org.drools.impl.StatefulKnowledgeSessionImpl;
 import org.drools.process.instance.WorkItemManager;
 import org.drools.process.instance.impl.WorkItemImpl;
-import org.drools.runtime.KnowledgeRuntime;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.WorkItem;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
+import org.kie.command.Context;
+import org.kie.definition.process.Process;
+import org.kie.runtime.KieRuntime;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.WorkItem;
+
+import java.util.Map;
 
 public class DynamicUtils {
 	
 	public static void addDynamicWorkItem(
-			final DynamicNodeInstance dynamicContext, KnowledgeRuntime ksession,
+			final DynamicNodeInstance dynamicContext, KieRuntime ksession,
 			String workItemName, Map<String, Object> parameters) {
 		final WorkflowProcessInstance processInstance = dynamicContext.getProcessInstance();
 		internalAddDynamicWorkItem(processInstance, dynamicContext, ksession, workItemName, parameters);
 	}
 	
 	public static void addDynamicWorkItem(
-			final org.drools.runtime.process.ProcessInstance dynamicProcessInstance, KnowledgeRuntime ksession,
+			final org.kie.runtime.process.ProcessInstance dynamicProcessInstance, KieRuntime ksession,
 			String workItemName, Map<String, Object> parameters) {
 		internalAddDynamicWorkItem((WorkflowProcessInstance) dynamicProcessInstance, null, ksession, workItemName, parameters);
 	}
 	
 	private static void internalAddDynamicWorkItem(
 			final WorkflowProcessInstance processInstance, final DynamicNodeInstance dynamicContext, 
-			KnowledgeRuntime ksession, String workItemName, Map<String, Object> parameters) {
+			KieRuntime ksession, String workItemName, Map<String, Object> parameters) {
 		final WorkItemImpl workItem = new WorkItemImpl();
 		workItem.setState(WorkItem.ACTIVE);
 		workItem.setProcessInstanceId(processInstance.getId());
@@ -111,21 +111,21 @@ public class DynamicUtils {
 	}
 
 	public static void addDynamicSubProcess(
-			final DynamicNodeInstance dynamicContext, KnowledgeRuntime ksession,
+			final DynamicNodeInstance dynamicContext, KieRuntime ksession,
 			final String processId, final Map<String, Object> parameters) {
 		final WorkflowProcessInstance processInstance = dynamicContext.getProcessInstance();
 		internalAddDynamicSubProcess(processInstance, dynamicContext, ksession, processId, parameters);
 	}
 	
 	public static void addDynamicSubProcess(
-			final org.drools.runtime.process.ProcessInstance processInstance, KnowledgeRuntime ksession,
+			final org.kie.runtime.process.ProcessInstance processInstance, KieRuntime ksession,
 			final String processId, final Map<String, Object> parameters) {
 		internalAddDynamicSubProcess((WorkflowProcessInstance) processInstance, null, ksession, processId, parameters);
 	}
 	
 	public static void internalAddDynamicSubProcess(
 			final WorkflowProcessInstance processInstance, final DynamicNodeInstance dynamicContext,
-			KnowledgeRuntime ksession, final String processId, final Map<String, Object> parameters) {
+			KieRuntime ksession, final String processId, final Map<String, Object> parameters) {
 		final SubProcessNodeInstance subProcessNodeInstance = new SubProcessNodeInstance();
     	subProcessNodeInstance.setNodeInstanceContainer(dynamicContext == null ? processInstance : dynamicContext);
 		subProcessNodeInstance.setProcessInstance(processInstance);
@@ -155,7 +155,7 @@ public class DynamicUtils {
 	}
 	
 	private static void executeSubProcess(StatefulKnowledgeSessionImpl ksession, String processId, Map<String, Object> parameters, ProcessInstance processInstance, SubProcessNodeInstance subProcessNodeInstance) {
-		Process process = ksession.getKnowledgeBase().getProcess(processId);
+		Process process = ksession.getKieBase().getProcess(processId);
         if (process == null) {
         	System.err.println("Could not find process " + processId);
         	System.err.println("Aborting process");

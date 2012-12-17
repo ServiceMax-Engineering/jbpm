@@ -1,20 +1,25 @@
 package org.jbpm.persistence.processinstance;
 
+import org.drools.common.InternalKnowledgeRuntime;
+import org.jbpm.persistence.ProcessPersistenceContext;
+import org.jbpm.persistence.ProcessPersistenceContextManager;
+import org.jbpm.process.instance.InternalProcessRuntime;
+import org.jbpm.process.instance.ProcessInstanceManager;
+import org.jbpm.process.instance.impl.ProcessInstanceImpl;
+import org.jbpm.process.instance.timer.TimerManager;
+import org.jbpm.workflow.instance.node.StateBasedNodeInstance;
+import org.kie.definition.process.Process;
+import org.kie.runtime.EnvironmentName;
+import org.kie.runtime.process.ProcessInstance;
+import org.kie.runtime.process.WorkflowProcessInstance;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.Process;
-import org.drools.runtime.EnvironmentName;
-import org.drools.runtime.process.ProcessInstance;
-import org.jbpm.persistence.ProcessPersistenceContext;
-import org.jbpm.persistence.ProcessPersistenceContextManager;
-import org.jbpm.process.instance.ProcessInstanceManager;
-import org.jbpm.process.instance.impl.ProcessInstanceImpl;
 
 /**
  * This is an implementation of the {@link ProcessInstanceManager} that uses JPA.
@@ -82,7 +87,7 @@ public class JPAProcessInstanceManager
         processInstanceInfo.updateLastReadDate();
         processInstance = (org.jbpm.process.instance.ProcessInstance)
         	processInstanceInfo.getProcessInstance(kruntime, this.kruntime.getEnvironment());
-        Process process = kruntime.getKnowledgeBase().getProcess( processInstance.getProcessId() );
+        Process process = kruntime.getKieBase().getProcess( processInstance.getProcessId() );
         if ( process == null ) {
             throw new IllegalArgumentException( "Could not find process " + processInstance.getProcessId() );
         }
@@ -119,6 +124,28 @@ public class JPAProcessInstanceManager
     public void clearProcessInstances() {
         for (ProcessInstance processInstance: new ArrayList<ProcessInstance>(processInstances.values())) {
             ((ProcessInstanceImpl) processInstance).disconnect();
+        }
+    }
+
+    public void clearProcessInstancesState() {
+        // at this point only timers are considered as state that needs to be cleared
+        TimerManager timerManager = ((InternalProcessRuntime)kruntime.getProcessRuntime()).getTimerManager();
+        
+        for (ProcessInstance processInstance: new ArrayList<ProcessInstance>(processInstances.values())) {
+            WorkflowProcessInstance pi = ((WorkflowProcessInstance) processInstance);
+
+            
+            for (org.kie.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {
+                if (nodeInstance instanceof StateBasedNodeInstance) {
+                    List<Long> timerIds = ((StateBasedNodeInstance) nodeInstance).getTimerInstances();
+                    if (timerIds != null) {
+                        for (Long id: timerIds) {
+                            timerManager.cancelTimer(id);
+                        }
+                    }
+                }
+            }
+            
         }
     }
 

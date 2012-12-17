@@ -4,7 +4,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.List;
 
-import org.drools.definition.process.Process;
+import org.kie.definition.process.Process;
 import org.drools.xml.SemanticModules;
 import org.jbpm.JbpmTestCase;
 import org.jbpm.ruleflow.core.RuleFlowProcess;

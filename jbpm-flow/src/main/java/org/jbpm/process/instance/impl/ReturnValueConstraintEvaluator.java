@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.drools.definition.process.Connection;
+import org.kie.definition.process.Connection;
 import org.drools.spi.CompiledInvoker;
 import org.drools.spi.ProcessContext;
 import org.drools.spi.Wireable;

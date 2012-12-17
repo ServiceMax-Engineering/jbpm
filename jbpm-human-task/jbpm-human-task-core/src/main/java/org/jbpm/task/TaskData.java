@@ -16,12 +16,6 @@
 
 package org.jbpm.task;
 
-import org.jbpm.task.service.ContentData;
-import org.jbpm.task.service.FaultData;
-import org.jbpm.task.service.IllegalTaskStateException;
-import org.jbpm.task.utils.CollectionUtils;
-
-import javax.persistence.*;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,6 +24,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+
+import org.jbpm.task.service.ContentData;
+import org.jbpm.task.service.FaultData;
+import org.jbpm.task.service.IllegalTaskStateException;
+import org.jbpm.task.utils.CollectionUtils;
 
 @Embeddable
 public class TaskData
@@ -48,6 +55,8 @@ public class TaskData
 
     private Date createdOn;
 
+    private Date completedOn;
+    
     private Date activationTime;
 
     private Date expirationTime;
@@ -93,6 +102,8 @@ public class TaskData
     private List<Attachment> attachments = Collections.<Attachment>emptyList();
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        short currentFormatVersion = 1;
+        
         if (status != null) {
             out.writeBoolean(true);
             out.writeUTF(status.toString());
@@ -253,10 +264,23 @@ public class TaskData
                 out);
         CollectionUtils.writeAttachmentList(attachments,
                 out);
+        
+        // Forwards compatibility
+        out.writeShort(currentFormatVersion);
+        if( completedOn != null ) { 
+            out.writeBoolean(true);
+            out.writeLong(completedOn.getTime());
+        } 
+        else { 
+            out.writeBoolean(false);
+        }
+        
     }
 
     public void readExternal(ObjectInput in) throws IOException,
             ClassNotFoundException {
+        short currentFormatVersion = 1;
+        
         if (in.readBoolean()) {
             status = Status.valueOf(in.readUTF());
         }
@@ -351,6 +375,14 @@ public class TaskData
         
         comments = CollectionUtils.readCommentList(in);
         attachments = CollectionUtils.readAttachmentList(in);
+        
+        // Forwards compatibility
+        short version = in.readShort();
+        if( version == currentFormatVersion ) { 
+            if( in.readBoolean() ) { 
+                completedOn = new Date(in.readLong());
+            }
+        }
 
     }
 
@@ -469,7 +501,15 @@ public class TaskData
     public void setCreatedOn(Date createdOn) {
         this.createdOn = createdOn;
     }
+    
+    public Date getCompletedOn() {
+        return completedOn;
+    }
 
+    public void setCompletedOn(Date completedOn) {
+        this.completedOn = completedOn;
+    }
+    
     Date getActivationTime() {
         return activationTime;
     }
@@ -750,6 +790,7 @@ public class TaskData
         result = prime * result + CollectionUtils.hashCode(attachments);
         result = prime * result + CollectionUtils.hashCode(comments);
         result = prime * result + ((createdOn == null) ? 0 : createdOn.hashCode());
+        result = prime * result + ((completedOn == null) ? 0 : completedOn.hashCode());
         result = prime * result + ((expirationTime == null) ? 0 : expirationTime.hashCode());
         result = prime * result + (skipable ? 1231 : 1237);
         result = prime * result + ((status == null) ? 0 : status.hashCode());
@@ -781,6 +822,9 @@ public class TaskData
         if (createdOn == null) {
             if (other.createdOn != null) return false;
         } else if (createdOn.getTime() != other.createdOn.getTime()) return false;
+        if (completedOn == null) {
+            if (other.completedOn != null) return false;
+        } else if (completedOn.getTime() != other.completedOn.getTime()) return false;
         if (expirationTime == null) {
             if (other.expirationTime != null) return false;
         } else if (expirationTime.getTime() != other.expirationTime.getTime()) return false;

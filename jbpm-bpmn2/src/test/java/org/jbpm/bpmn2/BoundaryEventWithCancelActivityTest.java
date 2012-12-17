@@ -1,31 +1,28 @@
 package org.jbpm.bpmn2;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import org.drools.KnowledgeBase;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
 import org.drools.core.util.DroolsStreamUtils;
-import org.drools.definition.KnowledgePackage;
-import org.drools.event.process.DefaultProcessEventListener;
-import org.drools.event.process.ProcessNodeLeftEvent;
-import org.drools.event.process.ProcessNodeTriggeredEvent;
-import org.drools.io.ResourceFactory;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.ProcessInstance;
-import org.jbpm.bpmn2.JbpmBpmn2TestCase.TestWorkItemHandler;
 import org.jbpm.bpmn2.objects.Person;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
-import org.junit.Test;
+import org.kie.KnowledgeBase;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.definition.KnowledgePackage;
+import org.kie.io.ResourceFactory;
+import org.kie.io.ResourceType;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.process.ProcessInstance;
 
 public class BoundaryEventWithCancelActivityTest extends JbpmBpmn2TestCase {
 
+    protected void setUp() {
+        persistence = false;
+    }
+    
     public void testConditionalBoundaryEventInterrupting() throws Exception {
         KnowledgeBase kbase = readKnowledgeBaseFromDisc("BPMN2-ConditionalBoundaryEventInterrupting.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);

@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.compiler.xml.XmlDumper;
-import org.drools.definition.process.Connection;
-import org.drools.definition.process.Node;
-import org.drools.definition.process.WorkflowProcess;
+import org.kie.definition.process.Connection;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.WorkflowProcess;
 import org.drools.process.core.datatype.DataType;
 import org.drools.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.xml.Handler;
@@ -69,7 +69,7 @@ public class XmlWorkflowProcessDumper {
             xmlDump.append("version=\"" + process.getVersion() + "\" ");
         }
         if (includeMeta) {
-            Integer routerLayout = (Integer) process.getMetaData("routerLayout");
+            Integer routerLayout = (Integer) process.getMetaData().get("routerLayout");
             if (routerLayout != null && routerLayout != 0) {
                 xmlDump.append("routerLayout=\"" + routerLayout + "\" ");
             }
@@ -247,7 +247,7 @@ public class XmlWorkflowProcessDumper {
             xmlDump.append("toType=\"" + connection.getToType() + "\" ");
         }
         if (includeMeta) {
-            String bendpoints = (String) connection.getMetaData("bendpoints");
+            String bendpoints = (String) connection.getMetaData().get("bendpoints");
             if (bendpoints != null) {
                 xmlDump.append("bendpoints=\"" + bendpoints + "\" ");
             }

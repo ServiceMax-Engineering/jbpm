@@ -38,12 +38,12 @@ import org.drools.compiler.ParserError;
 import org.drools.compiler.ProcessBuilder;
 import org.drools.compiler.ProcessLoadError;
 import org.drools.compiler.ReturnValueDescr;
-import org.drools.definition.process.Connection;
-import org.drools.definition.process.Node;
-import org.drools.definition.process.NodeContainer;
-import org.drools.definition.process.Process;
-import org.drools.definition.process.WorkflowProcess;
-import org.drools.io.Resource;
+import org.kie.definition.process.Connection;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
+import org.kie.definition.process.Process;
+import org.kie.definition.process.WorkflowProcess;
+import org.kie.io.Resource;
 import org.drools.io.internal.InternalResource;
 import org.drools.lang.descr.ActionDescr;
 import org.drools.lang.descr.ProcessDescr;
@@ -112,9 +112,9 @@ public class ProcessBuilderImpl implements ProcessBuilder {
     }
 
     public void buildProcess(final Process process, Resource resource) {
-        if ( resource != null && ((InternalResource)resource).hasURL() ) {
-            ((org.jbpm.process.core.Process) process).setResource( resource );
-        }
+//        if ( resource != null && ((InternalResource)resource).hasURL() ) {
+//            ((org.jbpm.process.core.Process) process).setResource( resource );
+//        }
         boolean hasErrors = false;
         ProcessValidator validator = processValidators.get(((Process)process).getType());
         if (validator == null) {

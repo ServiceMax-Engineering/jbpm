@@ -17,10 +17,10 @@
 package org.jbpm.workflow.instance.node;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.definition.process.Connection;
-import org.drools.event.rule.ActivationCreatedEvent;
-import org.drools.runtime.process.EventListener;
-import org.drools.runtime.process.NodeInstance;
+import org.kie.definition.process.Connection;
+import org.kie.event.rule.MatchCreatedEvent;
+import org.kie.runtime.process.EventListener;
+import org.kie.runtime.process.NodeInstance;
 import org.drools.runtime.rule.impl.InternalAgenda;
 import org.drools.spi.Activation;
 import org.jbpm.workflow.core.Constraint;
@@ -95,8 +95,8 @@ public class StateNodeInstance extends CompositeContextNodeInstance implements E
 				}
 			}
 		} else if (getActivationEventType().equals(type)) {
-			if (event instanceof ActivationCreatedEvent) {
-				activationCreated((ActivationCreatedEvent) event);
+			if (event instanceof MatchCreatedEvent) {
+				activationCreated((MatchCreatedEvent) event);
 			}
 		} else {
 			super.signalEvent(type, event);
@@ -132,15 +132,15 @@ public class StateNodeInstance extends CompositeContextNodeInstance implements E
     		+ "-" + getStateNode().getUniqueId();
     }
     
-    public void activationCreated(ActivationCreatedEvent event) {
+    public void activationCreated(MatchCreatedEvent event) {
         Connection selected = null;
         for (Connection connection: getNode().getOutgoingConnections(NodeImpl.CONNECTION_DEFAULT_TYPE)) {
             Constraint constraint = getStateNode().getConstraint(connection);
             if (constraint != null) {
 	            String constraintName =  getActivationEventType() + "-"
 	            	+ connection.getTo().getId() + "-" + connection.getToType();
-	            if (constraintName.equals(event.getActivation().getRule().getName())
-	            		&& checkProcessInstance((Activation) event.getActivation())) {
+	            if (constraintName.equals(event.getMatch().getRule().getName())
+	            		&& checkProcessInstance((Activation) event.getMatch())) {
 	            	selected = connection;
 	            }
             }

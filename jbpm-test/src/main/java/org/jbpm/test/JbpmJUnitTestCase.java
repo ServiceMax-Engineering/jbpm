@@ -1,69 +1,71 @@
 package org.jbpm.test;
 
-import static org.jbpm.test.JBPMHelper.createEnvironment;
-import static org.jbpm.test.JBPMHelper.txStateName;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.Assert;
+import org.drools.ClockType;
+import org.drools.SessionConfiguration;
+import org.drools.audit.WorkingMemoryInMemoryLogger;
+import org.drools.audit.event.LogEvent;
+import org.drools.audit.event.RuleFlowNodeLogEvent;
+import org.drools.impl.EnvironmentFactory;
+import org.h2.tools.DeleteDbFiles;
+import org.h2.tools.Server;
+import org.jbpm.process.audit.JPAProcessInstanceDbLog;
+import org.jbpm.process.audit.JPAWorkingMemoryDbLogger;
+import org.jbpm.process.audit.NodeInstanceLog;
+import org.jbpm.process.instance.event.DefaultSignalManagerFactory;
+import org.jbpm.process.instance.impl.DefaultProcessInstanceManagerFactory;
+import org.jbpm.process.workitem.wsht.LocalHTWorkItemHandler;
+import org.jbpm.task.TaskService;
+import org.jbpm.task.identity.DefaultUserGroupCallbackImpl;
+import org.jbpm.task.identity.UserGroupCallbackManager;
+import org.jbpm.task.service.local.LocalTaskService;
+import org.jbpm.task.utils.OnErrorAction;
+import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+import org.kie.KnowledgeBase;
+import org.kie.KnowledgeBaseFactory;
+import org.kie.SystemEventListenerFactory;
+import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderError;
+import org.kie.builder.KnowledgeBuilderFactory;
+import org.kie.definition.process.Node;
+import org.kie.io.ResourceFactory;
+import org.kie.io.ResourceType;
+import org.kie.persistence.jpa.JPAKnowledgeService;
+import org.kie.runtime.Environment;
+import org.kie.runtime.EnvironmentName;
+import org.kie.runtime.KieSessionConfiguration;
+import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.runtime.conf.ClockTypeOption;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstanceContainer;
+import org.kie.runtime.process.ProcessInstance;
+import org.kie.runtime.process.WorkItem;
+import org.kie.runtime.process.WorkItemHandler;
+import org.kie.runtime.process.WorkItemManager;
+import org.kie.runtime.process.WorkflowProcessInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
-import junit.framework.Assert;
-
-import org.drools.ClockType;
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseFactory;
-import org.drools.SystemEventListenerFactory;
-import org.drools.audit.WorkingMemoryInMemoryLogger;
-import org.drools.audit.event.LogEvent;
-import org.drools.audit.event.RuleFlowNodeLogEvent;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderError;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
-import org.drools.definition.process.Node;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.io.ResourceFactory;
-import org.drools.persistence.jpa.JPAKnowledgeService;
-import org.drools.runtime.Environment;
-import org.drools.runtime.EnvironmentName;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.conf.ClockTypeOption;
-import org.drools.runtime.process.NodeInstance;
-import org.drools.runtime.process.NodeInstanceContainer;
-import org.drools.runtime.process.ProcessInstance;
-import org.drools.runtime.process.WorkItem;
-import org.drools.runtime.process.WorkItemHandler;
-import org.drools.runtime.process.WorkItemManager;
-import org.drools.runtime.process.WorkflowProcessInstance;
-import org.h2.tools.DeleteDbFiles;
-import org.h2.tools.Server;
-import org.jbpm.process.audit.JPAProcessInstanceDbLog;
-import org.jbpm.process.audit.JPAWorkingMemoryDbLogger;
-import org.jbpm.process.audit.NodeInstanceLog;
-import org.jbpm.process.workitem.wsht.LocalHTWorkItemHandler;
-import org.jbpm.task.TaskService;
-import org.jbpm.task.identity.DefaultUserGroupCallbackImpl;
-import org.jbpm.task.identity.UserGroupCallbackManager;
-import org.jbpm.task.service.local.LocalTaskService;
-import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import static org.jbpm.test.JBPMHelper.createEnvironment;
+import static org.jbpm.test.JBPMHelper.txStateName;
 
 /**
  * Base test case for the jbpm-bpmn2 module. 
@@ -185,7 +187,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
             if (kbuilder.getErrors().size() > 0) {
                 boolean errors = false;
                 for (KnowledgeBuilderError error : kbuilder.getErrors()) {
-                    testLogger.warn(error.toString());
+                    testLogger.error(error.toString());
                     errors = true;
                 }
                 assertFalse("Could not build knowldge base.", errors);
@@ -251,7 +253,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
 	
 	protected StatefulKnowledgeSession createKnowledgeSession(KnowledgeBase kbase) {
 	    StatefulKnowledgeSession result;
-        final KnowledgeSessionConfiguration conf = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
+        KieSessionConfiguration conf = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
 	    // Do NOT use the Pseudo clock yet.. 
         // conf.setOption( ClockTypeOption.get( ClockType.PSEUDO_CLOCK.getId() ) );
         
@@ -265,6 +267,12 @@ public abstract class JbpmJUnitTestCase extends Assert {
 		} else {
 		    Environment env = EnvironmentFactory.newEnvironment();
 		    env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
+		    
+		    Properties defaultProps = new Properties();
+		    defaultProps.setProperty("drools.processSignalManagerFactory", DefaultSignalManagerFactory.class.getName());
+		    defaultProps.setProperty("drools.processInstanceManagerFactory", DefaultProcessInstanceManagerFactory.class.getName());
+		    conf = new SessionConfiguration(defaultProps);
+		    
 			result = kbase.newStatefulKnowledgeSession(conf, env);
 			logger = new WorkingMemoryInMemoryLogger(result);
 		}
@@ -280,7 +288,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
 	protected StatefulKnowledgeSession restoreSession(StatefulKnowledgeSession ksession, boolean noCache) throws SystemException {
 		if (sessionPersistence) {
 			int id = ksession.getId();
-			KnowledgeBase kbase = ksession.getKnowledgeBase();
+			KnowledgeBase kbase = ksession.getKieBase();
 			Transaction tx = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
 			if( tx != null ) { 
 			    int txStatus = tx.getStatus();
@@ -299,7 +307,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
 				env = ksession.getEnvironment();
 				taskService = null;
 			}
-			KnowledgeSessionConfiguration config = ksession.getSessionConfiguration();
+			KieSessionConfiguration config = ksession.getSessionConfiguration();
 			ksession.dispose();
 			
 			// reload knowledge session 
@@ -315,7 +323,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
 	public StatefulKnowledgeSession loadSession(int id, String... process) { 
 	    KnowledgeBase kbase = createKnowledgeBase(process);
 	       
-        final KnowledgeSessionConfiguration config = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
+        final KieSessionConfiguration config = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
         config.setOption( ClockTypeOption.get( ClockType.PSEUDO_CLOCK.getId() ) );
         
 	    StatefulKnowledgeSession ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(id, kbase, config, createEnvironment(emf));
@@ -556,7 +564,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
     	}
     	LocalTaskService localTaskService = new LocalTaskService(taskService);
 		LocalHTWorkItemHandler humanTaskHandler = new LocalHTWorkItemHandler(
-			localTaskService, ksession);
+			localTaskService, ksession, OnErrorAction.RETHROW);
 		humanTaskHandler.connect();
 		ksession.getWorkItemManager().registerWorkItemHandler("Human Task", humanTaskHandler);
 		return localTaskService;
