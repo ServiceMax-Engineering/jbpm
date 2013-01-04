@@ -15,10 +15,10 @@
  */
 package org.droolsjbpm.services.test;
 
-import java.util.ArrayList;
+import static org.junit.Assert.assertEquals;
+
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,8 +26,6 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 import org.droolsjbpm.services.api.Domain;
-import org.jbpm.shared.services.api.FileException;
-import org.jbpm.shared.services.api.FileService;
 import org.droolsjbpm.services.api.KnowledgeAdminDataService;
 import org.droolsjbpm.services.api.KnowledgeDataService;
 import org.droolsjbpm.services.api.KnowledgeDomainService;
@@ -39,10 +37,10 @@ import org.droolsjbpm.services.impl.SimpleDomainImpl;
 import org.droolsjbpm.services.impl.example.NotificationWorkItemHandler;
 import org.droolsjbpm.services.impl.example.TriggerTestsWorkItemHandler;
 import org.droolsjbpm.services.impl.model.RuleNotificationInstanceDesc;
+import org.jbpm.shared.services.api.FileException;
+import org.jbpm.shared.services.api.FileService;
 import org.jbpm.task.api.TaskServiceEntryPoint;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 import org.kie.commons.java.nio.file.Path;
 import org.kie.runtime.process.ProcessInstance;
 import org.kie.runtime.process.WorkItem;
@@ -73,11 +71,9 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
     @Inject
     private RulesNotificationService rulesNotificationService;
 
-    @Test
-    public void testDummy() {
-    }
     
-    public void FIXMEtestReleaseProcessWithRules() throws FileException, InterruptedException {
+    @Test
+    public void testReleaseProcessWithRules() throws FileException, InterruptedException {
         Domain myDomain = new SimpleDomainImpl("myDomain");
         sessionManager.setDomain(myDomain);
 
@@ -149,18 +145,13 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
 
         assertEquals(ProcessInstance.STATE_ABORTED, thirdPI.getState());
 
-        //LET'S SLEEP FOR 20 SECONDS AND FIRE ALL THE RULES EACH SECOND
+        
 
-        for (int i = 0; i < 20; i++) {
-            Thread.sleep(1000);
-            System.out.println("Waiting...");
-
-        }
         Collection<RuleNotificationInstanceDesc> allNotificationInstance = rulesNotificationService.getAllNotificationInstance();
-        assertEquals(4, allNotificationInstance.size());
+        assertEquals(1, allNotificationInstance.size());
         
         Collection<RuleNotificationInstanceDesc> notificationsBySessionId = rulesNotificationService.getAllNotificationInstanceBySessionId(0);
-        assertEquals(4, notificationsBySessionId.size());
+        assertEquals(1, notificationsBySessionId.size());
 
 
 

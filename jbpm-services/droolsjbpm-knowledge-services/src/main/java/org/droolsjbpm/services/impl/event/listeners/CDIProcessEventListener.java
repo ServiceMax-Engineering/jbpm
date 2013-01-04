@@ -86,7 +86,6 @@ public class CDIProcessEventListener implements ProcessEventListener {
     }
 
     public void beforeNodeTriggered(ProcessNodeTriggeredEvent pnte) {
-        //do nothing
         int sessionId = ((StatefulKnowledgeSession)pnte.getKieRuntime()).getId();
         long processInstanceId = pnte.getProcessInstance().getId();
         NodeInstance nodeInstance = pnte.getNodeInstance();

@@ -26,7 +26,10 @@ import javax.inject.Named;
 
 import org.droolsjbpm.services.api.Domain;
 import org.droolsjbpm.services.api.SessionManager;
+import org.droolsjbpm.services.api.WorkItemHandlerProducer;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
+import org.droolsjbpm.services.impl.event.listeners.BAM;
+import org.droolsjbpm.services.impl.event.listeners.CDIBAMProcessEventListener;
 import org.droolsjbpm.services.impl.event.listeners.CDIKbaseEventListener;
 import org.droolsjbpm.services.impl.event.listeners.CDIProcessEventListener;
 import org.droolsjbpm.services.impl.event.listeners.CDIRuleAwareProcessEventListener;
@@ -61,13 +64,18 @@ public class CDISessionManager implements SessionManager {
     @Inject
     private CDIProcessEventListener processListener;
     @Inject
+    @BAM
+    private CDIBAMProcessEventListener bamProcessListener;
+    @Inject
     private CDIRuleAwareProcessEventListener processFactsListener;
     @Inject
     private CDIKbaseEventListener kbaseEventListener;
     @Inject
     private BPMN2DataService bpmn2Service;
     @Inject
-    @Named("ioStrategy")
+    private WorkItemHandlerProducer workItemHandlerProducer;
+    @Inject
+    @Named("fileServiceIOStrategy")
     private IOService ioService;
     private Domain domain;
     // Ksession Name  / Ksession
@@ -167,9 +175,11 @@ public class CDISessionManager implements SessionManager {
             
             kbase.addEventListener(kbaseEventListener);
             kbase.addKnowledgePackages(kbuilder.getKnowledgePackages());
-            StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
+            StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();            
 
             ksession.addEventListener(processListener);
+            
+            ksession.addEventListener(bamProcessListener);
 
             KnowledgeRuntimeLoggerFactory.newConsoleLogger(ksession);
 
@@ -178,7 +188,14 @@ public class CDISessionManager implements SessionManager {
             // Register the same handler for all the ksessions
             ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
             // Register the configured handlers
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("ksession", ksession);
+            Map<String, WorkItemHandler> handlers = workItemHandlerProducer.getWorkItemHandlers(domain.getKsessionRepositoryRoot().get(session), params);
             StatefulKnowledgeSessionDelegate statefulKnowledgeSessionDelegate = new StatefulKnowledgeSessionDelegate(session, ksession, this);
+            
+            for (Map.Entry<String, WorkItemHandler> wihandler : handlers.entrySet()) {
+                ksession.getWorkItemManager().registerWorkItemHandler(wihandler.getKey(), wihandler.getValue());
+            }
 
             ksessions.put(session, statefulKnowledgeSessionDelegate);
             ksessionIds.put(session, ksession.getId());

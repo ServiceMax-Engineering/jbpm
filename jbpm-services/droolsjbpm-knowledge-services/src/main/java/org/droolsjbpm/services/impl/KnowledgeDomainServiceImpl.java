@@ -64,7 +64,7 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
     @Inject
     private FileService fs;
     @Inject
-    @Named("ioStrategy")
+    @Named("fileServiceIOStrategy")
     private IOService ioService;
     
     @Inject
@@ -95,6 +95,7 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
 
     @PostConstruct
     public void createDomain() {
+        // TODO: Do this based on configuration and use the new CDI approach
         sessionManager.setDomain(domain);
 
         Iterable<Path> releaseProcessesFiles = null;
@@ -107,24 +108,26 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
         } catch (FileException ex) {
             Logger.getLogger(KnowledgeDomainServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
+        String kSessionName = "releaseSession";
+        domain.addKsessionRepositoryRoot(kSessionName, "examples/release/");
         for (Path p : releaseProcessesFiles) {
-            String kSessionName = "releaseSession";
+            
             domain.addProcessDefinitionToKsession(kSessionName, p);
             System.out.println(" >>> Adding Path to ReleaseSession- > "+p.toString());
             // TODO automate this in another service
             String processString = new String( ioService.readAllBytes( p ) );
             domain.addProcessBPMN2ContentToKsession(kSessionName, bpmn2Service.findProcessId( processString ), processString );
         }
-        for (Path p : releaseRulesFiles) {
-            String kSessionName = "releaseSession";
+        kSessionName = "releaseSession";
+        for (Path p : releaseRulesFiles) {            
             System.out.println(" >>> Adding Path to ReleaseSession- > "+p.toString());
             // TODO automate this in another service
             domain.addRulesDefinitionToKsession(kSessionName, p);
         }
         
-        
+        kSessionName = "generalSession";
+        domain.addKsessionRepositoryRoot(kSessionName, "examples/general/");
         for (Path p : exampleProcessesFiles) {
-            String kSessionName = "generalSession";
             domain.addProcessDefinitionToKsession("generalSession", p);
             System.out.println(" >>> Adding Path to GeneralSession - > "+p.toString());
             // TODO automate this in another service
@@ -135,6 +138,8 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
         
 
         sessionManager.buildSessions(true);
+        
+        
 
         sessionManager.addKsessionHandler("releaseSession", "MoveToStagingArea",moveFilesWIHandler);
         sessionManager.addKsessionHandler("releaseSession", "MoveToTest", moveFilesWIHandler);
@@ -194,26 +199,6 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
         }
     }
     
-     private class MockTestWorkItemHandler implements WorkItemHandler {
-
-        @Override
-        public void executeWorkItem(WorkItem wi, WorkItemManager wim) {
-            for(String k : wi.getParameters().keySet()){
-                System.out.println("Key = "+ k + " - value = "+wi.getParameter(k));
-            }
-            Map<String, Object> params = new HashMap<String, Object>();
-            params.put("out_test_successful", "true");
-            params.put("out_test_report", "All Test were SUCCESSFULY executed!");
-            System.out.println("######### Test Output");
-            System.out.println(" out_test_successful = " + params.get("out_test_successful"));
-            System.out.println(" out_test_report = " + params.get("out_test_report"));
-            System.out.println("#####################");
-            wim.completeWorkItem(wi.getId(), params);
-        }
-
-        @Override
-        public void abortWorkItem(WorkItem wi, WorkItemManager wim) {
-        }
-    }
+    
     
 }
