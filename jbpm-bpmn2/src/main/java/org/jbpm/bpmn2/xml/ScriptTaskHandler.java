@@ -77,7 +77,7 @@ public class ScriptTaskHandler extends AbstractNodeHandler {
 	    throw new IllegalArgumentException("Writing out should be handled by action node handler");
 	}
 	
-    public Object end(final String uri, final String localName,
+/*    public Object end(final String uri, final String localName,
             final ExtensibleXmlParser parser) throws SAXException {
 		final Element element = parser.endElementBuilder();
 		Node node = (Node) parser.getCurrent();
@@ -165,6 +165,7 @@ public class ScriptTaskHandler extends AbstractNodeHandler {
 		nodeContainer.addNode(node);
 		return node;
 	}
+*/
 
 
 }

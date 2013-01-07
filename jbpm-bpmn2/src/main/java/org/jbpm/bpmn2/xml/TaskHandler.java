@@ -222,7 +222,7 @@ public class TaskHandler extends AbstractNodeHandler {
 				CompositeNode composite = new CompositeContextNode();
 				composite.setId(node.getId());
 				composite.setName(node.getName());
-				composite.setMetaData("UniqueId", node.getMetaData("UniqueId"));
+				composite.setMetaData("UniqueId", node.getMetaData().get("UniqueId"));
 
 				StartNode start = new StartNode();
 				composite.addNode(start);
