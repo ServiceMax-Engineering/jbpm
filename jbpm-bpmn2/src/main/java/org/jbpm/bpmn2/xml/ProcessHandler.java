@@ -244,7 +244,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 	    }
 
     public Class<?> generateNodeFor() {
-        return org.drools.definition.process.Process.class;
+		return RuleFlowProcess.class;
     }
 
     public static void linkConnections(NodeContainer nodeContainer,

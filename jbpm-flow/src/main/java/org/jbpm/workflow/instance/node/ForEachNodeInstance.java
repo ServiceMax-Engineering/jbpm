@@ -127,7 +127,7 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
             return (ForEachSplitNode) getNode();
         }
 
-        public void internalTrigger(org.drools.runtime.process.NodeInstance fromm, String type) {
+        public void internalTrigger(org.kie.runtime.process.NodeInstance fromm, String type) {
         	Map<String, Object> m = new HashMap<String, Object>();
             for (Iterator<DataAssociation> iterator = getForEachNode().getInMapping().iterator(); iterator.hasNext(); ) {
             	DataAssociation association = iterator.next();

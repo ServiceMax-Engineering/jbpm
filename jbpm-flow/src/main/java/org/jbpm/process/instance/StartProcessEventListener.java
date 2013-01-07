@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.runtime.process.EventListener;
+import org.kie.runtime.process.EventListener;
 import org.drools.spi.ProcessContext;
 import org.jbpm.process.core.event.EventFilter;
 import org.jbpm.process.instance.impl.AssignmentAction;

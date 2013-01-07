@@ -253,7 +253,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
                             StartProcessEventListener listener = new StartProcessEventListener( process.getId(),
                                                                                                 filters,
                                                                                                 trigger.getInMappings(),
-                                                                                                (List<AssignmentAction>) startNode.getMetaData(AssignmentAction.ASSIGNMENT_ACTION),
+                                                                                                (List<AssignmentAction>) startNode.getMetaData().get(AssignmentAction.ASSIGNMENT_ACTION),
                                                                                                 this);
                             signalManager.addEventListener( type,
                                                             listener );

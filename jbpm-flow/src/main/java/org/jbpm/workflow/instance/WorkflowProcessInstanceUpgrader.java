@@ -23,6 +23,7 @@ import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.kie.definition.process.WorkflowProcess;
 import org.kie.runtime.KieRuntime;
 import org.kie.runtime.process.NodeInstance;
+import org.jbpm.process.instance.ProcessInstance;
 
 import java.util.HashMap;
 import java.util.Map;

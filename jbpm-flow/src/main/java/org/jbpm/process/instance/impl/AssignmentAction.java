@@ -18,7 +18,7 @@ package org.jbpm.process.instance.impl;
 
 import org.kie.runtime.process.ProcessContext;
 import org.drools.process.instance.WorkItem;
-import org.drools.runtime.process.ProcessContext;
+import java.util.Map;
 
 public interface AssignmentAction {
     

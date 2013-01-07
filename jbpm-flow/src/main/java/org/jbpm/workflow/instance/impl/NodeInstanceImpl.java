@@ -46,6 +46,10 @@ import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.WorkflowRuntimeException;
 import org.jbpm.workflow.instance.node.CompositeNodeInstance;
 
+import org.kie.event.process.ProcessEventListener;
+import org.kie.event.process.ProcessNodeTriggeredEvent;
+import org.drools.event.ProcessNodeTriggeredEventImpl;
+
 /**
  * Default implementation of a RuleFlow node instance.
  * 
