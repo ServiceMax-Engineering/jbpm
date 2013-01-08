@@ -135,6 +135,7 @@
           </execution>
         </executions>
         <configuration>
+<manifestLocation>META-INF</manifestLocation>
           <instructions>
             <_removeheaders>Ignore-Package</_removeheaders>
             <Bundle-SymbolicName>org.jbpm.flow-persistence-jpa;singleton:=true</Bundle-SymbolicName>

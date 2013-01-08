@@ -132,6 +132,7 @@
           </execution>
         </executions>
         <configuration>
+<manifestLocation>META-INF</manifestLocation>
           <instructions>
             <Bundle-SymbolicName>org.jbpm.bpmn2;singleton:=true</Bundle-SymbolicName>
             <_removeheaders>Ignore-Package</_removeheaders>
