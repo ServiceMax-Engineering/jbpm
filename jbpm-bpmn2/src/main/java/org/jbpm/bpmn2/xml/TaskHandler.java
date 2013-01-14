@@ -367,10 +367,11 @@ public class TaskHandler extends AbstractNodeHandler {
                 }
                 
             }
-            else if("loopDataInput".equals(nodeName)) {
+            else if("loopDataInputRef".equals(nodeName)) {
                 String inputVariable = subNode.getFirstChild().getTextContent();
                 if (inputVariable != null && inputVariable.trim().length() > 0) {
-                	forEachNode.setCollectionExpression(dataInputs.get(inputVariable));
+//                	forEachNode.setCollectionExpression(dataInputs.get(inputVariable));
+                	forEachNode.setCollectionExpression(inputVariable);
                 }
             }
             subNode = subNode.getNextSibling();

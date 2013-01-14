@@ -128,79 +128,8 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
         }
 
         public void internalTrigger(org.kie.runtime.process.NodeInstance fromm, String type) {
-        	Map<String, Object> m = new HashMap<String, Object>();
-            for (Iterator<DataAssociation> iterator = getForEachNode().getInMapping().iterator(); iterator.hasNext(); ) {
-            	DataAssociation association = iterator.next();
-            	String source = association.getSources().get(0);
-            	String target = association.getTarget();
-            	
-    			if(source.equals(getForEachNode().getVariableName())) {
-    				continue;
-    			}
-
-            	try {
-            		for(Iterator<Assignment> it = association.getAssignments().iterator(); it.hasNext(); ) {
-            			Assignment assignment = it.next();
-            			String from = assignment.getFrom();
-            			String to = assignment.getTo();
-
-            			XPathFactory factory = XPathFactory.newInstance();
-            			XPath xpathFrom = factory.newXPath();
-
-            			XPathExpression exprFrom 
-            			= xpathFrom.compile(from);
-
-            			XPath xpathTo = factory.newXPath();
-
-            			XPathExpression exprTo 
-            			= xpathTo.compile(to);
-
-            			VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-            			resolveContextInstance(VariableScope.VARIABLE_SCOPE, source);
-            			
-            			Element targetElem =  null;
-
-            			if( m.get(target) == null) {
-            				DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            				Document doc = builder.newDocument();
-            				targetElem = doc.createElement(target);
-            				m.put(target, targetElem);
-            			}
-
-            			targetElem = (Element) m.get(target);
-            			XPATHExpressionModifier modifier = new XPATHExpressionModifier();
-            			modifier.insertMissingData(to, targetElem);
-
-            			targetElem = ((Element)  exprTo.evaluate(m.get(target), XPathConstants.NODE));
-
-            			NodeList nl = (NodeList)  exprFrom.evaluate(variableScopeInstance.getVariable(source), XPathConstants.NODESET);
-
-            			for( int i =0 ; i<nl.getLength(); i++) {
-            				org.w3c.dom.Node n  = targetElem.getOwnerDocument().importNode(nl.item(i), true);
-            				if(n instanceof Attr) {
-            					targetElem.setAttributeNode((Attr) n);
-            				}
-            				else {
-            					targetElem.appendChild(n);
-            				}
-            			}
-
-            		}
-            	}
-            	catch(Exception e) {
-            		e.printStackTrace();
-            		throw new RuntimeException(e);
-            	}
-            }
-
             String collectionExpression = getForEachNode().getCollectionExpression();
-            Collection<?> collection = null;
-            if(m.containsKey(collectionExpression)) {
-            	collection = evaluateCollectionExpression((Element) m.get(collectionExpression));
-            }
-            else {
-            	collection = evaluateCollectionExpression(collectionExpression);
-            }
+            Collection<?> collection = evaluateCollectionExpression(collectionExpression);
             ((NodeInstanceContainer) getNodeInstanceContainer()).removeNodeInstance(this);
             if (collection.isEmpty()) {
             	ForEachNodeInstance.this.triggerCompleted(org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, true);
@@ -228,9 +157,11 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
             // TODO: should evaluate this expression using MVEL
         	Object collection = null;
             VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-                resolveContextInstance(VariableScope.VARIABLE_SCOPE, collectionExpression);
+                resolveContextInstance(VariableScope.VARIABLE_SCOPE, collectionExpression.substring(0, collectionExpression.indexOf(".")));
             if (variableScopeInstance != null) {
-            	collection = variableScopeInstance.getVariable(collectionExpression);
+            	collection = ((Element) variableScopeInstance.getVariable(collectionExpression.substring(0, collectionExpression.indexOf(".")))).getAttribute(collectionExpression.substring(collectionExpression.indexOf(".")+1));
+            	String c = (String) collection;
+            	collection = (c.substring(1, c.length()-1)).split(",");
             } else {
             	try {
             		collection = MVEL.eval(collectionExpression, new NodeInstanceResolverFactory(this));
