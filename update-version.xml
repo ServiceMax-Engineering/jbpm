@@ -12,6 +12,7 @@
       <fileset dir="." includes="pom.xml, 
                                  jbpm-*/pom.xml, 
                                  jbpm-gwt/**/pom.xml,
+                                 jbpm-services/**/pom.xml,
                                  jbpm-human-task/**/pom.xml"/>
     </replaceregexp>
   	<replaceregexp match="&lt;jbpm.version&gt;${current}&lt;/jbpm.version&gt;"
