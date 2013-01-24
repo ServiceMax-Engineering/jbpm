@@ -47,6 +47,7 @@ public class ForEachNode extends CompositeNode {
     private boolean waitForCompletion = true;
 
     public ForEachNode() {
+        setMetaData("hidden", true);
         // Split
         ForEachSplitNode split = new ForEachSplitNode();
         split.setName("ForEachSplit");
@@ -82,6 +83,7 @@ public class ForEachNode extends CompositeNode {
     }
     
 	public ForEachNode(Node node) {
+        setMetaData("hidden", true);
         // Split
         ForEachSplitNode split = new ForEachSplitNode();
         split.setName("ForEachSplit");
