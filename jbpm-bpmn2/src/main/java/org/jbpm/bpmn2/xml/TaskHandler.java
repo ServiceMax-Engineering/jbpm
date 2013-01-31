@@ -316,7 +316,10 @@ public class TaskHandler extends AbstractNodeHandler {
 
 	@SuppressWarnings("unchecked")
 	protected void readMultiInstanceLoopCharacteristics(org.w3c.dom.Node xmlNode, ForEachNode forEachNode, ExtensibleXmlParser parser) {
-	    
+	    String isParallel = xmlNode.getAttributes().getNamedItem("isParallel").getNodeValue();
+	    if(isParallel != null) {
+	    	forEachNode.setParallel(isParallel.equals("true"));
+	    }
 	    // sourceRef
         org.w3c.dom.Node subNode = xmlNode.getFirstChild();
         while (subNode != null) {

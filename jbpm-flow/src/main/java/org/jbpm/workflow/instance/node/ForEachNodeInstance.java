@@ -144,8 +144,14 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
             		variableScopeInstance.setVariable(variableName, o);
             		nodeInstances.add(nodeInstance);
             	}
+            	if(getForEachNode().isParallel()) {
             	for (NodeInstance nodeInstance: nodeInstances) {
             		((org.jbpm.workflow.instance.NodeInstance) nodeInstance).trigger(this, getForEachSplitNode().getTo().getToType());
+            	}
+            	} else {
+            		if(!nodeInstances.isEmpty()) {
+            			((org.jbpm.workflow.instance.NodeInstance) nodeInstances.get(0)).trigger(this, getForEachSplitNode().getTo().getToType());
+            		}
             	}
 	            if (!getForEachNode().isWaitForCompletion()) {
 	            	ForEachNodeInstance.this.triggerCompleted(org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, false);
@@ -240,6 +246,15 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
 	                	}
                 	}
                 }
+            } else if(!getForEachNode().isParallel()) {
+            	org.jbpm.workflow.instance.NodeInstance _instance = null;
+            	for( org.kie.runtime.process.NodeInstance nodeInstance : getNodeInstanceContainer().getNodeInstances()) {
+            		if(nodeInstance != this) {
+            			_instance = (org.jbpm.workflow.instance.NodeInstance) nodeInstance;
+            			break;
+            		}
+            	}
+            	_instance.trigger(this, org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
             }
         }
         

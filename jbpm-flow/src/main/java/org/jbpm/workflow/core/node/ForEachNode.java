@@ -45,6 +45,7 @@ public class ForEachNode extends CompositeNode {
     private String collectionExpression;
     private String outputCollectionExpression;
     private boolean waitForCompletion = true;
+    private boolean isParallel = true;
 
     public ForEachNode() {
         setMetaData("hidden", true);
@@ -289,7 +290,15 @@ public class ForEachNode extends CompositeNode {
         this.waitForCompletion = waitForCompletion;
     }
 
-   public class ForEachSplitNode extends ExtendedNodeImpl {
+   public boolean isParallel() {
+		return isParallel;
+	}
+
+	public void setParallel(boolean isParallel) {
+		this.isParallel = isParallel;
+	}
+
+public class ForEachSplitNode extends ExtendedNodeImpl {
         private static final long serialVersionUID = 510l;
     }
 
