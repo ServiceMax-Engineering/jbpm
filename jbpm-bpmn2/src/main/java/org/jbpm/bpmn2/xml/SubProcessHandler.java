@@ -333,6 +333,13 @@ public class SubProcessHandler extends AbstractNodeHandler {
 				if (variableName != null && variableName.trim().length() > 0) {
 					forEachNode.setVariable(variableName, dataType);
 				}
+			} else if ("loopDataInputRef".equals(nodeName)) {
+				String inputVariable = subNode.getFirstChild().getTextContent();
+				if (inputVariable != null && inputVariable.trim().length() > 0) {
+//					forEachNode.setCollectionExpression(dataInputs
+//							.get(inputVariable));
+					forEachNode.setCollectionExpression(inputVariable);
+				}
 			}
 			subNode = subNode.getNextSibling();
 		}
