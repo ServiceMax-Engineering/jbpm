@@ -117,8 +117,7 @@ public class SimpleDomainImpl implements Domain{
         if(this.ksessionProcessDefinitions.get(ksession) == null){
             this.ksessionProcessDefinitions.put(ksession, new ArrayList<Path>());
         }
-        this.ksessionProcessDefinitions.get(ksession).add(path);
-        
+        this.ksessionProcessDefinitions.get(ksession).add(path);   
     }
     
     @Override
@@ -178,6 +177,15 @@ public class SimpleDomainImpl implements Domain{
 
     public void setKsessionRepositoryRoot(Map<String, String> ksessionRepositoryRoot) {
         this.ksessionRepositoryRoot = ksessionRepositoryRoot;
+    }
+
+    @Override
+    public void clear() {
+      this.assetsDefs.clear();
+      this.ksessionProcessDefinitions.clear();
+      this.ksessionRulesDefinitions.clear();
+      this.processes.clear();
+      this.ksessionRepositoryRoot.clear();
     }
 
  

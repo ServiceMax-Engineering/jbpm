@@ -32,12 +32,14 @@ import org.droolsjbpm.services.impl.model.NodeInstanceDesc;
 import org.droolsjbpm.services.impl.model.ProcessDesc;
 import org.droolsjbpm.services.impl.model.ProcessInstanceDesc;
 import org.droolsjbpm.services.impl.model.VariableStateDesc;
+import org.jboss.seam.transaction.Transactional;
 
 /**
  *
  * @author salaboy
  */
 @ApplicationScoped
+@Transactional
 public class KnowledgeDataServiceImpl implements KnowledgeDataService {
 
     Map<String, SessionLocator> ksessionLocators = new HashMap<String, SessionLocator>();
@@ -81,20 +83,32 @@ public class KnowledgeDataServiceImpl implements KnowledgeDataService {
                 .setParameter("domainName", domainName).getResultList();
         return processes;
     }
-
-    public Collection<ProcessDesc> getProcesses() {
-        List<ProcessDesc> processes = em.createQuery("select pd from ProcessDesc pd where pd.pki = (select max(pdd.pki) FROM ProcessDesc pdd WHERE pdd.id = pd.id ) GROUP BY pd.id ORDER BY pd.dataTimeStamp DESC)").getResultList();
+    
+    public Collection<ProcessDesc> getProcessesByFilter(String filter) {
+        List<ProcessDesc> processes = em.createQuery("select pd from ProcessDesc pd where pd.id like :filter or pd.name like :filter ORDER BY pd.dataTimeStamp DESC")
+                .setParameter("filter", filter+"%").getResultList();
         return processes;
     }
 
-    public ProcessInstanceDesc getProcessInstanceById(int sessionId, long processId) {
-         List<ProcessInstanceDesc> processInstances = em.createQuery("select pid from ProcessInstanceDesc pid where pid.id=:processId AND pid.sessionId=:sessionId ORDER BY pid.pk DESC")
-                .setParameter("processId", processId)
-                .setParameter("sessionId", sessionId)
-                .setMaxResults(1).getResultList();
-
-        return processInstances.get(0);
+    public Collection<ProcessDesc> getProcesses() {
+        List<ProcessDesc> processes = em.createQuery("select pd from ProcessDesc pd ORDER BY pd.pki DESC, pd.dataTimeStamp DESC").getResultList();
+        return processes;
     }
+
+    public Collection<ProcessInstanceDesc> getProcessInstancesByProcessDefinition(String processDefId){
+      List<ProcessInstanceDesc> processInstances = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.processDefId =:processDefId and pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id and pid.processDefId =:processDefId )")
+                .setParameter("processDefId", processDefId).getResultList();
+
+        return processInstances;
+    }
+    
+    public ProcessInstanceDesc getProcessInstanceById(long processId) {
+        List<ProcessInstanceDesc> processInstances = em.createQuery("select pid from ProcessInstanceDesc pid where pid.id=:processId ORDER BY pid.pk DESC")
+               .setParameter("processId", processId)
+               .setMaxResults(1).getResultList();
+
+       return processInstances.get(0);
+   }
 
     public Collection<NodeInstanceDesc> getProcessInstanceHistory(int sessionId, long processId) {
         return getProcessInstanceHistory(sessionId, processId, false);
@@ -174,15 +188,15 @@ public class KnowledgeDataServiceImpl implements KnowledgeDataService {
         Query query = null;
         if (initiator == null) {
             query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id ) " +
-            		"and pi.state in (:states) and pi.processId =:processId");
+            		"and pi.state in (:states) and pi.processId like :processId");
             query = query.setParameter("states", states);
-            query = query.setParameter("processId", processId);
+            query = query.setParameter("processId", processId +"%");
         } else {
             query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id  and pi.initiator =:initiator) " +
-            		"and pi.state in (:states) and pi.processId =:processId");
+            		"and pi.state in (:states) and pi.processId like :processId");
             query = query.setParameter("states", states);
             query = query.setParameter("initiator", initiator);
-            query = query.setParameter("processId", processId);
+            query = query.setParameter("processId", processId +"%");
         }
                 
                 
@@ -198,15 +212,15 @@ public class KnowledgeDataServiceImpl implements KnowledgeDataService {
         Query query = null;
         if (initiator == null) {
             query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id ) " +
-                    "and pi.state in (:states) and pi.processName =:processName");
+                    "and pi.state in (:states) and pi.processName like :processName");
             query = query.setParameter("states", states);
-            query = query.setParameter("processName", processName);
+            query = query.setParameter("processName", processName +"%");
         } else {
             query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id  and pi.initiator =:initiator) " +
-                    "and pi.state in (:states) and pi.processName =:processName");
+                    "and pi.state in (:states) and pi.processName like :processName");
             query = query.setParameter("states", states);
             query = query.setParameter("initiator", initiator);
-            query = query.setParameter("processName", processName);
+            query = query.setParameter("processName", processName +"%");
         }
                 
                 

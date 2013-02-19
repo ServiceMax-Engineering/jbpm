@@ -26,17 +26,18 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import org.droolsjbpm.services.api.Domain;
 
+import org.jboss.seam.transaction.Transactional;
 import org.jbpm.shared.services.api.FileException;
 import org.jbpm.shared.services.api.FileService;
 import org.droolsjbpm.services.api.KnowledgeDomainService;
 import org.droolsjbpm.services.api.RulesNotificationService;
 import org.droolsjbpm.services.api.SessionManager;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
-import org.droolsjbpm.services.impl.event.listeners.CDIKbaseEventListener;
 import org.droolsjbpm.services.impl.event.listeners.CDIProcessEventListener;
 import org.droolsjbpm.services.impl.example.MoveFileWorkItemHandler;
 import org.droolsjbpm.services.impl.example.NotificationWorkItemHandler;
 import org.droolsjbpm.services.impl.example.TriggerTestsWorkItemHandler;
+import org.droolsjbpm.services.impl.util.Startup;
 import org.jbpm.task.api.TaskServiceEntryPoint;
 import org.jbpm.task.wih.CDIHTWorkItemHandler;
 import org.kie.commons.io.IOService;
@@ -50,6 +51,8 @@ import org.kie.runtime.process.WorkItemManager;
  * @author salaboy
  */
 @ApplicationScoped
+@Transactional
+@Startup
 public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
 
     private Map<String, StatefulKnowledgeSession> ksessions = new HashMap<String, StatefulKnowledgeSession>();
@@ -57,8 +60,7 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
     private CDIHTWorkItemHandler handler;
     @Inject
     private CDIProcessEventListener processListener;
-    @Inject
-    private CDIKbaseEventListener kbaseEventListener;
+    
     @Inject
     private BPMN2DataService bpmn2Service;
     @Inject
@@ -90,71 +92,89 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
 
     public KnowledgeDomainServiceImpl() {
         domain = new SimpleDomainImpl("myDomain");
-
+        
     }
 
     @PostConstruct
     public void createDomain() {
         // TODO: Do this based on configuration and use the new CDI approach
+       // domain.clear();
         sessionManager.setDomain(domain);
-
-        Iterable<Path> releaseProcessesFiles = null;
-        Iterable<Path> releaseRulesFiles = null;
-        Iterable<Path> exampleProcessesFiles = null;
-        try {
-            releaseProcessesFiles = fs.loadFilesByType("examples/release/", "bpmn");
-            releaseRulesFiles = fs.loadFilesByType("examples/release/", "drl");
-            exampleProcessesFiles = fs.loadFilesByType("examples/general/", "bpmn");
-        } catch (FileException ex) {
-            Logger.getLogger(KnowledgeDomainServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        String kSessionName = "releaseSession";
-        domain.addKsessionRepositoryRoot(kSessionName, "examples/release/");
-        for (Path p : releaseProcessesFiles) {
-            
-            domain.addProcessDefinitionToKsession(kSessionName, p);
-            System.out.println(" >>> Adding Path to ReleaseSession- > "+p.toString());
-            // TODO automate this in another service
-            String processString = new String( ioService.readAllBytes( p ) );
-            domain.addProcessBPMN2ContentToKsession(kSessionName, bpmn2Service.findProcessId( processString ), processString );
-        }
-        kSessionName = "releaseSession";
-        for (Path p : releaseRulesFiles) {            
-            System.out.println(" >>> Adding Path to ReleaseSession- > "+p.toString());
-            // TODO automate this in another service
-            domain.addRulesDefinitionToKsession(kSessionName, p);
-        }
+        Iterable<Path> availableDirectories = fs.listDirectories("examples/");
         
-        kSessionName = "generalSession";
-        domain.addKsessionRepositoryRoot(kSessionName, "examples/general/");
-        for (Path p : exampleProcessesFiles) {
-            domain.addProcessDefinitionToKsession("generalSession", p);
-            System.out.println(" >>> Adding Path to GeneralSession - > "+p.toString());
-            // TODO automate this in another service
-            String processString = new String( ioService.readAllBytes( p ) );
-            domain.addProcessBPMN2ContentToKsession(kSessionName, bpmn2Service.findProcessId( processString ), processString );
+        for(Path p : availableDirectories){
+          
+           sessionManager.buildSession(p.getFileName().toString(), "examples/"+p.getFileName().toString(), true);
+          
         }
         
         
-
-        sessionManager.buildSessions(true);
+//        Iterable<Path> releaseProcessesFiles = null;
+//        Iterable<Path> releaseRulesFiles = null;
+//        Iterable<Path> exampleProcessesFiles = null;
+//        try {
+//            releaseProcessesFiles = fs.loadFilesByType("examples/release/", "bpmn");
+//            releaseRulesFiles = fs.loadFilesByType("examples/release/", "drl");
+//            exampleProcessesFiles = fs.loadFilesByType("examples/general/", "bpmn");
+//        } catch (FileException ex) {
+//            Logger.getLogger(KnowledgeDomainServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        String kSessionName = "releaseSession";
+//        domain.addKsessionRepositoryRoot(kSessionName, "examples/release/");
+//        for (Path p : releaseProcessesFiles) {
+//            
+//            domain.addProcessDefinitionToKsession(kSessionName, p);
+//            System.out.println(" >>> Adding Path to ReleaseSession- > "+p.toString());
+//            // TODO automate this in another service
+//            String processString = new String( ioService.readAllBytes( p ) );
+//            String processId = bpmn2Service.findProcessId( processString );
+//            if(!processId.equals("")){
+//              domain.addProcessBPMN2ContentToKsession(kSessionName, processId , processString );
+//              domain.addAsset(processId, p.toString());
+//            }
+//        }
+//        kSessionName = "releaseSession";
+//        for (Path p : releaseRulesFiles) {            
+//            System.out.println(" >>> Adding Path to ReleaseSession- > "+p.toString());
+//            // TODO automate this in another service
+//            domain.addRulesDefinitionToKsession(kSessionName, p);
+//        }
+//        
+//        kSessionName = "generalSession";
+//        domain.addKsessionRepositoryRoot(kSessionName, "examples/general/");
+//        for (Path p : exampleProcessesFiles) {
+//            
+//            // TODO automate this in another service
+//            String processString = new String( ioService.readAllBytes( p ) );
+//            String processId = bpmn2Service.findProcessId( processString );
+//            if(!processId.equals("")){
+//              System.out.println(" >>> Adding Path to GeneralSession - > "+p.toString());
+//              domain.addProcessDefinitionToKsession("generalSession", p);
+//              domain.addProcessBPMN2ContentToKsession(kSessionName, processId ,processString );
+//            }
+//            
+//        }
+//        
+//        
+//        sessionManager.clear();
+//        sessionManager.buildSessions(true);
         
         
 
-        sessionManager.addKsessionHandler("releaseSession", "MoveToStagingArea",moveFilesWIHandler);
-        sessionManager.addKsessionHandler("releaseSession", "MoveToTest", moveFilesWIHandler);
-        sessionManager.addKsessionHandler("releaseSession", "TriggerTests", triggerTestsWorkItemHandler);
-        sessionManager.addKsessionHandler("releaseSession", "MoveBackToStaging", moveFilesWIHandler);
-        sessionManager.addKsessionHandler("releaseSession", "MoveToProduction", moveFilesWIHandler);
-        sessionManager.addKsessionHandler("releaseSession", "Email", notificationWorkItemHandler);
-
-        sessionManager.registerHandlersForSession("releaseSession");
-        
-        sessionManager.registerRuleListenerForSession("releaseSession");
-         
-        sessionManager.getKsessionByName("releaseSession").setGlobal("rulesNotificationService", rulesNotificationService);
-        
-        sessionManager.getKsessionByName("releaseSession").setGlobal("taskService", taskService);
+//        sessionManager.addKsessionHandler("releaseSession", "MoveToStagingArea",moveFilesWIHandler);
+//        sessionManager.addKsessionHandler("releaseSession", "MoveToTest", moveFilesWIHandler);
+//        sessionManager.addKsessionHandler("releaseSession", "TriggerTests", triggerTestsWorkItemHandler);
+//        sessionManager.addKsessionHandler("releaseSession", "MoveBackToStaging", moveFilesWIHandler);
+//        sessionManager.addKsessionHandler("releaseSession", "MoveToProduction", moveFilesWIHandler);
+//        sessionManager.addKsessionHandler("releaseSession", "Email", notificationWorkItemHandler);
+//
+//        sessionManager.registerHandlersForSession("releaseSession", 2);
+//        
+//        sessionManager.registerRuleListenerForSession("releaseSession", 2);
+//         
+//        sessionManager.getKsessionsByName("releaseSession").get(2).setGlobal("rulesNotificationService", rulesNotificationService);
+//        
+//        sessionManager.getKsessionsByName("releaseSession").get(2).setGlobal("taskService", taskService);
     }
 
     @Override
@@ -171,15 +191,29 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
     public Map<String, String> getAvailableProcesses() {
         return domain.getAllProcesses();
     }
+    
+    @Override
+    public Map<String, String> getAvailableProcessesPaths() {
+        return domain.getAssetsDefs();
+    }
 
     @Override
-    public StatefulKnowledgeSession getSessionByName(String ksessionName) {
-        return sessionManager.getKsessionByName(ksessionName);
+    public Map<Integer, StatefulKnowledgeSession> getSessionsByName(String ksessionName) {
+        return sessionManager.getKsessionsByName(ksessionName);
         
     }
 
     public String getProcessInSessionByName(String processDefId){
         return sessionManager.getProcessInSessionByName(processDefId);
+    }
+    
+    public int getSessionForProcessInstanceId(long processInstanceId){
+      return sessionManager.getSessionForProcessInstanceId(processInstanceId);
+    }
+
+    @Override
+    public StatefulKnowledgeSession getSessionById(int sessionId) {
+      return sessionManager.getKsessionById(sessionId);
     }
     
     
@@ -197,6 +231,13 @@ public class KnowledgeDomainServiceImpl implements KnowledgeDomainService {
         @Override
         public void abortWorkItem(WorkItem wi, WorkItemManager wim) {
         }
+    }
+
+
+    @Override
+    public String getProcessAssetPath(String processId) {
+        
+        return sessionManager.getDomain().getAssetsDefs().get(processId);
     }
     
     

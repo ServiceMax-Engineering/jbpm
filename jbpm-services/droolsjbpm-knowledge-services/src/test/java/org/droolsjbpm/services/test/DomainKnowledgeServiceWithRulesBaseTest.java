@@ -20,8 +20,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
@@ -32,7 +30,6 @@ import org.droolsjbpm.services.api.KnowledgeDomainService;
 import org.droolsjbpm.services.api.RulesNotificationService;
 import org.droolsjbpm.services.api.SessionManager;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
-import org.droolsjbpm.services.impl.KnowledgeDomainServiceImpl;
 import org.droolsjbpm.services.impl.SimpleDomainImpl;
 import org.droolsjbpm.services.impl.example.NotificationWorkItemHandler;
 import org.droolsjbpm.services.impl.example.TriggerTestsWorkItemHandler;
@@ -40,18 +37,19 @@ import org.droolsjbpm.services.impl.model.RuleNotificationInstanceDesc;
 import org.jbpm.shared.services.api.FileException;
 import org.jbpm.shared.services.api.FileService;
 import org.jbpm.task.api.TaskServiceEntryPoint;
+import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.junit.Test;
-import org.kie.commons.java.nio.file.Path;
 import org.kie.runtime.process.ProcessInstance;
 import org.kie.runtime.process.WorkItem;
 import org.kie.runtime.process.WorkItemHandler;
 import org.kie.runtime.process.WorkItemManager;
 import org.kie.runtime.rule.QueryResults;
+import org.kie.runtime.rule.QueryResultsRow;
 
 public abstract class DomainKnowledgeServiceWithRulesBaseTest {
 
     @Inject
-    protected TaskServiceEntryPoint taskService;
+    protected transient TaskServiceEntryPoint taskService;
     @Inject
     private BPMN2DataService bpmn2Service;
     @Inject
@@ -69,7 +67,7 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
     @Inject
     private NotificationWorkItemHandler notificationWorkItemHandler;
     @Inject
-    private RulesNotificationService rulesNotificationService;
+    private transient RulesNotificationService rulesNotificationService;
 
     
     @Test
@@ -77,28 +75,34 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
         Domain myDomain = new SimpleDomainImpl("myDomain");
         sessionManager.setDomain(myDomain);
 
-        Iterable<Path> processFiles = null;
-        Iterable<Path> rulesFiles = null;
-        try {
-            processFiles = fs.loadFilesByType("examples/release/", "bpmn");
-            rulesFiles = fs.loadFilesByType("examples/release/", "drl");
-        } catch (FileException ex) {
-            Logger.getLogger(KnowledgeDomainServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        String kSessionName = "myKsession";
-        for (Path p : processFiles) {
-
-            System.out.println(" >>> Loading Path -> " + p.toString());
-            myDomain.addProcessDefinitionToKsession(kSessionName, p);
-            String processString = new String(fs.loadFile(p));
-            myDomain.addProcessBPMN2ContentToKsession(kSessionName, bpmn2Service.findProcessId(processString), processString);
-        }
-        for (Path p : rulesFiles) {
-            System.out.println(" >>> Loading Path -> " + p.toString());
-            myDomain.addRulesDefinitionToKsession(kSessionName, p);
-        }
-
-        sessionManager.buildSessions(true);
+//        Iterable<Path> processFiles = null;
+//        Iterable<Path> rulesFiles = null;
+//        try {
+//            processFiles = fs.loadFilesByType("examples/release/", "bpmn");
+//            rulesFiles = fs.loadFilesByType("examples/release/", "drl");
+//        } catch (FileException ex) {
+//            Logger.getLogger(KnowledgeDomainServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        String kSessionName = "myKsession";
+//        for (Path p : processFiles) {
+//
+//            
+//            String processString = new String(fs.loadFile(p));
+//            String processId = bpmn2Service.findProcessId(processString);
+//            if(!processId.equals("")){
+//              System.out.println(" >>> Loading Path -> " + p.toString());
+//              myDomain.addProcessDefinitionToKsession(kSessionName, p);
+//              myDomain.addProcessBPMN2ContentToKsession(kSessionName, processId , processString);
+//            }
+//        }
+//        for (Path p : rulesFiles) {
+//            System.out.println(" >>> Loading Path -> " + p.toString());
+//            myDomain.addRulesDefinitionToKsession(kSessionName, p);
+//        }
+//
+//        sessionManager.buildSessions(true);
+        
+        sessionManager.buildSession("myKsession", "examples/release/", true);
 
         sessionManager.addKsessionHandler("myKsession", "MoveToStagingArea", new DoNothingWorkItemHandler());
         sessionManager.addKsessionHandler("myKsession", "MoveToTest", new DoNothingWorkItemHandler());
@@ -108,20 +112,20 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
 
         sessionManager.addKsessionHandler("myKsession", "Email", notificationWorkItemHandler);
 
-        sessionManager.registerHandlersForSession("myKsession");
+        sessionManager.registerHandlersForSession("myKsession", 1);
 
-        sessionManager.registerRuleListenerForSession("myKsession");
+        sessionManager.registerRuleListenerForSession("myKsession", 1);
 
-        sessionManager.getKsessionByName("myKsession").setGlobal("rulesNotificationService", rulesNotificationService);
+        sessionManager.getKsessionsByName("myKsession").get(1).setGlobal("rulesNotificationService", rulesNotificationService);
 
-        sessionManager.getKsessionByName("myKsession").setGlobal("taskService", taskService);
+        sessionManager.getKsessionsByName("myKsession").get(1).setGlobal("taskService", taskService);
 
         // Let's start a couple of processes
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("release_name", "first release");
         params.put("release_path", "/releasePath/");
 
-        ProcessInstance firstPI = sessionManager.getKsessionByName("myKsession").startProcess("org.jbpm.release.process", params);
+        ProcessInstance firstPI = sessionManager.getKsessionsByName("myKsession").get(1).startProcess("org.jbpm.release.process", params);
 
         params = new HashMap<String, Object>();
         params.put("release_name", "second release");
@@ -129,10 +133,15 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
 
 
 
-        ProcessInstance secondPI = sessionManager.getKsessionByName("myKsession").startProcess("org.jbpm.release.process", params);
+        ProcessInstance secondPI = sessionManager.getKsessionsByName("myKsession").get(1).startProcess("org.jbpm.release.process", params);
 
-        QueryResults queryResults = sessionManager.getKsessionByName("myKsession").getQueryResults("getProcessInstances", new Object[]{});
+        QueryResults queryResults = sessionManager.getKsessionsByName("myKsession").get(1).getQueryResults("getProcessInstances", new Object[]{});
 
+        for(QueryResultsRow r : queryResults){
+          WorkflowProcessInstanceImpl pi = (WorkflowProcessInstanceImpl)r.get("$w");
+          System.out.println("PI "+pi);
+        }
+        
         assertEquals(2, queryResults.size());
 
         params = new HashMap<String, Object>();
@@ -141,7 +150,7 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
 
 
         // This process must be automatically aborted because it's using the same release path than the first process.
-        ProcessInstance thirdPI = sessionManager.getKsessionByName("myKsession").startProcess("org.jbpm.release.process", params);
+        ProcessInstance thirdPI = sessionManager.getKsessionsByName("myKsession").get(1).startProcess("org.jbpm.release.process", params);
 
         assertEquals(ProcessInstance.STATE_ABORTED, thirdPI.getState());
 
@@ -150,7 +159,7 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
         Collection<RuleNotificationInstanceDesc> allNotificationInstance = rulesNotificationService.getAllNotificationInstance();
         assertEquals(1, allNotificationInstance.size());
         
-        Collection<RuleNotificationInstanceDesc> notificationsBySessionId = rulesNotificationService.getAllNotificationInstanceBySessionId(0);
+        Collection<RuleNotificationInstanceDesc> notificationsBySessionId = rulesNotificationService.getAllNotificationInstanceBySessionId(1);
         assertEquals(1, notificationsBySessionId.size());
 
 

@@ -23,6 +23,11 @@ public class NewSessionSessionManagerFactory implements SessionManagerFactory {
 	public SessionManager getSessionManager() {
 		return new NewSessionSessionManager(factory);
 	}
+	
+	public SessionManager getSessionManager(String context) {
+		throw new UnsupportedOperationException(
+			"When using a new session per request, no context object is required, use getSessionManager().");
+	}
 
 	public void dispose() throws Exception {
 		emf.close();

@@ -15,7 +15,6 @@
  */
 package org.droolsjbpm.services.test.support;
 
-import org.droolsjbpm.services.test.*;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -62,18 +61,20 @@ public class SupportProcessCDITest extends SupportProcessBaseTest {
                 .addPackage("org.droolsjbpm.services.test")
                 .addPackage("org.droolsjbpm.services.impl.event.listeners")
                 .addPackage("org.droolsjbpm.services.impl.example") 
+                .addPackage("org.droolsjbpm.services.impl.util") 
                 .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
                 .addAsManifestResource("META-INF/Taskorm.xml", ArchivePaths.create("Taskorm.xml"))
                 .addAsManifestResource("META-INF/beans.xml", ArchivePaths.create("beans.xml"))
                 .addAsManifestResource("META-INF/services/org.kie.commons.java.nio.file.spi.FileSystemProvider", ArchivePaths.create("org.kie.commons.java.nio.file.spi.FileSystemProvider"));
 
     }
-    
+
     @After
     public void tearDown() throws Exception {
         int removedTasks = taskService.removeAllTasks();
         int removedLogs = adminDataService.removeAllData();
         System.out.println(" --> Removed Tasks = "+removedTasks + " - ");
         System.out.println(" --> Removed Logs = "+removedLogs + " - ");
+       
     }
 }

@@ -58,46 +58,26 @@ public abstract class SupportProcessBaseTest {
     @Inject
     private SessionManager sessionManager;
 
-    @Before
-    public void setUp() throws IOException, FileException {
-    }
-
-    @After
-    public void cleanUp() throws IOException {
-    }
+ 
 
     @Test
-    public void testReleaseProcess() throws FileException {
+    public void testSupportProcess() throws FileException {
         Domain myDomain = new SimpleDomainImpl("myDomain");
         sessionManager.setDomain(myDomain);
 
-        Iterable<Path> loadFilesByType = null;
-        try {
-            loadFilesByType = fs.loadFilesByType("examples/general/", "bpmn");
-        } catch (FileException ex) {
-            Logger.getLogger(KnowledgeDomainServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        String kSessionName = "myKsession";
-        myDomain.addKsessionRepositoryRoot(kSessionName, "examples/general/");
-        for (Path p : loadFilesByType) {
 
-            System.out.println(" >>> Loading Path -> " + p.toString());
-            myDomain.addProcessDefinitionToKsession("myKsession", p);
-            String processString = new String(fs.loadFile(p));
-            myDomain.addProcessBPMN2ContentToKsession(kSessionName, bpmn2Service.findProcessId(processString), processString);
-        }
 
-        sessionManager.buildSessions(false);
+        sessionManager.buildSession("myKsession", "examples/support/", false);
 
 
 
-        sessionManager.registerHandlersForSession("myKsession");
+        sessionManager.registerHandlersForSession("myKsession", 1);
 
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("customer", "polymita");
 
 
-        ProcessInstance pI = sessionManager.getKsessionByName("myKsession").startProcess("support.process", params);
+        ProcessInstance pI = sessionManager.getKsessionsByName("myKsession").get(1).startProcess("support.process", params);
 
         // Configure Release
         List<TaskSummary> tasksAssignedToSalaboy = taskService.getTasksAssignedAsPotentialOwner("salaboy", "en-UK");
@@ -151,12 +131,6 @@ public abstract class SupportProcessBaseTest {
         output = new HashMap<String, Object>();
         output.put("output_solution", "solved today");
         taskService.complete(notifySupportTask.getId(), "salaboy", output);
-
-
-        
-
-        
-
 
 
 

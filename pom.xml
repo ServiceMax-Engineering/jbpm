@@ -85,7 +85,7 @@
     <module>jbpm-workitems</module>
     <module>jbpm-human-task</module>
     <module>jbpm-services</module>
-    <module>jbpm-gwt</module>
+    <!--module>jbpm-gwt</module-->
     <module>jbpm-test</module>
     <module>jbpm-examples</module>
   </modules>
@@ -146,16 +146,29 @@
 
     <profile>
       <id>database</id>
-      <dependencies>
-        <dependency>
-           <groupId>${maven.jdbc.driver.group}</groupId>
-           <artifactId>${maven.jdbc.driver.artifact}</artifactId>
-           <version>${maven.jdbc.driver.version}</version>
-           <scope>test</scope>
-        </dependency>  
-      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <additionalClasspathElements>
+                <additionalClasspathElement>${maven.jdbc.driver.jar}</additionalClasspathElement>
+              </additionalClasspathElements>
+              <useSystemClassLoader>true</useSystemClassLoader>
+              <includes>
+                <include>**/*Test.java</include>
+              </includes>
+              <excludes>
+                <exclude>**/*AbstractTest.java</exclude>
+                <exclude>**/*JMS*Test.java</exclude>
+              </excludes>
+              <argLine>-Xmx1024m -XX:MaxPermSize=128m</argLine>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
-    
+
   </profiles>
     
 </project>

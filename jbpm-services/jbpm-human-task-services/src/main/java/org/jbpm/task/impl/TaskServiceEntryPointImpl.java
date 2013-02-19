@@ -299,8 +299,8 @@ public class TaskServiceEntryPointImpl implements TaskServiceEntryPoint {
         return taskQueryService.getTasksAssignedAsPotentialOwner(userId, groupIds, language);
     }
 
-    public List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, List<String> groupIds, String language, int firstResult, int maxResult) {
-        return taskQueryService.getTasksAssignedAsPotentialOwner(userId, groupIds, language, firstResult, maxResult);
+    public List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, List<String> groupIds, String language, int firstResult, int maxResults) {
+        return taskQueryService.getTasksAssignedAsPotentialOwner(userId, groupIds, language, firstResult, maxResults);
     }
 
     public List<TaskSummary> getTasksAssignedAsRecipient(String userId, String language) {
@@ -325,6 +325,14 @@ public class TaskServiceEntryPointImpl implements TaskServiceEntryPoint {
 
     public List<TaskSummary> getTasksAssignedAsPotentialOwnerByStatus(String salaboy, List<Status> status, String language) {
         return taskQueryService.getTasksAssignedAsPotentialOwnerByStatus(salaboy, status, language);
+    }
+    
+    public List<TaskSummary> getTasksOwnedByExpirationDate(String userId, List<Status> status, Date expirationDate){
+        return taskQueryService.getTasksOwnedByExpirationDate(userId, status, expirationDate);
+    }
+    
+    public List<TaskSummary> getTasksAssignedByGroupsByExpirationDate(List<String> groupIds, String language, Date expirationDate){
+        return taskQueryService.getTasksAssignedByGroupsByExpirationDate(groupIds, language, expirationDate);
     }
 
     public List<TaskSummary> getTasksAssignedAsPotentialOwnerByStatusByGroup(String userId, List<String> groupIds, List<Status> status, String language) {

@@ -39,6 +39,7 @@ import org.jbpm.workflow.core.node.CompositeContextNode;
 import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.EndNode;
+import org.jbpm.workflow.core.node.EventSubProcessNode;
 import org.jbpm.workflow.core.node.ForEachNode;
 import org.jbpm.workflow.core.node.Join;
 import org.jbpm.workflow.core.node.Split;
@@ -51,16 +52,21 @@ public class SubProcessHandler extends AbstractNodeHandler {
 
 	private Map<String, String> dataInputs = new HashMap<String, String>();
 	private Map<String, String> dataOutputs = new HashMap<String, String>();
-
-	protected Node createNode(Attributes attrs) {
-		CompositeContextNode result = new CompositeContextNode();
-		VariableScope variableScope = new VariableScope();
-		result.addContext(variableScope);
-		result.setDefaultContext(variableScope);
-		return result;
-	}
-
-	@SuppressWarnings("unchecked")
+    
+    
+    protected Node createNode(Attributes attrs) {
+    	CompositeContextNode result = new CompositeContextNode();    	
+        String eventSubprocessAttribute = attrs.getValue("triggeredByEvent");
+        if (eventSubprocessAttribute != null && Boolean.parseBoolean(eventSubprocessAttribute)) {            
+            result = new EventSubProcessNode();
+    	}
+        VariableScope variableScope = new VariableScope();
+        result.addContext(variableScope);
+        result.setDefaultContext(variableScope);
+        return result;
+    }
+    
+    @SuppressWarnings("unchecked")
 	public Class generateNodeFor() {
 		return CompositeContextNode.class;
 	}
@@ -131,8 +137,7 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		Node node = (Node) parser.getCurrent();
 		// determine type of event definition, so the correct type of node
 		// can be generated
-		handleNode(node, element, uri, localName, parser);
-		boolean found = false;
+		boolean found = false;		
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();

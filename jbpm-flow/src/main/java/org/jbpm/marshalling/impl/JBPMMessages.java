@@ -36,6 +36,10 @@ public final class JBPMMessages {
     boolean hasNodeInstanceCounter();
     long getNodeInstanceCounter();
     
+    // optional string process_xml = 11;
+    boolean hasProcessXml();
+    String getProcessXml();
+    
     // repeated .org.jbpm.marshalling.ProcessInstance.SwimlaneContextInstance swimlane_context = 6;
     java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstance> 
         getSwimlaneContextList();
@@ -119,6 +123,7 @@ public final class JBPMMessages {
       FOR_EACH_NODE(10, 10),
       DYNAMIC_NODE(11, 11),
       STATUS_SUB_NODE(12, 12),
+      EVENT_SUBPROCESS_NODE(12, 12),
       ;
       
       public static final int RULE_SET_NODE_VALUE = 0;
@@ -134,6 +139,7 @@ public final class JBPMMessages {
       public static final int FOR_EACH_NODE_VALUE = 10;
       public static final int DYNAMIC_NODE_VALUE = 11;
       public static final int STATUS_SUB_NODE_VALUE = 12;
+      public static final int EVENT_SUBPROCESS_NODE_VALUE = 12;
       
       
       public final int getNumber() { return value; }
@@ -153,6 +159,7 @@ public final class JBPMMessages {
           case 10: return FOR_EACH_NODE;
           case 11: return DYNAMIC_NODE;
           case 12: return STATUS_SUB_NODE;
+          case 12: return EVENT_SUBPROCESS_NODE;
           default: return null;
         }
       }
@@ -183,7 +190,7 @@ public final class JBPMMessages {
       }
       
       private static final NodeInstanceType[] VALUES = {
-        RULE_SET_NODE, HUMAN_TASK_NODE, WORK_ITEM_NODE, SUBPROCESS_NODE, MILESTONE_NODE, EVENT_NODE, TIMER_NODE, JOIN_NODE, STATE_NODE, COMPOSITE_CONTEXT_NODE, FOR_EACH_NODE, DYNAMIC_NODE,  STATUS_SUB_NODE,
+        RULE_SET_NODE, HUMAN_TASK_NODE, WORK_ITEM_NODE, SUBPROCESS_NODE, MILESTONE_NODE, EVENT_NODE, TIMER_NODE, JOIN_NODE, STATE_NODE, COMPOSITE_CONTEXT_NODE, FOR_EACH_NODE, DYNAMIC_NODE,  STATUS_SUB_NODE, EVENT_SUBPROCESS_NODE, 
       };
       
       public static NodeInstanceType valueOf(
@@ -10265,6 +10272,38 @@ public final class JBPMMessages {
       return nodeInstanceCounter_;
     }
     
+    // optional string process_xml = 11;
+    public static final int PROCESS_XML_FIELD_NUMBER = 11;
+    private java.lang.Object processXml_;
+    public boolean hasProcessXml() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    public String getProcessXml() {
+      java.lang.Object ref = processXml_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          processXml_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getProcessXmlBytes() {
+      java.lang.Object ref = processXml_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        processXml_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    
     // repeated .org.jbpm.marshalling.ProcessInstance.SwimlaneContextInstance swimlane_context = 6;
     public static final int SWIMLANE_CONTEXT_FIELD_NUMBER = 6;
     private java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstance> swimlaneContext_;
@@ -10355,6 +10394,7 @@ public final class JBPMMessages {
       processId_ = "";
       state_ = 0;
       nodeInstanceCounter_ = 0L;
+      processXml_ = "";
       swimlaneContext_ = java.util.Collections.emptyList();
       nodeInstance_ = java.util.Collections.emptyList();
       variable_ = java.util.Collections.emptyList();
@@ -10398,6 +10438,9 @@ public final class JBPMMessages {
       }
       for (int i = 0; i < exclusiveGroup_.size(); i++) {
         output.writeMessage(10, exclusiveGroup_.get(i));
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        output.writeBytes(11, getProcessXmlBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -10443,6 +10486,10 @@ public final class JBPMMessages {
       for (int i = 0; i < exclusiveGroup_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(10, exclusiveGroup_.get(i));
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(11, getProcessXmlBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -10582,27 +10629,29 @@ public final class JBPMMessages {
         bitField0_ = (bitField0_ & ~0x00000008);
         nodeInstanceCounter_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
+        processXml_ = "";
+        bitField0_ = (bitField0_ & ~0x00000020);
         if (swimlaneContextBuilder_ == null) {
           swimlaneContext_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
         } else {
           swimlaneContextBuilder_.clear();
         }
         if (nodeInstanceBuilder_ == null) {
           nodeInstance_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
         } else {
           nodeInstanceBuilder_.clear();
         }
         if (variableBuilder_ == null) {
           variable_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000080);
+          bitField0_ = (bitField0_ & ~0x00000100);
         } else {
           variableBuilder_.clear();
         }
         if (exclusiveGroupBuilder_ == null) {
           exclusiveGroup_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000100);
+          bitField0_ = (bitField0_ & ~0x00000200);
         } else {
           exclusiveGroupBuilder_.clear();
         }
@@ -10664,37 +10713,41 @@ public final class JBPMMessages {
           to_bitField0_ |= 0x00000010;
         }
         result.nodeInstanceCounter_ = nodeInstanceCounter_;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000020;
+        }
+        result.processXml_ = processXml_;
         if (swimlaneContextBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          if (((bitField0_ & 0x00000040) == 0x00000040)) {
             swimlaneContext_ = java.util.Collections.unmodifiableList(swimlaneContext_);
-            bitField0_ = (bitField0_ & ~0x00000020);
+            bitField0_ = (bitField0_ & ~0x00000040);
           }
           result.swimlaneContext_ = swimlaneContext_;
         } else {
           result.swimlaneContext_ = swimlaneContextBuilder_.build();
         }
         if (nodeInstanceBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
             nodeInstance_ = java.util.Collections.unmodifiableList(nodeInstance_);
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000080);
           }
           result.nodeInstance_ = nodeInstance_;
         } else {
           result.nodeInstance_ = nodeInstanceBuilder_.build();
         }
         if (variableBuilder_ == null) {
-          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+          if (((bitField0_ & 0x00000100) == 0x00000100)) {
             variable_ = java.util.Collections.unmodifiableList(variable_);
-            bitField0_ = (bitField0_ & ~0x00000080);
+            bitField0_ = (bitField0_ & ~0x00000100);
           }
           result.variable_ = variable_;
         } else {
           result.variable_ = variableBuilder_.build();
         }
         if (exclusiveGroupBuilder_ == null) {
-          if (((bitField0_ & 0x00000100) == 0x00000100)) {
+          if (((bitField0_ & 0x00000200) == 0x00000200)) {
             exclusiveGroup_ = java.util.Collections.unmodifiableList(exclusiveGroup_);
-            bitField0_ = (bitField0_ & ~0x00000100);
+            bitField0_ = (bitField0_ & ~0x00000200);
           }
           result.exclusiveGroup_ = exclusiveGroup_;
         } else {
@@ -10731,11 +10784,14 @@ public final class JBPMMessages {
         if (other.hasNodeInstanceCounter()) {
           setNodeInstanceCounter(other.getNodeInstanceCounter());
         }
+        if (other.hasProcessXml()) {
+          setProcessXml(other.getProcessXml());
+        }
         if (swimlaneContextBuilder_ == null) {
           if (!other.swimlaneContext_.isEmpty()) {
             if (swimlaneContext_.isEmpty()) {
               swimlaneContext_ = other.swimlaneContext_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000040);
             } else {
               ensureSwimlaneContextIsMutable();
               swimlaneContext_.addAll(other.swimlaneContext_);
@@ -10748,7 +10804,7 @@ public final class JBPMMessages {
               swimlaneContextBuilder_.dispose();
               swimlaneContextBuilder_ = null;
               swimlaneContext_ = other.swimlaneContext_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000040);
               swimlaneContextBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getSwimlaneContextFieldBuilder() : null;
@@ -10761,7 +10817,7 @@ public final class JBPMMessages {
           if (!other.nodeInstance_.isEmpty()) {
             if (nodeInstance_.isEmpty()) {
               nodeInstance_ = other.nodeInstance_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
             } else {
               ensureNodeInstanceIsMutable();
               nodeInstance_.addAll(other.nodeInstance_);
@@ -10774,7 +10830,7 @@ public final class JBPMMessages {
               nodeInstanceBuilder_.dispose();
               nodeInstanceBuilder_ = null;
               nodeInstance_ = other.nodeInstance_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
               nodeInstanceBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getNodeInstanceFieldBuilder() : null;
@@ -10787,7 +10843,7 @@ public final class JBPMMessages {
           if (!other.variable_.isEmpty()) {
             if (variable_.isEmpty()) {
               variable_ = other.variable_;
-              bitField0_ = (bitField0_ & ~0x00000080);
+              bitField0_ = (bitField0_ & ~0x00000100);
             } else {
               ensureVariableIsMutable();
               variable_.addAll(other.variable_);
@@ -10800,7 +10856,7 @@ public final class JBPMMessages {
               variableBuilder_.dispose();
               variableBuilder_ = null;
               variable_ = other.variable_;
-              bitField0_ = (bitField0_ & ~0x00000080);
+              bitField0_ = (bitField0_ & ~0x00000100);
               variableBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getVariableFieldBuilder() : null;
@@ -10813,7 +10869,7 @@ public final class JBPMMessages {
           if (!other.exclusiveGroup_.isEmpty()) {
             if (exclusiveGroup_.isEmpty()) {
               exclusiveGroup_ = other.exclusiveGroup_;
-              bitField0_ = (bitField0_ & ~0x00000100);
+              bitField0_ = (bitField0_ & ~0x00000200);
             } else {
               ensureExclusiveGroupIsMutable();
               exclusiveGroup_.addAll(other.exclusiveGroup_);
@@ -10826,7 +10882,7 @@ public final class JBPMMessages {
               exclusiveGroupBuilder_.dispose();
               exclusiveGroupBuilder_ = null;
               exclusiveGroup_ = other.exclusiveGroup_;
-              bitField0_ = (bitField0_ & ~0x00000100);
+              bitField0_ = (bitField0_ & ~0x00000200);
               exclusiveGroupBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getExclusiveGroupFieldBuilder() : null;
@@ -10913,6 +10969,11 @@ public final class JBPMMessages {
               org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstance.Builder subBuilder = org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstance.newBuilder();
               input.readMessage(subBuilder, extensionRegistry);
               addExclusiveGroup(subBuilder.buildPartial());
+              break;
+            }
+            case 90: {
+              bitField0_ |= 0x00000020;
+              processXml_ = input.readBytes();
               break;
             }
           }
@@ -11056,13 +11117,49 @@ public final class JBPMMessages {
         return this;
       }
       
+      // optional string process_xml = 11;
+      private java.lang.Object processXml_ = "";
+      public boolean hasProcessXml() {
+        return ((bitField0_ & 0x00000020) == 0x00000020);
+      }
+      public String getProcessXml() {
+        java.lang.Object ref = processXml_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          processXml_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
+      }
+      public Builder setProcessXml(String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000020;
+        processXml_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearProcessXml() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        processXml_ = getDefaultInstance().getProcessXml();
+        onChanged();
+        return this;
+      }
+      void setProcessXml(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000020;
+        processXml_ = value;
+        onChanged();
+      }
+      
       // repeated .org.jbpm.marshalling.ProcessInstance.SwimlaneContextInstance swimlane_context = 6;
       private java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstance> swimlaneContext_ =
         java.util.Collections.emptyList();
       private void ensureSwimlaneContextIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
           swimlaneContext_ = new java.util.ArrayList<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstance>(swimlaneContext_);
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
          }
       }
       
@@ -11178,7 +11275,7 @@ public final class JBPMMessages {
       public Builder clearSwimlaneContext() {
         if (swimlaneContextBuilder_ == null) {
           swimlaneContext_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
           onChanged();
         } else {
           swimlaneContextBuilder_.clear();
@@ -11234,7 +11331,7 @@ public final class JBPMMessages {
           swimlaneContextBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstance, org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstance.Builder, org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.SwimlaneContextInstanceOrBuilder>(
                   swimlaneContext_,
-                  ((bitField0_ & 0x00000020) == 0x00000020),
+                  ((bitField0_ & 0x00000040) == 0x00000040),
                   getParentForChildren(),
                   isClean());
           swimlaneContext_ = null;
@@ -11246,9 +11343,9 @@ public final class JBPMMessages {
       private java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstance> nodeInstance_ =
         java.util.Collections.emptyList();
       private void ensureNodeInstanceIsMutable() {
-        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
           nodeInstance_ = new java.util.ArrayList<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstance>(nodeInstance_);
-          bitField0_ |= 0x00000040;
+          bitField0_ |= 0x00000080;
          }
       }
       
@@ -11364,7 +11461,7 @@ public final class JBPMMessages {
       public Builder clearNodeInstance() {
         if (nodeInstanceBuilder_ == null) {
           nodeInstance_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
           onChanged();
         } else {
           nodeInstanceBuilder_.clear();
@@ -11420,7 +11517,7 @@ public final class JBPMMessages {
           nodeInstanceBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstance, org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstance.Builder, org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceOrBuilder>(
                   nodeInstance_,
-                  ((bitField0_ & 0x00000040) == 0x00000040),
+                  ((bitField0_ & 0x00000080) == 0x00000080),
                   getParentForChildren(),
                   isClean());
           nodeInstance_ = null;
@@ -11432,9 +11529,9 @@ public final class JBPMMessages {
       private java.util.List<org.jbpm.marshalling.impl.JBPMMessages.Variable> variable_ =
         java.util.Collections.emptyList();
       private void ensureVariableIsMutable() {
-        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+        if (!((bitField0_ & 0x00000100) == 0x00000100)) {
           variable_ = new java.util.ArrayList<org.jbpm.marshalling.impl.JBPMMessages.Variable>(variable_);
-          bitField0_ |= 0x00000080;
+          bitField0_ |= 0x00000100;
          }
       }
       
@@ -11550,7 +11647,7 @@ public final class JBPMMessages {
       public Builder clearVariable() {
         if (variableBuilder_ == null) {
           variable_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000080);
+          bitField0_ = (bitField0_ & ~0x00000100);
           onChanged();
         } else {
           variableBuilder_.clear();
@@ -11606,7 +11703,7 @@ public final class JBPMMessages {
           variableBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.jbpm.marshalling.impl.JBPMMessages.Variable, org.jbpm.marshalling.impl.JBPMMessages.Variable.Builder, org.jbpm.marshalling.impl.JBPMMessages.VariableOrBuilder>(
                   variable_,
-                  ((bitField0_ & 0x00000080) == 0x00000080),
+                  ((bitField0_ & 0x00000100) == 0x00000100),
                   getParentForChildren(),
                   isClean());
           variable_ = null;
@@ -11618,9 +11715,9 @@ public final class JBPMMessages {
       private java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstance> exclusiveGroup_ =
         java.util.Collections.emptyList();
       private void ensureExclusiveGroupIsMutable() {
-        if (!((bitField0_ & 0x00000100) == 0x00000100)) {
+        if (!((bitField0_ & 0x00000200) == 0x00000200)) {
           exclusiveGroup_ = new java.util.ArrayList<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstance>(exclusiveGroup_);
-          bitField0_ |= 0x00000100;
+          bitField0_ |= 0x00000200;
          }
       }
       
@@ -11736,7 +11833,7 @@ public final class JBPMMessages {
       public Builder clearExclusiveGroup() {
         if (exclusiveGroupBuilder_ == null) {
           exclusiveGroup_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000100);
+          bitField0_ = (bitField0_ & ~0x00000200);
           onChanged();
         } else {
           exclusiveGroupBuilder_.clear();
@@ -11792,7 +11889,7 @@ public final class JBPMMessages {
           exclusiveGroupBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstance, org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstance.Builder, org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.ExclusiveGroupInstanceOrBuilder>(
                   exclusiveGroup_,
-                  ((bitField0_ & 0x00000100) == 0x00000100),
+                  ((bitField0_ & 0x00000200) == 0x00000200),
                   getParentForChildren(),
                   isClean());
           exclusiveGroup_ = null;
@@ -14530,108 +14627,109 @@ public final class JBPMMessages {
     java.lang.String[] descriptorData = {
       "\n\'org/jbpm/marshalling/jbpmmessages.prot" +
       "o\022\024org.jbpm.marshalling\032+org/drools/mars" +
-      "halling/droolsmessages.proto\"\347\027\n\017Process" +
+      "halling/droolsmessages.proto\"\227\030\n\017Process" +
       "Instance\022\024\n\014process_type\030\001 \001(\t\022\n\n\002id\030\002 \001" +
       "(\003\022\022\n\nprocess_id\030\003 \001(\t\022\r\n\005state\030\004 \001(\005\022\035\n" +
-      "\025node_instance_counter\030\005 \001(\003\022W\n\020swimlane" +
-      "_context\030\006 \003(\0132=.org.jbpm.marshalling.Pr" +
-      "ocessInstance.SwimlaneContextInstance\022I\n" +
-      "\rnode_instance\030\007 \003(\01322.org.jbpm.marshall" +
-      "ing.ProcessInstance.NodeInstance\0220\n\010vari",
-      "able\030\010 \003(\0132\036.org.jbpm.marshalling.Variab" +
-      "le\022U\n\017exclusive_group\030\n \003(\0132<.org.jbpm.m" +
-      "arshalling.ProcessInstance.ExclusiveGrou" +
-      "pInstance\032=\n\027SwimlaneContextInstance\022\020\n\010" +
-      "swimlane\030\001 \001(\t\022\020\n\010actor_id\030\002 \001(\t\032w\n\014Node" +
-      "Instance\022\n\n\002id\030\001 \001(\003\022\017\n\007node_id\030\002 \001(\003\022J\n" +
-      "\007content\030\004 \001(\01329.org.jbpm.marshalling.Pr" +
-      "ocessInstance.NodeInstanceContent\0328\n\026Exc" +
-      "lusiveGroupInstance\022\036\n\026group_node_instan" +
-      "ce_id\030\001 \003(\003\032\326\020\n\023NodeInstanceContent\022D\n\004t",
-      "ype\030\001 \001(\01626.org.jbpm.marshalling.Process" +
-      "Instance.NodeInstanceType\022W\n\010rule_set\030\002 " +
-      "\001(\0132E.org.jbpm.marshalling.ProcessInstan" +
-      "ce.NodeInstanceContent.RuleSetNode\022[\n\nhu" +
-      "man_task\030\003 \001(\0132G.org.jbpm.marshalling.Pr" +
-      "ocessInstance.NodeInstanceContent.HumanT" +
-      "askNode\022Y\n\twork_item\030\004 \001(\0132F.org.jbpm.ma" +
-      "rshalling.ProcessInstance.NodeInstanceCo" +
-      "ntent.WorkItemNode\022]\n\013sub_process\030\005 \001(\0132" +
-      "H.org.jbpm.marshalling.ProcessInstance.N",
-      "odeInstanceContent.SubProcessNode\022Z\n\tmil" +
-      "estone\030\006 \001(\0132G.org.jbpm.marshalling.Proc" +
-      "essInstance.NodeInstanceContent.Mileston" +
-      "eNode\022R\n\005event\030\007 \001(\0132C.org.jbpm.marshall" +
-      "ing.ProcessInstance.NodeInstanceContent." +
-      "EventNode\022R\n\005timer\030\010 \001(\0132C.org.jbpm.mars" +
-      "halling.ProcessInstance.NodeInstanceCont" +
-      "ent.TimerNode\022P\n\004join\030\t \001(\0132B.org.jbpm.m" +
-      "arshalling.ProcessInstance.NodeInstanceC" +
-      "ontent.JoinNode\022R\n\005state\030\n \001(\0132C.org.jbp",
+      "\025node_instance_counter\030\005 \001(\003\022\023\n\013process_" +
+      "xml\030\013 \001(\t\022W\n\020swimlane_context\030\006 \003(\0132=.or" +
+      "g.jbpm.marshalling.ProcessInstance.Swiml" +
+      "aneContextInstance\022I\n\rnode_instance\030\007 \003(" +
+      "\01322.org.jbpm.marshalling.ProcessInstance",
+      ".NodeInstance\0220\n\010variable\030\010 \003(\0132\036.org.jb" +
+      "pm.marshalling.Variable\022U\n\017exclusive_gro" +
+      "up\030\n \003(\0132<.org.jbpm.marshalling.ProcessI" +
+      "nstance.ExclusiveGroupInstance\032=\n\027Swimla" +
+      "neContextInstance\022\020\n\010swimlane\030\001 \001(\t\022\020\n\010a" +
+      "ctor_id\030\002 \001(\t\032w\n\014NodeInstance\022\n\n\002id\030\001 \001(" +
+      "\003\022\017\n\007node_id\030\002 \001(\003\022J\n\007content\030\004 \001(\01329.or" +
+      "g.jbpm.marshalling.ProcessInstance.NodeI" +
+      "nstanceContent\0328\n\026ExclusiveGroupInstance" +
+      "\022\036\n\026group_node_instance_id\030\001 \003(\003\032\326\020\n\023Nod",
+      "eInstanceContent\022D\n\004type\030\001 \001(\01626.org.jbp" +
       "m.marshalling.ProcessInstance.NodeInstan" +
-      "ceContent.StateNode\022a\n\tcomposite\030\013 \001(\0132N" +
-      ".org.jbpm.marshalling.ProcessInstance.No" +
-      "deInstanceContent.CompositeContextNode\022W" +
-      "\n\010for_each\030\014 \001(\0132E.org.jbpm.marshalling." +
-      "ProcessInstance.NodeInstanceContent.ForE" +
-      "achNode\032\324\001\n\013RuleSetNode\022\031\n\021timer_instanc" +
-      "e_id\030\001 \003(\003\022d\n\010mapEntry\030\002 \003(\0132R.org.jbpm." +
-      "marshalling.ProcessInstance.NodeInstance" +
-      "Content.RuleSetNode.TextMapEntry\022\027\n\017rule",
-      "_flow_group\030\003 \001(\t\032+\n\014TextMapEntry\022\014\n\004nam" +
-      "e\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\032@\n\rHumanTaskNode\022" +
-      "\024\n\014work_item_id\030\001 \001(\003\022\031\n\021timer_instance_" +
-      "id\030\002 \003(\003\032?\n\014WorkItemNode\022\024\n\014work_item_id" +
-      "\030\001 \001(\003\022\031\n\021timer_instance_id\030\002 \003(\003\032H\n\016Sub" +
-      "ProcessNode\022\033\n\023process_instance_id\030\001 \001(\003" +
-      "\022\031\n\021timer_instance_id\030\002 \003(\003\032*\n\rMilestone" +
-      "Node\022\031\n\021timer_instance_id\030\001 \003(\003\032\013\n\tEvent" +
-      "Node\032\035\n\tTimerNode\022\020\n\010timer_id\030\001 \001(\003\032\234\001\n\010" +
-      "JoinNode\022_\n\007trigger\030\001 \003(\0132N.org.jbpm.mar",
-      "shalling.ProcessInstance.NodeInstanceCon" +
-      "tent.JoinNode.JoinTrigger\032/\n\013JoinTrigger" +
-      "\022\017\n\007node_id\030\001 \001(\003\022\017\n\007counter\030\002 \001(\005\032&\n\tSt" +
-      "ateNode\022\031\n\021timer_instance_id\030\001 \003(\003\032\205\002\n\024C" +
-      "ompositeContextNode\022\031\n\021timer_instance_id" +
-      "\030\002 \003(\003\0220\n\010variable\030\003 \003(\0132\036.org.jbpm.mars" +
-      "halling.Variable\022I\n\rnode_instance\030\004 \003(\0132" +
-      "2.org.jbpm.marshalling.ProcessInstance.N" +
-      "odeInstance\022U\n\017exclusive_group\030\005 \003(\0132<.o" +
-      "rg.jbpm.marshalling.ProcessInstance.Excl",
-      "usiveGroupInstance\032X\n\013ForEachNode\022I\n\rnod" +
-      "e_instance\030\001 \003(\01322.org.jbpm.marshalling." +
-      "ProcessInstance.NodeInstance\"\367\001\n\020NodeIns" +
-      "tanceType\022\021\n\rRULE_SET_NODE\020\000\022\023\n\017HUMAN_TA" +
-      "SK_NODE\020\001\022\022\n\016WORK_ITEM_NODE\020\002\022\023\n\017SUBPROC" +
-      "ESS_NODE\020\003\022\022\n\016MILESTONE_NODE\020\004\022\016\n\nEVENT_" +
-      "NODE\020\005\022\016\n\nTIMER_NODE\020\006\022\r\n\tJOIN_NODE\020\007\022\016\n" +
-      "\nSTATE_NODE\020\010\022\032\n\026COMPOSITE_CONTEXT_NODE\020" +
-      "\t\022\021\n\rFOR_EACH_NODE\020\n\022\020\n\014DYNAMIC_NODE\020\013\"?" +
-      "\n\010Variable\022\014\n\004name\030\001 \001(\t\022\026\n\016strategy_ind",
-      "ex\030\002 \001(\005\022\r\n\005value\030\003 \001(\014\"\203\001\n\010WorkItem\022\n\n\002" +
-      "id\030\001 \001(\003\022\034\n\024process_instances_id\030\002 \001(\003\022\014" +
-      "\n\004name\030\003 \001(\t\022\r\n\005state\030\004 \001(\005\0220\n\010variable\030" +
-      "\005 \003(\0132\036.org.jbpm.marshalling.Variable\"\235\002" +
-      "\n\014ProcessTimer\022?\n\005timer\030\001 \001(\01320.org.jbpm" +
-      ".marshalling.ProcessTimer.TimerInstance\022" +
-      "0\n\007trigger\030\002 \001(\0132\037.org.drools.marshallin" +
-      "g.Trigger\032\231\001\n\rTimerInstance\022\n\n\002id\030\001 \001(\003\022" +
-      "\020\n\010timer_id\030\002 \001(\003\022\r\n\005delay\030\003 \001(\003\022\016\n\006peri" +
-      "od\030\004 \001(\003\022\033\n\023process_instance_id\030\005 \001(\003\022\026\n",
-      "\016activated_time\030\006 \001(\003\022\026\n\016last_triggered\030" +
-      "\007 \001(\003:d\n\020process_instance\022#.org.drools.m" +
-      "arshalling.ProcessData\030\n \003(\0132%.org.jbpm." +
-      "marshalling.ProcessInstance:V\n\twork_item" +
-      "\022#.org.drools.marshalling.ProcessData\030\013 " +
-      "\003(\0132\036.org.jbpm.marshalling.WorkItem:5\n\010t" +
-      "imer_id\022#.org.drools.marshalling.Process" +
-      "Data\030\r \001(\003:^\n\rprocess_timer\022#.org.drools" +
-      ".marshalling.ProcessData\030\014 \003(\0132\".org.jbp" +
-      "m.marshalling.ProcessTimer:\\\n\nproc_timer",
-      "\022$.org.drools.marshalling.Timers.Timer\030d" +
-      " \001(\0132\".org.jbpm.marshalling.ProcessTimer" +
-      "B)\n\031org.jbpm.marshalling.implB\014JBPMMessa" +
-      "ges"
+      "ceType\022W\n\010rule_set\030\002 \001(\0132E.org.jbpm.mars" +
+      "halling.ProcessInstance.NodeInstanceCont" +
+      "ent.RuleSetNode\022[\n\nhuman_task\030\003 \001(\0132G.or" +
+      "g.jbpm.marshalling.ProcessInstance.NodeI" +
+      "nstanceContent.HumanTaskNode\022Y\n\twork_ite" +
+      "m\030\004 \001(\0132F.org.jbpm.marshalling.ProcessIn" +
+      "stance.NodeInstanceContent.WorkItemNode\022" +
+      "]\n\013sub_process\030\005 \001(\0132H.org.jbpm.marshall",
+      "ing.ProcessInstance.NodeInstanceContent." +
+      "SubProcessNode\022Z\n\tmilestone\030\006 \001(\0132G.org." +
+      "jbpm.marshalling.ProcessInstance.NodeIns" +
+      "tanceContent.MilestoneNode\022R\n\005event\030\007 \001(" +
+      "\0132C.org.jbpm.marshalling.ProcessInstance" +
+      ".NodeInstanceContent.EventNode\022R\n\005timer\030" +
+      "\010 \001(\0132C.org.jbpm.marshalling.ProcessInst" +
+      "ance.NodeInstanceContent.TimerNode\022P\n\004jo" +
+      "in\030\t \001(\0132B.org.jbpm.marshalling.ProcessI" +
+      "nstance.NodeInstanceContent.JoinNode\022R\n\005",
+      "state\030\n \001(\0132C.org.jbpm.marshalling.Proce" +
+      "ssInstance.NodeInstanceContent.StateNode" +
+      "\022a\n\tcomposite\030\013 \001(\0132N.org.jbpm.marshalli" +
+      "ng.ProcessInstance.NodeInstanceContent.C" +
+      "ompositeContextNode\022W\n\010for_each\030\014 \001(\0132E." +
+      "org.jbpm.marshalling.ProcessInstance.Nod" +
+      "eInstanceContent.ForEachNode\032\324\001\n\013RuleSet" +
+      "Node\022\031\n\021timer_instance_id\030\001 \003(\003\022d\n\010mapEn" +
+      "try\030\002 \003(\0132R.org.jbpm.marshalling.Process" +
+      "Instance.NodeInstanceContent.RuleSetNode",
+      ".TextMapEntry\022\027\n\017rule_flow_group\030\003 \001(\t\032+" +
+      "\n\014TextMapEntry\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 " +
+      "\001(\t\032@\n\rHumanTaskNode\022\024\n\014work_item_id\030\001 \001" +
+      "(\003\022\031\n\021timer_instance_id\030\002 \003(\003\032?\n\014WorkIte" +
+      "mNode\022\024\n\014work_item_id\030\001 \001(\003\022\031\n\021timer_ins" +
+      "tance_id\030\002 \003(\003\032H\n\016SubProcessNode\022\033\n\023proc" +
+      "ess_instance_id\030\001 \001(\003\022\031\n\021timer_instance_" +
+      "id\030\002 \003(\003\032*\n\rMilestoneNode\022\031\n\021timer_insta" +
+      "nce_id\030\001 \003(\003\032\013\n\tEventNode\032\035\n\tTimerNode\022\020" +
+      "\n\010timer_id\030\001 \001(\003\032\234\001\n\010JoinNode\022_\n\007trigger",
+      "\030\001 \003(\0132N.org.jbpm.marshalling.ProcessIns" +
+      "tance.NodeInstanceContent.JoinNode.JoinT" +
+      "rigger\032/\n\013JoinTrigger\022\017\n\007node_id\030\001 \001(\003\022\017" +
+      "\n\007counter\030\002 \001(\005\032&\n\tStateNode\022\031\n\021timer_in" +
+      "stance_id\030\001 \003(\003\032\205\002\n\024CompositeContextNode" +
+      "\022\031\n\021timer_instance_id\030\002 \003(\003\0220\n\010variable\030" +
+      "\003 \003(\0132\036.org.jbpm.marshalling.Variable\022I\n" +
+      "\rnode_instance\030\004 \003(\01322.org.jbpm.marshall" +
+      "ing.ProcessInstance.NodeInstance\022U\n\017excl" +
+      "usive_group\030\005 \003(\0132<.org.jbpm.marshalling",
+      ".ProcessInstance.ExclusiveGroupInstance\032" +
+      "X\n\013ForEachNode\022I\n\rnode_instance\030\001 \003(\01322." +
+      "org.jbpm.marshalling.ProcessInstance.Nod" +
+      "eInstance\"\222\002\n\020NodeInstanceType\022\021\n\rRULE_S" +
+      "ET_NODE\020\000\022\023\n\017HUMAN_TASK_NODE\020\001\022\022\n\016WORK_I" +
+      "TEM_NODE\020\002\022\023\n\017SUBPROCESS_NODE\020\003\022\022\n\016MILES" +
+      "TONE_NODE\020\004\022\016\n\nEVENT_NODE\020\005\022\016\n\nTIMER_NOD" +
+      "E\020\006\022\r\n\tJOIN_NODE\020\007\022\016\n\nSTATE_NODE\020\010\022\032\n\026CO" +
+      "MPOSITE_CONTEXT_NODE\020\t\022\021\n\rFOR_EACH_NODE\020" +
+      "\n\022\020\n\014DYNAMIC_NODE\020\013\022\031\n\025EVENT_SUBPROCESS_",
+      "NODE\020\014\"?\n\010Variable\022\014\n\004name\030\001 \001(\t\022\026\n\016stra" +
+      "tegy_index\030\002 \001(\005\022\r\n\005value\030\003 \001(\014\"\203\001\n\010Work" +
+      "Item\022\n\n\002id\030\001 \001(\003\022\034\n\024process_instances_id" +
+      "\030\002 \001(\003\022\014\n\004name\030\003 \001(\t\022\r\n\005state\030\004 \001(\005\0220\n\010v" +
+      "ariable\030\005 \003(\0132\036.org.jbpm.marshalling.Var" +
+      "iable\"\235\002\n\014ProcessTimer\022?\n\005timer\030\001 \001(\01320." +
+      "org.jbpm.marshalling.ProcessTimer.TimerI" +
+      "nstance\0220\n\007trigger\030\002 \001(\0132\037.org.drools.ma" +
+      "rshalling.Trigger\032\231\001\n\rTimerInstance\022\n\n\002i" +
+      "d\030\001 \001(\003\022\020\n\010timer_id\030\002 \001(\003\022\r\n\005delay\030\003 \001(\003",
+      "\022\016\n\006period\030\004 \001(\003\022\033\n\023process_instance_id\030" +
+      "\005 \001(\003\022\026\n\016activated_time\030\006 \001(\003\022\026\n\016last_tr" +
+      "iggered\030\007 \001(\003:d\n\020process_instance\022#.org." +
+      "drools.marshalling.ProcessData\030\n \003(\0132%.o" +
+      "rg.jbpm.marshalling.ProcessInstance:V\n\tw" +
+      "ork_item\022#.org.drools.marshalling.Proces" +
+      "sData\030\013 \003(\0132\036.org.jbpm.marshalling.WorkI" +
+      "tem:5\n\010timer_id\022#.org.drools.marshalling" +
+      ".ProcessData\030\r \001(\003:^\n\rprocess_timer\022#.or" +
+      "g.drools.marshalling.ProcessData\030\014 \003(\0132\"",
+      ".org.jbpm.marshalling.ProcessTimer:\\\n\npr" +
+      "oc_timer\022$.org.drools.marshalling.Timers" +
+      ".Timer\030d \001(\0132\".org.jbpm.marshalling.Proc" +
+      "essTimerB)\n\031org.jbpm.marshalling.implB\014J" +
+      "BPMMessages"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -14643,7 +14741,7 @@ public final class JBPMMessages {
           internal_static_org_jbpm_marshalling_ProcessInstance_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_org_jbpm_marshalling_ProcessInstance_descriptor,
-              new java.lang.String[] { "ProcessType", "Id", "ProcessId", "State", "NodeInstanceCounter", "SwimlaneContext", "NodeInstance", "Variable", "ExclusiveGroup", },
+              new java.lang.String[] { "ProcessType", "Id", "ProcessId", "State", "NodeInstanceCounter", "ProcessXml", "SwimlaneContext", "NodeInstance", "Variable", "ExclusiveGroup", },
               org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.class,
               org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.Builder.class);
           internal_static_org_jbpm_marshalling_ProcessInstance_SwimlaneContextInstance_descriptor =

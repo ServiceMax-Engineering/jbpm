@@ -33,12 +33,12 @@ import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jbpm.task.TaskDef;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 /**
  *
@@ -81,6 +81,7 @@ public class BPMN2DataServicesTest {
                 .addPackage("org.droolsjbpm.services.test")
                 .addPackage("org.droolsjbpm.services.impl.event.listeners")
                 .addPackage("org.droolsjbpm.services.impl.example") 
+                .addPackage("org.droolsjbpm.services.impl.util") 
                 .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
                 .addAsManifestResource("META-INF/Taskorm.xml", ArchivePaths.create("Taskorm.xml"))
                 .addAsManifestResource("META-INF/beans.xml", ArchivePaths.create("beans.xml"))
@@ -92,28 +93,15 @@ public class BPMN2DataServicesTest {
     @Inject
     private BPMN2DataService bpmn2Service;
 
+       
     public BPMN2DataServicesTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-        knolwedgeService.getAvailableProcesses();
-    }
-
-    @After
-    public void tearDown() {
     }
 
     @Test
     public void hello() throws IOException {
+      
+        knolwedgeService.createDomain();
+      
         String theString = "org.jbpm.writedocument";
         
 
@@ -135,6 +123,8 @@ public class BPMN2DataServicesTest {
     
     @Test
     public void testFindReusableSubProcesses() {
+      
+        knolwedgeService.createDomain();
         String theString = "ParentProcess";
         
         assertNotNull(theString);

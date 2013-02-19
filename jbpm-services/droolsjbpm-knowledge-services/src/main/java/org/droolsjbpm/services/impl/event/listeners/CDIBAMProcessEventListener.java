@@ -16,6 +16,7 @@
 package org.droolsjbpm.services.impl.event.listeners;
 
 import java.util.Date;
+import java.util.List;
 import org.droolsjbpm.services.api.IdentityProvider;
 import org.droolsjbpm.services.api.SessionManager;
 import org.jboss.seam.transaction.Transactional;
@@ -33,7 +34,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import org.droolsjbpm.services.impl.model.BAMProcessSummary;
 import org.droolsjbpm.services.impl.model.StateHelper;
-import org.kie.runtime.process.WorkflowProcessInstance;
 
 /**
  *
@@ -59,40 +59,43 @@ public class CDIBAMProcessEventListener implements ProcessEventListener {
 
     @Override
     public void beforeProcessStarted(ProcessStartedEvent pse) {
-        WorkflowProcessInstance processInstance = (WorkflowProcessInstance)pse.getProcessInstance();
-        int sessionId = ((StatefulKnowledgeSession)pse.getKieRuntime()).getId();
-        // TODO: include session ID
-        String version = processInstance.getProcess().getVersion();
-        if(version == null){
-            version = "";
-        }
-        em.persist(new BAMProcessSummary(processInstance.getId(), processInstance.getProcessName(), StateHelper.getProcessState(processInstance.getState()), new Date(), identity.getName(), version));
+        int currentState = pse.getProcessInstance().getState();
+
+//        if (currentState == ProcessInstance.STATE_ACTIVE) {
+            System.out.println("Saving event for process instance " + pse.getProcessInstance().getId());
+            ProcessInstance processInstance = pse.getProcessInstance();
+            int sessionId = ((StatefulKnowledgeSession)pse.getKieRuntime()).getId();
+            String version = processInstance.getProcess().getVersion();
+//            BAMProcessSummary processSummaryById = (BAMProcessSummary)em.createQuery("select bps from BAMProcessSummary bps where bps.processInstanceId =:processId")
+//                                                    .setParameter("processId", processInstance.getId()).getSingleResult();
+//            processSummaryById.setStatus(StateHelper.getProcessState(processInstance.getState()));
+//            em.merge(processSummaryById);
+            // FIXME this will record state pending so we might hard code it as Active to keep the right state in bam
+            em.persist(new BAMProcessSummary(processInstance.getId(), processInstance.getProcessName(), StateHelper.getProcessState(processInstance.getState()), new Date(), identity.getName(), version));
+//        }
     }
 
     @Override
     public void afterProcessStarted(ProcessStartedEvent pse) {
-        int currentState = pse.getProcessInstance().getState();
 
-        if (currentState == ProcessInstance.STATE_ACTIVE) {
-            ProcessInstance processInstance = pse.getProcessInstance();
-            int sessionId = ((StatefulKnowledgeSession)pse.getKieRuntime()).getId();
-            BAMProcessSummary processSummaryById = (BAMProcessSummary)em.createQuery("select bps from BAMProcessSummary bps where bps.processInstanceId =:processId")
-                                                    .setParameter("processId", processInstance.getId()).getSingleResult();
-            processSummaryById.setStatus(StateHelper.getProcessState(processInstance.getState()));
-            em.merge(processSummaryById);
-        }
     }
 
     public void beforeProcessCompleted(ProcessCompletedEvent pce) {
         ProcessInstance processInstance = pce.getProcessInstance();
-        BAMProcessSummary processSummaryById = (BAMProcessSummary)em.createQuery("select bps from BAMProcessSummary bps where bps.processInstanceId =:processId")
-                                                    .setParameter("processId", processInstance.getId()).getSingleResult();
-        processSummaryById.setStatus(StateHelper.getProcessState(processInstance.getState()));
-        Date completedDate = new Date();
-        Date startDate = processSummaryById.getStartDate();
-        processSummaryById.setEndDate(completedDate);
-        processSummaryById.setDuration(completedDate.getTime() - startDate.getTime() );
-        em.merge(processSummaryById);
+        List<BAMProcessSummary> summaries = (List<BAMProcessSummary>)em.createQuery("select bps from BAMProcessSummary bps where bps.processInstanceId =:processId")
+                                                    .setParameter("processId", processInstance.getId()).getResultList();
+        if(summaries.size() == 1){
+          BAMProcessSummary processSummaryById = (BAMProcessSummary) summaries.get(0);
+          processSummaryById.setStatus(StateHelper.getProcessState(processInstance.getState()));
+          Date completedDate = new Date();
+          Date startDate = processSummaryById.getStartDate();
+          processSummaryById.setEndDate(completedDate);
+          processSummaryById.setDuration(completedDate.getTime() - startDate.getTime() );
+          em.merge(processSummaryById);
+        }else{
+          // Log
+          System.out.print("EEEE: Something went wrong with the BAM Listener");
+        }
         
     }
 

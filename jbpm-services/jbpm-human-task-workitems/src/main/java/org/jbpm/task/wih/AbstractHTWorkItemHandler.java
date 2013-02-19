@@ -44,18 +44,14 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractHTWorkItemHandler.class);
-    protected KnowledgeRuntime session;
+    
     protected OnErrorAction action = OnErrorAction.LOG;
 
     public AbstractHTWorkItemHandler() {
     }
 
-    public AbstractHTWorkItemHandler(KnowledgeRuntime session) {
-        this.session = session;
-    }
-
-    public AbstractHTWorkItemHandler(KnowledgeRuntime session, OnErrorAction action) {
-        this.session = session;
+    public AbstractHTWorkItemHandler( OnErrorAction action) {
+        
         this.action = action;
     }
 
@@ -63,17 +59,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
         this.action = action;
     }
 
-    public KnowledgeRuntime getSession() {
-        return session;
-    }
-
-    public void setSession(KnowledgeRuntime session) {
-        this.session = session;
-    }
-    
-    
-    
-    protected Task createTaskBasedOnWorkItemParams(WorkItem workItem) {
+    protected Task createTaskBasedOnWorkItemParams(StatefulKnowledgeSession session, WorkItem workItem) {
         Task task = new Task();
         String taskName = (String) workItem.getParameter("TaskName");
         if (taskName != null) {
@@ -116,6 +102,10 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
         if (parentId != null) {
             taskData.setParentId(parentId);
         }
+        String createdBy = (String) workItem.getParameter("CreatedBy");
+        if (createdBy != null && createdBy.trim().length() > 0) {
+            taskData.setCreatedBy(new User(createdBy));
+        }
         PeopleAssignments assignments = new PeopleAssignments();
         List<OrganizationalEntity> potentialOwners = new ArrayList<OrganizationalEntity>();
         String actorId = (String) workItem.getParameter("ActorId");
@@ -125,7 +115,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
                 potentialOwners.add(new User(id.trim()));
             }
             //Set the first user as creator ID??? hmmm might be wrong
-            if (potentialOwners.size() > 0) {
+            if (potentialOwners.size() > 0 && taskData.getCreatedBy() == null) {
                 taskData.setCreatedBy((User) potentialOwners.get(0));
             }
         }
@@ -136,6 +126,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
                 potentialOwners.add(new Group(id.trim()));
             }
         }
+        
         assignments.setPotentialOwners(potentialOwners);
         List<OrganizationalEntity> businessAdministrators = new ArrayList<OrganizationalEntity>();
         businessAdministrators.add(new User("Administrator"));
@@ -146,7 +137,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
         return task;
     }
 
-    protected ContentData createTaskContentBasedOnWorkItemParams(WorkItem workItem) {
+    protected ContentData createTaskContentBasedOnWorkItemParams(StatefulKnowledgeSession session, WorkItem workItem) {
         ContentData content = null;
         Object contentObject = workItem.getParameter("Content");
         if (contentObject == null) {

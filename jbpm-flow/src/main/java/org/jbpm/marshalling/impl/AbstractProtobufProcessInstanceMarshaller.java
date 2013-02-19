@@ -28,16 +28,10 @@ import java.util.Map;
 import org.drools.common.DefaultFactHandle;
 import org.drools.common.InternalRuleBase;
 import org.drools.common.InternalWorkingMemory;
-import org.kie.definition.process.Process;
 import org.drools.marshalling.impl.MarshallerReaderContext;
 import org.drools.marshalling.impl.MarshallerWriteContext;
 import org.drools.marshalling.impl.PersisterHelper;
 import org.drools.marshalling.impl.ProtobufMessages.Header;
-import org.kie.runtime.process.NodeInstance;
-import org.kie.runtime.process.NodeInstanceContainer;
-import org.kie.runtime.process.ProcessInstance;
-import org.kie.runtime.process.WorkflowProcessInstance;
-import org.kie.runtime.rule.FactHandle;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceContent;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.TextMapEntry;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceType;
@@ -58,6 +52,7 @@ import org.jbpm.workflow.instance.impl.factory.CreateNewNodeFactory;
 import org.jbpm.workflow.instance.node.CompositeContextNodeInstance;
 import org.jbpm.workflow.instance.node.DynamicNodeInstance;
 import org.jbpm.workflow.instance.node.EventNodeInstance;
+import org.jbpm.workflow.instance.node.EventSubProcessNodeInstance;
 import org.jbpm.workflow.instance.node.ForEachNodeInstance;
 import org.jbpm.workflow.instance.node.HumanTaskNodeInstance;
 import org.jbpm.workflow.instance.node.JoinInstance;
@@ -68,6 +63,12 @@ import org.jbpm.workflow.instance.node.StateNodeInstance;
 import org.jbpm.workflow.instance.node.SubProcessNodeInstance;
 import org.jbpm.workflow.instance.node.TimerNodeInstance;
 import org.jbpm.workflow.instance.node.WorkItemNodeInstance;
+import org.kie.definition.process.Process;
+import org.kie.runtime.process.NodeInstance;
+import org.kie.runtime.process.NodeInstanceContainer;
+import org.kie.runtime.process.ProcessInstance;
+import org.kie.runtime.process.WorkflowProcessInstance;
+import org.kie.runtime.rule.FactHandle;
 
 import com.google.protobuf.ExtensionRegistry;
 
@@ -90,6 +91,9 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 .setState( workFlow.getState() )
                 .setNodeInstanceCounter( workFlow.getNodeInstanceCounter() )
                 .setProcessType( workFlow.getProcess().getType() );
+        if (workFlow.getProcessXml() != null) {
+            _instance.setProcessXml( workFlow.getProcessXml());
+        }
 
         SwimlaneContextInstance swimlaneContextInstance = (SwimlaneContextInstance) workFlow.getContextInstance( SwimlaneContext.SWIMLANE_SCOPE );
         if ( swimlaneContextInstance != null ) {
@@ -285,9 +289,14 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                     .setState( _state.build() );
         } else if ( nodeInstance instanceof CompositeContextNodeInstance ) {
             JBPMMessages.ProcessInstance.NodeInstanceContent.CompositeContextNode.Builder _composite = JBPMMessages.ProcessInstance.NodeInstanceContent.CompositeContextNode.newBuilder();
-            JBPMMessages.ProcessInstance.NodeInstanceType _type = ( nodeInstance instanceof DynamicNodeInstance ) ?
-                JBPMMessages.ProcessInstance.NodeInstanceType.DYNAMIC_NODE :
-                JBPMMessages.ProcessInstance.NodeInstanceType.COMPOSITE_CONTEXT_NODE;
+            JBPMMessages.ProcessInstance.NodeInstanceType _type = null;
+            if (nodeInstance instanceof DynamicNodeInstance) {
+                _type = JBPMMessages.ProcessInstance.NodeInstanceType.DYNAMIC_NODE;
+            } else if (nodeInstance instanceof EventSubProcessNodeInstance) {
+                _type = JBPMMessages.ProcessInstance.NodeInstanceType.EVENT_SUBPROCESS_NODE;
+            } else {
+                _type = JBPMMessages.ProcessInstance.NodeInstanceType.COMPOSITE_CONTEXT_NODE;
+            }
 
             CompositeContextNodeInstance compositeNodeInstance = (CompositeContextNodeInstance) nodeInstance;
             List<Long> timerInstances =
@@ -404,8 +413,13 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         processInstance.setId( _instance.getId() );
         String processId = _instance.getProcessId();
         processInstance.setProcessId( processId );
-        Process process = ruleBase.getProcess( processId );
-        if ( ruleBase != null ) {
+        String processXml = _instance.getProcessXml();
+        Process process = null;
+        if (processXml != null && processXml.trim().length() > 0) {
+        	processInstance.setProcessXml( processXml );
+        	process = processInstance.getProcess();
+        } else {
+            process = ruleBase.getProcess( processId );
             processInstance.setProcess( process );
         }
         processInstance.setKnowledgeRuntime( wm.getKnowledgeRuntime() );
@@ -455,9 +469,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
             }
         }
         processInstance.internalSetNodeInstanceCounter( nodeInstanceCounter );
-        if ( wm != null ) {
-            processInstance.reconnect();
-        }
+    	processInstance.reconnect();
         return processInstance;
     }
 
@@ -470,7 +482,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         
         NodeInstanceImpl nodeInstance = readNodeInstanceContent( _node,
                                                                  context, 
-                                                                 processInstance );
+                                                                 processInstance);
 
         nodeInstance.setNodeId( _node.getNodeId() );
         nodeInstance.setNodeInstanceContainer( nodeInstanceContainer );
@@ -517,6 +529,14 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                     context.parameterObject = _instance;
                     readNodeInstance( context,
                                       (ForEachNodeInstance) nodeInstance,
+                                      processInstance );
+                }
+                break;
+            case EVENT_SUBPROCESS_NODE :
+                for ( JBPMMessages.ProcessInstance.NodeInstance _instance : _node.getContent().getComposite().getNodeInstanceList() ) {
+                    context.parameterObject = _instance;
+                    readNodeInstance( context,
+                                      (EventSubProcessNodeInstance) nodeInstance,
                                       processInstance );
                 }
                 break;
@@ -629,6 +649,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 break;
             case COMPOSITE_CONTEXT_NODE :
                 nodeInstance = new CompositeContextNodeInstance();
+                
                 if ( _content.getComposite().getTimerInstanceIdCount() > 0 ) {
                     List<Long> timerInstances = new ArrayList<Long>();
                     for ( Long _timerId : _content.getComposite().getTimerInstanceIdList() ) {
@@ -675,6 +696,17 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 ((StateBasedNodeInstance) nodeInstance).internalSetTimerInstances( timerInstances );
             }
               break;
+            case EVENT_SUBPROCESS_NODE :
+                nodeInstance = new EventSubProcessNodeInstance();
+                
+                if ( _content.getComposite().getTimerInstanceIdCount() > 0 ) {
+                    List<Long> timerInstances = new ArrayList<Long>();
+                    for ( Long _timerId : _content.getComposite().getTimerInstanceIdList() ) {
+                        timerInstances.add( _timerId );
+                    }
+                    ((CompositeContextNodeInstance) nodeInstance).internalSetTimerInstances( timerInstances );
+                }
+                break;
             default :
                 throw new IllegalArgumentException( "Unknown node type: " + _content.getType() );
         }

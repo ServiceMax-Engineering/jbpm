@@ -23,11 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.RuntimeDroolsException;
-import org.kie.definition.process.Connection;
-import org.kie.definition.process.Node;
-import org.kie.definition.process.NodeContainer;
-import org.kie.definition.process.Process;
 import org.drools.process.core.Work;
+import org.drools.process.core.datatype.DataType;
+import org.drools.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.time.TimeUtils;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.timer.DateTimeUtils;
@@ -37,7 +35,6 @@ import org.jbpm.process.core.validation.ProcessValidator;
 import org.jbpm.process.core.validation.impl.ProcessValidationErrorImpl;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.WorkflowProcess;
-import org.jbpm.workflow.core.impl.ConnectionImpl;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.core.node.ActionNode;
@@ -47,6 +44,7 @@ import org.jbpm.workflow.core.node.CompositeNode.NodeAndType;
 import org.jbpm.workflow.core.node.DynamicNode;
 import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.EventNode;
+import org.jbpm.workflow.core.node.EventSubProcessNode;
 import org.jbpm.workflow.core.node.FaultNode;
 import org.jbpm.workflow.core.node.ForEachNode;
 import org.jbpm.workflow.core.node.Join;
@@ -59,9 +57,15 @@ import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.core.node.ThrowLinkNode;
 import org.jbpm.workflow.core.node.TimerNode;
 import org.jbpm.workflow.core.node.WorkItemNode;
+import org.kie.definition.process.Connection;
+import org.kie.definition.process.Node;
+import org.kie.definition.process.NodeContainer;
+import org.kie.definition.process.Process;
 import org.mvel2.ErrorDetail;
 import org.mvel2.ParserContext;
 import org.mvel2.compiler.ExpressionCompiler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of a RuleFlow validator.
@@ -74,6 +78,8 @@ public class RuleFlowProcessValidator implements ProcessValidator {
     // TODO: extract generic process stuff and generic workflow stuff
 
     private static RuleFlowProcessValidator instance;
+    
+    private static Logger logger = LoggerFactory.getLogger(RuleFlowProcessValidator.class);
 
     private boolean startNodeFound;
     private boolean endNodeFound;
@@ -135,7 +141,9 @@ public class RuleFlowProcessValidator implements ProcessValidator {
             }
         }
 
-        checkAllNodesConnectedToStart(process, errors);
+        validateVariables(errors, process);
+
+        checkAllNodesConnectedToStart(process, errors);        
 
         return errors.toArray(new ProcessValidationError[errors.size()]);
     }
@@ -743,6 +751,32 @@ public class RuleFlowProcessValidator implements ProcessValidator {
                     "This validator can only validate ruleflow processes!");
         }
         return validateProcess((RuleFlowProcess) process);
+    }
+    
+    private void validateVariables(List<ProcessValidationError> errors, RuleFlowProcess process) {
+        
+        List<Variable> variables = process.getVariableScope().getVariables();
+        
+        if (variables != null) {
+            for (Variable var : variables) {
+                DataType varDataType = var.getType();                
+                if (varDataType == null) {
+                    errors.add(new ProcessValidationErrorImpl(process, "Variable '" + var.getName() + "' has no type."));
+                }
+                
+                String stringType = varDataType.getStringType();
+                if (varDataType instanceof ObjectDataType) {
+                    if ("java.lang.Object".equals(stringType) || "Object".equals(stringType)) {
+                        errors.add(new ProcessValidationErrorImpl(process,
+                                "Process variable " + var.getName() + " must have a defined concrete type, currently '" 
+                                        + stringType + "' and data type '" + varDataType.getClass().getName()));
+                    } else if (stringType.startsWith("java.lang")) {
+                        logger.warn("Process variable " + var.getName() + " uses ObjectDataType for default type (java.lang) " +
+                        		"which could cause problems with setting variables, use dedicated type instead");
+                    }
+                }
+            }
+        }
     }
 
 }

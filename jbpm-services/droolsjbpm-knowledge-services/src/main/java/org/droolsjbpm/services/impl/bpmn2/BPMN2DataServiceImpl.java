@@ -34,6 +34,7 @@ import org.droolsjbpm.services.impl.model.ProcessDesc;
 import org.jbpm.task.TaskDef;
 import org.jbpm.task.api.TaskServiceEntryPoint;
 import org.kie.builder.KnowledgeBuilder;
+import org.kie.builder.KnowledgeBuilderError;
 import org.kie.builder.KnowledgeBuilderFactory;
 import org.kie.definition.KnowledgePackage;
 import org.kie.io.ResourceType;
@@ -163,10 +164,11 @@ public class BPMN2DataServiceImpl implements BPMN2DataService {
     }
 
     @Override
-    public String findProcessId(String bpmn2Content) {
+    public ProcessDesc findProcessId(final String bpmn2Content) {
         if (bpmn2Content == null || "".equals(bpmn2Content)) {
-            throw new IllegalStateException("The Process Content cannot be Empty!");
+            return null;
         }
+        
         BPMN2ProcessProvider originalProvider = BPMN2ProcessFactory.getBPMN2ProcessProvider();
         if (originalProvider != provider) {
             BPMN2ProcessFactory.setBPMN2ProcessProvider(provider);
@@ -176,12 +178,20 @@ public class BPMN2DataServiceImpl implements BPMN2DataService {
        
         kbuilder.add(new ByteArrayResource(bpmn2Content.getBytes()), ResourceType.BPMN2);
         if (kbuilder.hasErrors()) {
-            throw new IllegalStateException("Process Cannot be Parsed!");
+            for(KnowledgeBuilderError error: kbuilder.getErrors()){
+                System.out.println("Error: "+error.getMessage());
+            }
+            System.out.println(">> Process Cannot be Parsed! \n"+bpmn2Content);
+            return null;
         }
         
         BPMN2ProcessFactory.setBPMN2ProcessProvider(originalProvider);
         
         KnowledgePackage pckg = kbuilder.getKnowledgePackages().iterator().next();
-        return pckg.getProcesses().iterator().next().getId();
+        
+        org.kie.definition.process.Process process = pckg.getProcesses().iterator().next();
+        return new ProcessDesc(process.getId(), process.getName(), process.getVersion()
+                , process.getPackageName(), process.getType(), process.getKnowledgeType().name(),
+                process.getNamespace(), null);
     }
 }

@@ -61,18 +61,22 @@ public class DomainKnowledgeServiceWithRulesCDITest extends DomainKnowledgeServi
                 .addPackage("org.droolsjbpm.services.test")
                 .addPackage("org.droolsjbpm.services.impl.event.listeners")
                 .addPackage("org.droolsjbpm.services.impl.example") 
+                .addPackage("org.droolsjbpm.services.impl.util") 
+                .addAsResource("jndi.properties","jndi.properties")
                 .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
                 .addAsManifestResource("META-INF/Taskorm.xml", ArchivePaths.create("Taskorm.xml"))
                 .addAsManifestResource("META-INF/beans.xml", ArchivePaths.create("beans.xml"))
                 .addAsManifestResource("META-INF/services/org.kie.commons.java.nio.file.spi.FileSystemProvider", ArchivePaths.create("org.kie.commons.java.nio.file.spi.FileSystemProvider"));
 
     }
-    
+
     @After
     public void tearDown() throws Exception {
         int removedTasks = taskService.removeAllTasks();
         int removedLogs = adminDataService.removeAllData();
         System.out.println(" --> Removed Tasks = "+removedTasks + " - ");
         System.out.println(" --> Removed Logs = "+removedLogs + " - ");
+        
     }
+    
 }

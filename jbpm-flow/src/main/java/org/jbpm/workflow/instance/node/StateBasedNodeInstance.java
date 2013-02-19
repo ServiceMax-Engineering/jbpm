@@ -305,7 +305,7 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
 		}
 	}
 	
-	private String getActivationType() {
+	protected String getActivationType() {
 	    return "RuleFlowStateEvent-" + this.getProcessInstance().getProcessId();
 	}
 	

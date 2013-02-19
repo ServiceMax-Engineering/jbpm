@@ -27,52 +27,54 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class ReleaseProcessCDITest extends ReleaseProcessBaseTest {
 
-    @Deployment()
-    public static Archive<?> createDeployment() {
-        return ShrinkWrap.create(JavaArchive.class, "droolsjbpm-knowledge-services.jar")
-                .addPackage("org.jboss.seam.persistence") //seam-persistence
-                .addPackage("org.jboss.seam.transaction") //seam-persistence
-                .addPackage("org.jbpm.task")
-                .addPackage("org.jbpm.task.wih") // work items org.jbpm.task.wih
-                .addPackage("org.jbpm.task.annotations")
-                .addPackage("org.jbpm.task.api")
-                .addPackage("org.jbpm.task.impl")
-                .addPackage("org.jbpm.task.events")
-                .addPackage("org.jbpm.task.exception")
-                .addPackage("org.jbpm.task.identity")
-                .addPackage("org.jbpm.task.factories")
-                .addPackage("org.jbpm.task.internals")
-                .addPackage("org.jbpm.task.internals.lifecycle")
-                .addPackage("org.jbpm.task.lifecycle.listeners")
-                .addPackage("org.jbpm.task.query")
-                .addPackage("org.jbpm.task.util")
-                .addPackage("org.jbpm.task.commands") // This should not be required here
-                .addPackage("org.jbpm.task.deadlines") // deadlines
-                .addPackage("org.jbpm.task.deadlines.notifications.impl")
-                .addPackage("org.jbpm.task.subtask")
-                .addPackage("org.droolsjbpm.services.api")
-                .addPackage("org.droolsjbpm.services.api.bpmn2")
-                .addPackage("org.droolsjbpm.services.impl")
-                .addPackage("org.droolsjbpm.services.impl.bpmn2")
-                .addPackage("org.jbpm.shared.services.api")
-                .addPackage("org.jbpm.shared.services.impl")
-                .addPackage("org.droolsjbpm.services.impl.vfs")
-                .addPackage("org.kie.commons.java.nio.fs.jgit")
-                .addPackage("org.droolsjbpm.services.test")
-                .addPackage("org.droolsjbpm.services.impl.event.listeners")
-                .addPackage("org.droolsjbpm.services.impl.example") 
-                .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
-                .addAsManifestResource("META-INF/Taskorm.xml", ArchivePaths.create("Taskorm.xml"))
-                .addAsManifestResource("META-INF/beans.xml", ArchivePaths.create("beans.xml"))
-                .addAsManifestResource("META-INF/services/org.kie.commons.java.nio.file.spi.FileSystemProvider", ArchivePaths.create("org.kie.commons.java.nio.file.spi.FileSystemProvider"));
+  @Deployment()
+  public static Archive<?> createDeployment() {
+    return ShrinkWrap.create(JavaArchive.class, "droolsjbpm-knowledge-services.jar")
+            .addPackage("org.jboss.seam.persistence") //seam-persistence
+            .addPackage("org.jboss.seam.transaction") //seam-persistence
+            .addPackage("org.jbpm.task")
+            .addPackage("org.jbpm.task.wih") // work items org.jbpm.task.wih
+            .addPackage("org.jbpm.task.annotations")
+            .addPackage("org.jbpm.task.api")
+            .addPackage("org.jbpm.task.impl")
+            .addPackage("org.jbpm.task.events")
+            .addPackage("org.jbpm.task.exception")
+            .addPackage("org.jbpm.task.identity")
+            .addPackage("org.jbpm.task.factories")
+            .addPackage("org.jbpm.task.internals")
+            .addPackage("org.jbpm.task.internals.lifecycle")
+            .addPackage("org.jbpm.task.lifecycle.listeners")
+            .addPackage("org.jbpm.task.query")
+            .addPackage("org.jbpm.task.util")
+            .addPackage("org.jbpm.task.commands") // This should not be required here
+            .addPackage("org.jbpm.task.deadlines") // deadlines
+            .addPackage("org.jbpm.task.deadlines.notifications.impl")
+            .addPackage("org.jbpm.task.subtask")
+            .addPackage("org.droolsjbpm.services.api")
+            .addPackage("org.droolsjbpm.services.api.bpmn2")
+            .addPackage("org.droolsjbpm.services.impl")
+            .addPackage("org.droolsjbpm.services.impl.bpmn2")
+            .addPackage("org.jbpm.shared.services.api")
+            .addPackage("org.jbpm.shared.services.impl")
+            .addPackage("org.droolsjbpm.services.impl.vfs")
+            .addPackage("org.kie.commons.java.nio.fs.jgit")
+            .addPackage("org.droolsjbpm.services.test")
+            .addPackage("org.droolsjbpm.services.impl.event.listeners")
+            .addPackage("org.droolsjbpm.services.impl.example")
+            .addPackage("org.droolsjbpm.services.impl.util")
+            .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
+            .addAsManifestResource("META-INF/Taskorm.xml", ArchivePaths.create("Taskorm.xml"))
+            .addAsManifestResource("META-INF/beans.xml", ArchivePaths.create("beans.xml"))
+            .addAsManifestResource("META-INF/services/org.kie.commons.java.nio.file.spi.FileSystemProvider", ArchivePaths.create("org.kie.commons.java.nio.file.spi.FileSystemProvider"));
 
-    }
-    
-    @After
-    public void tearDown() throws Exception {
-        int removedTasks = taskService.removeAllTasks();
-        int removedLogs = adminDataService.removeAllData();
-        System.out.println(" --> Removed Tasks = "+removedTasks + " - ");
-        System.out.println(" --> Removed Logs = "+removedLogs + " - ");
-    }
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    super.cleanUp();
+    int removedTasks = taskService.removeAllTasks();
+    int removedLogs = adminDataService.removeAllData();
+    System.out.println(" --> Removed Tasks = " + removedTasks + " - ");
+    System.out.println(" --> Removed Logs = " + removedLogs + " - ");
+  }
 }

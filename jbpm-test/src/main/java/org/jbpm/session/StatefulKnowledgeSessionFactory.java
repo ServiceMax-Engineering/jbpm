@@ -2,6 +2,8 @@ package org.jbpm.session;
 
 import javax.persistence.EntityManagerFactory;
 
+import org.jbpm.process.audit.AuditLoggerFactory;
+import org.jbpm.process.audit.AuditLoggerFactory.Type;
 import org.jbpm.process.audit.JPAWorkingMemoryDbLogger;
 import org.jbpm.process.workitem.wsht.LocalHTWorkItemHandler;
 import org.jbpm.task.service.local.LocalTaskService;
@@ -41,12 +43,13 @@ public class StatefulKnowledgeSessionFactory {
 	public SessionEnvironment createStatefulKnowledgeSession() {
 		Environment env = KnowledgeBaseFactory.newEnvironment();
 		env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
-		// TODO env.set(EnvironmentName.TRANSACTION_MANAGER, TransactionManagerServices.getTransactionManager());
+		// TODO: what if other transaction manager than bitronix is used?
+//		env.set(EnvironmentName.TRANSACTION_MANAGER, TransactionManagerServices.getTransactionManager());
 		
 		StatefulKnowledgeSession ksession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
 		JPAWorkingMemoryDbLogger historyLogger = null;
 		if (useHistoryLogger) {
-			historyLogger = new JPAWorkingMemoryDbLogger(ksession);
+			historyLogger = (JPAWorkingMemoryDbLogger) AuditLoggerFactory.newInstance(Type.JPA, ksession, null);
 		}
 		
 		// TODO reuse internalTaskService (but deregister listeners)
@@ -60,8 +63,8 @@ public class StatefulKnowledgeSessionFactory {
 		humanTaskHandler.connect();
 		ksession.getWorkItemManager().registerWorkItemHandler("Human Task", humanTaskHandler);
 		
-		// TODO: make these debug statements
-		System.out.println("Created ksession " + ksession.getId());
+//		// TODO: make these debug statements
+//		System.out.println("Created ksession " + ksession.getId());
 //		System.out.println("Created taskService");
 //		((SingleSessionCommandService) ((CommandBasedStatefulKnowledgeSession) ksession).getCommandService()).addInterceptor(new AbstractInterceptor() {
 //			public <T> T execute(Command<T> command) {
@@ -72,6 +75,7 @@ public class StatefulKnowledgeSessionFactory {
 //			}
 //		});
 		
+		// TODO: need to pass internalTaskService so it can be disposed
 		return new SessionEnvironment(ksession, taskService, humanTaskHandler, historyLogger);
 	}
 	

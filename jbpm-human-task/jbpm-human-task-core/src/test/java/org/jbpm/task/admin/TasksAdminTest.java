@@ -23,11 +23,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import org.jbpm.task.BaseTest;
 import org.jbpm.task.Group;
 import org.jbpm.task.I18NText;
 import org.jbpm.task.MockUserInfo;
@@ -47,6 +49,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.kie.SystemEventListenerFactory;
 
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+
 /**
  */
 public class TasksAdminTest {
@@ -57,13 +61,26 @@ public class TasksAdminTest {
     
     private Map<String, User> users = new HashMap<String, User>();
     private Map<String, Group> groups = new HashMap<String, Group>();
-
+    protected PoolingDataSource pds;
     public TasksAdminTest() {
     }
 
     @Before
     public void setUp() {
-        emf = Persistence.createEntityManagerFactory("org.jbpm.task");
+        Properties dsProps = BaseTest.loadDataSourceProperties();
+        
+        pds = new PoolingDataSource();
+        pds.setUniqueName( "jdbc/taskDS" );
+        pds.setClassName(dsProps.getProperty("className"));
+        pds.setMaxPoolSize(Integer.parseInt(dsProps.getProperty("maxPoolSize")));
+        pds.setAllowLocalTransactions(Boolean.parseBoolean(dsProps.getProperty("allowLocalTransactions")));
+        for (String propertyName : new String[] { "user", "password" }) {
+            pds.getDriverProperties().put(propertyName, dsProps.getProperty(propertyName));
+        }
+        BaseTest.setDatabaseSpecificDataSourceProperties(pds, dsProps);
+        
+        pds.init();
+        emf = Persistence.createEntityManagerFactory("org.jbpm.task.local");
         taskService = new TaskService(emf, SystemEventListenerFactory.getSystemEventListener());
 
         taskSession = taskService.createSession();
@@ -80,6 +97,7 @@ public class TasksAdminTest {
     public void tearDown() {
         taskSession.dispose();
         emf.close();
+        pds.close();
     }
 
     @Test
@@ -163,6 +181,8 @@ public class TasksAdminTest {
         System.out.println(">>> Archived? "+localTaskService.getTask(archivedTasks.get(0).getId()).isArchived());
         EntityManager em = emf.createEntityManager();
         System.out.println(">>> Archived? "+em.find(Task.class, archivedTasks.get(0).getId()).isArchived());
+        em.close();
+        System.out.println("Closed");
     }
     
     @Test
@@ -197,6 +217,8 @@ public class TasksAdminTest {
         
         EntityManager em = emf.createEntityManager();
         assertNull(em.find(Task.class, activeTask.getId()));
+        em.close();
+        System.out.println("Closed");
     }
     
     public static void addUsersAndGroups(TaskServiceSession taskSession, Map<String, User> users, Map<String, Group> groups) {
