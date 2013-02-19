@@ -141,7 +141,7 @@ public class RuleFlowProcessValidator implements ProcessValidator {
             }
         }
 
-        validateVariables(errors, process);
+//        validateVariables(errors, process);
 
         checkAllNodesConnectedToStart(process, errors);        
 
