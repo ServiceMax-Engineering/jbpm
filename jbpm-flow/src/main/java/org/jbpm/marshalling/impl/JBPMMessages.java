@@ -159,7 +159,7 @@ public final class JBPMMessages {
           case 10: return FOR_EACH_NODE;
           case 11: return DYNAMIC_NODE;
           case 12: return STATUS_SUB_NODE;
-          case 12: return EVENT_SUBPROCESS_NODE;
+          case 13: return EVENT_SUBPROCESS_NODE;
           default: return null;
         }
       }
