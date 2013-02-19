@@ -77,6 +77,7 @@ public class TimerManager {
     public void registerTimer(final TimerInstance timer,
                               ProcessInstance processInstance) {
         try {
+        	kruntime.getEnvironment().set("dirty", true);
             kruntime.startOperation();
             if ( !kruntime.getActionQueue().isEmpty() ) {
                 kruntime.executeQueuedActions();
