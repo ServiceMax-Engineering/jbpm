@@ -469,7 +469,7 @@ public class ProcessBuilderImpl implements ProcessBuilder {
         return result;
     }
 
-    private String createStartConstraintRule(Process process, NodeContainer nodeContainer,
+    protected String createStartConstraintRule(Process process, NodeContainer nodeContainer,
                                              ConstraintTrigger trigger) {
         if (nodeContainer instanceof EventSubProcessNode) {
             return createEventSubprocessStateRule(process, (EventSubProcessNode) nodeContainer, trigger);
