@@ -21,7 +21,6 @@ import java.io.OutputStream;
 import java.net.URI;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -88,7 +87,8 @@ public class VFSFileServiceImpl implements FileService {
             @Override
             public boolean accept( final Path entry ) throws IOException {
                 if ( !org.kie.commons.java.nio.file.Files.isDirectory(entry) && 
-                        entry.getFileName().toString().endsWith( fileType ) ) {
+                        (entry.getFileName().toString().endsWith( fileType )
+                                || entry.getFileName().toString().matches(fileType))) {
                     return true;
                 }
                 return false;
@@ -107,12 +107,6 @@ public class VFSFileServiceImpl implements FileService {
             }
         } );
     
-    }
-
-    @Produces
-    @Named("fileServiceIOStrategy")
-    public IOService ioService() {
-        return ioService;
     }
 
     @Override

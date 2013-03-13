@@ -18,7 +18,8 @@ package org.droolsjbpm.services.api;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.KieBase;
+import org.kie.runtime.KieSession;
 import org.kie.runtime.process.WorkItemHandler;
 
 /**
@@ -32,14 +33,14 @@ public interface SessionManager {
     Domain getDomain();
     
     int buildSession(String sessionName, String path, boolean streamMode);
+    
+    int newKieSession(String groupId, String artifactId, String version, String kbaseName, String sessionName);
 
-    void buildSessions(boolean streamMode);
-
-    Map<Integer, StatefulKnowledgeSession> getKsessionsByName(String ksessionName);
+    Map<Integer, KieSession> getKsessionsByName(String ksessionName);
 
     Map<Integer, Long> getProcessInstanceIdKsession();
 
-    StatefulKnowledgeSession getKsessionById(int ksessionId);
+    KieSession getKsessionById(int ksessionId);
 
     void addProcessInstanceIdKsession(Integer ksessionId, Long processInstanceId);
 

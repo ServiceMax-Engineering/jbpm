@@ -24,10 +24,12 @@ public class Error implements Serializable {
 	
     private String id;
     private String errorCode;
+    private String structureRef;
     
-    public Error(String id, String errorCode) {
+    public Error(String id, String errorCode, String itemRef) {
         this.id = id;
         this.errorCode = errorCode;
+        this.structureRef = itemRef;
     }
     
     public String getId() {
@@ -36,6 +38,10 @@ public class Error implements Serializable {
 
     public String getErrorCode() {
         return errorCode;
+    }
+
+    public String getStructureRef() {
+        return structureRef;
     }
 
 }

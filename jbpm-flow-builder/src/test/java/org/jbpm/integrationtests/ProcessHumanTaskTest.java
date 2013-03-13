@@ -5,18 +5,16 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.WorkingMemory;
+import junit.framework.TestCase;
+
+import org.drools.*;
 import org.drools.compiler.PackageBuilder;
 import org.drools.rule.Package;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
-import org.jbpm.JbpmTestCase;
+import org.jbpm.integrationtests.handler.TestWorkItemHandler;
 import org.jbpm.process.instance.ProcessInstance;
+import org.kie.runtime.process.WorkItem;
 
-public class ProcessHumanTaskTest extends JbpmTestCase {
+public class ProcessHumanTaskTest extends TestCase {
     
     public void testHumanTask() {
         PackageBuilder builder = new PackageBuilder();
@@ -279,20 +277,4 @@ public class ProcessHumanTaskTest extends JbpmTestCase {
         assertFalse(handler.isAborted());
     }
 
-    private static class TestWorkItemHandler implements WorkItemHandler {
-        private WorkItem workItem;
-        private boolean aborted = false; 
-        public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
-            this.workItem = workItem;
-        }
-        public void abortWorkItem(WorkItem workItem, WorkItemManager manager) {
-        	aborted = true;
-        }
-        public WorkItem getWorkItem() {
-            return workItem;
-        }
-        public boolean isAborted() {
-        	return aborted;
-        }
-    }
 }

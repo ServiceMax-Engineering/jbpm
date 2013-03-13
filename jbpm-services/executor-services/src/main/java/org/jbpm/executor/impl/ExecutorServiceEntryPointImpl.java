@@ -14,6 +14,7 @@ import org.jbpm.executor.api.ExecutorQueryService;
 import org.jbpm.executor.api.ExecutorRequestAdminService;
 import org.jbpm.executor.entities.ErrorInfo;
 import org.jbpm.executor.entities.RequestInfo;
+import org.jbpm.executor.entities.STATUS;
 
 /**
  *
@@ -22,6 +23,7 @@ import org.jbpm.executor.entities.RequestInfo;
 public class ExecutorServiceEntryPointImpl implements ExecutorServiceEntryPoint {
     @Inject
     private Executor executor;
+    private boolean executorStarted = false;
     @Inject 
     private ExecutorQueryService queryService;
     @Inject
@@ -82,6 +84,10 @@ public class ExecutorServiceEntryPointImpl implements ExecutorServiceEntryPoint 
         return queryService.getAllRequests();
     }
 
+    public List<RequestInfo> getRequestsByStatus(List<STATUS> statuses) {
+    	return queryService.getRequestsByStatus(statuses);
+    }
+    
     public int clearAllRequests() {
         return adminService.clearAllRequests();
     }
@@ -100,10 +106,16 @@ public class ExecutorServiceEntryPointImpl implements ExecutorServiceEntryPoint 
 
     public void init() {
         executor.init();
+        this.executorStarted = true;
     }
 
     public void destroy() {
+    	this.executorStarted = false;
         executor.destroy();
+    }
+    
+    public boolean isActive() {
+    	return executorStarted;
     }
 
     public int getInterval() {
@@ -145,8 +157,13 @@ public class ExecutorServiceEntryPointImpl implements ExecutorServiceEntryPoint 
     public List<RequestInfo> getRunningRequests() {
         return queryService.getRunningRequests();
     }
-    
-    
-    
+
+	public RequestInfo getRequestById(Long requestId) {
+		return queryService.getRequestById(requestId);
+	}
+
+	public List<ErrorInfo> getErrorsByRequestId(Long requestId) {
+		return queryService.getErrorsByRequestId(requestId);
+	}
     
 }

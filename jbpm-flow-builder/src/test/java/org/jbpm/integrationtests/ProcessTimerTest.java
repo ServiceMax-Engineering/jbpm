@@ -1,7 +1,5 @@
 package org.jbpm.integrationtests;
 
-import static org.jbpm.integrationtests.SerializationHelper.getSerialisedStatefulSession;
-
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -10,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.TestCase;
+
 import org.drools.ClockType;
-import org.kie.KnowledgeBaseFactory;
 import org.drools.RuleBase;
 import org.drools.RuleBaseFactory;
 import org.drools.SessionConfiguration;
@@ -20,20 +19,15 @@ import org.drools.common.InternalWorkingMemory;
 import org.drools.compiler.DroolsError;
 import org.drools.compiler.PackageBuilder;
 import org.drools.rule.Package;
-import org.kie.runtime.KieSessionConfiguration;
-import org.kie.runtime.conf.ClockTypeOption;
 import org.drools.time.SessionPseudoClock;
-import org.jbpm.JbpmTestCase;
 import org.jbpm.Message;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
-import org.junit.Ignore;
+import org.kie.runtime.conf.ClockTypeOption;
 
-public class ProcessTimerTest extends JbpmTestCase {
-	
-    @Ignore
-	@SuppressWarnings("unchecked")
+public class ProcessTimerTest extends TestCase {
+
 	public void testSimpleProcess() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -90,29 +84,11 @@ public class ProcessTimerTest extends JbpmTestCase {
 		List<Message> myList = new ArrayList<Message>();
 		session.setGlobal("myList", myList);
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-		
         ProcessInstance processInstance = ( ProcessInstance )
         	session.startProcess("org.drools.timer");
         assertEquals(0, myList.size());
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
-        session.halt();
-        
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<Message>) session2.getGlobal( "myList" );
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-        processInstance = ( ProcessInstance ) session2.getProcessInstance( processInstance.getId() );
-        
-        assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
 
         // test that the delay works
         try {
@@ -131,10 +107,9 @@ public class ProcessTimerTest extends JbpmTestCase {
         assertEquals(5, myList.size());
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         
-        session2.halt();
+        session.dispose();
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void testVariableSimpleProcess() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -199,12 +174,6 @@ public class ProcessTimerTest extends JbpmTestCase {
 		List<Message> myList = new ArrayList<Message>();
 		session.setGlobal("myList", myList);
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-		
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("x", 800);
 		params.put("y", 200);
@@ -213,18 +182,6 @@ public class ProcessTimerTest extends JbpmTestCase {
         assertEquals(0, myList.size());
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
-        session.halt();
-        
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<Message>) session2.getGlobal( "myList" );
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-        processInstance = ( ProcessInstance ) session2.getProcessInstance( processInstance.getId() );
-        
-        assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
 
         // test that the delay works
         try {
@@ -243,7 +200,7 @@ public class ProcessTimerTest extends JbpmTestCase {
         assertEquals(5, myList.size());
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         
-        session2.halt();
+        session.dispose();
 	}
 	
 	public void testIncorrectTimerNode() throws Exception {
@@ -277,7 +234,6 @@ public class ProcessTimerTest extends JbpmTestCase {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void testOnEntryTimerExecuted() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -321,33 +277,12 @@ public class ProcessTimerTest extends JbpmTestCase {
 		List<String> myList = new ArrayList<String>();
 		session.setGlobal("myList", myList);
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-		
         ProcessInstance processInstance = ( ProcessInstance )
         	session.startProcess("org.drools.timer");
         assertEquals(0, myList.size());
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
         
-        session.halt();
-        
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<String>) session2.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-		
-        processInstance = ( ProcessInstance ) session2.getProcessInstance( processInstance.getId() );
-        
-        assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
-
         try {
             Thread.sleep(400);
         } catch (InterruptedException e) {
@@ -355,10 +290,9 @@ public class ProcessTimerTest extends JbpmTestCase {
         }
         assertEquals(1, myList.size());
         
-        session2.halt();
+        session.dispose();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void testOnEntryTimerVariableExecuted() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -421,21 +355,6 @@ public class ProcessTimerTest extends JbpmTestCase {
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
         
-        session.halt();
-        
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<String>) session2.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-		
-        processInstance = ( ProcessInstance ) session2.getProcessInstance( processInstance.getId() );
-        
-        assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
-
         try {
             Thread.sleep(400);
         } catch (InterruptedException e) {
@@ -443,10 +362,9 @@ public class ProcessTimerTest extends JbpmTestCase {
         }
         assertEquals(1, myList.size());
         
-        session2.halt();
+        session.dispose();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void testOnEntryTimerWorkItemExecuted() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -492,33 +410,12 @@ public class ProcessTimerTest extends JbpmTestCase {
 		session.setGlobal("myList", myList);
 		session.getWorkItemManager().registerWorkItemHandler("Human Task", new DoNothingWorkItemHandler());
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-		
         ProcessInstance processInstance = ( ProcessInstance )
         	session.startProcess("org.drools.timer");
         assertEquals(0, myList.size());
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
         
-        session.halt();
-        
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<String>) session2.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-		
-        processInstance = ( ProcessInstance ) session2.getProcessInstance( processInstance.getId() );
-        
-        assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
-
         try {
             Thread.sleep(400);
         } catch (InterruptedException e) {
@@ -526,7 +423,7 @@ public class ProcessTimerTest extends JbpmTestCase {
         }
         assertEquals(1, myList.size());
         
-        session2.halt();
+        session.dispose();
 	}
 
 	public void testIncorrectOnEntryTimer() throws Exception {
@@ -571,7 +468,6 @@ public class ProcessTimerTest extends JbpmTestCase {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void testOnEntryTimerExecutedMultipleTimes() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -615,12 +511,6 @@ public class ProcessTimerTest extends JbpmTestCase {
 		List<String> myList = new ArrayList<String>();
 		session.setGlobal("myList", myList);
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-
         ProcessInstance processInstance = ( ProcessInstance )
         	session.startProcess("org.drools.timer");
         assertEquals(0, myList.size());
@@ -628,19 +518,6 @@ public class ProcessTimerTest extends JbpmTestCase {
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
         session.halt();
         
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<String>) session2.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-
-        processInstance = ( ProcessInstance ) session2.getProcessInstance( processInstance.getId() );
-        
-        assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
-
         try {
             Thread.sleep(600);
         } catch (InterruptedException e) {
@@ -648,10 +525,9 @@ public class ProcessTimerTest extends JbpmTestCase {
         }
         assertEquals(2, myList.size());
         
-        session2.halt();
+        session.dispose();
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void testMultipleTimers() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -706,54 +582,24 @@ public class ProcessTimerTest extends JbpmTestCase {
 		List<String> myList = new ArrayList<String>();
 		session.setGlobal("myList", myList);
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-
         ProcessInstance processInstance = ( ProcessInstance ) session.startProcess("org.drools.timer");
         assertEquals(0, myList.size());
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(2, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());        
         
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<String>) session2.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
-		
-        assertEquals(2, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
-
-        clock = ( SessionPseudoClock) session2.getSessionClock();
+        clock = ( SessionPseudoClock) session.getSessionClock();
         clock.advanceTime( 500,
                            TimeUnit.MILLISECONDS );  
         assertEquals(1, myList.size());
         assertEquals("Executing timer2", myList.get(0));
-        session2.halt();
-        
-        final StatefulSession session3 = getSerialisedStatefulSession( session2 );
-        session3.setGlobal("myList", myList);
-        myList = (List<String>) session.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session3.fireUntilHalt();       	
-			}
-        }).start();
-		
-        clock = ( SessionPseudoClock) session3.getSessionClock();
+
         clock.advanceTime( 500,
                            TimeUnit.MILLISECONDS ); 
         assertEquals(2, myList.size());
         
-        session3.halt();
+        session.dispose();
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void testOnEntryTimerCancelled() throws Exception {
 		PackageBuilder builder = new PackageBuilder();
 		Reader source = new StringReader(
@@ -797,33 +643,17 @@ public class ProcessTimerTest extends JbpmTestCase {
 		List<String> myList = new ArrayList<String>();
 		session.setGlobal("myList", myList);
 		
-		new Thread(new Runnable() {
-			public void run() {
-	        	session.fireUntilHalt();       	
-			}
-        }).start();
-		
         ProcessInstance processInstance = ( ProcessInstance )
         	session.startProcess("org.drools.timer");
         assertEquals(0, myList.size());
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
-        session.halt();
-        
-        final StatefulSession session2 = getSerialisedStatefulSession( session );
-        myList = (List<String>) session2.getGlobal( "myList" );
-        
-		new Thread(new Runnable() {
-			public void run() {
-	        	session2.fireUntilHalt();       	
-			}
-        }).start();
 		
-        session2.insert(new Message());
+        session.insert(new Message());
         assertEquals(0, myList.size());
-        assertEquals(0, ((InternalProcessRuntime) ((InternalWorkingMemory) session2).getProcessRuntime()).getTimerManager().getTimers().size());
+        assertEquals(0, ((InternalProcessRuntime) ((InternalWorkingMemory) session).getProcessRuntime()).getTimerManager().getTimers().size());
         
-        session2.halt();
+        session.dispose();
 	}
 	
 }

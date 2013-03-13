@@ -3,6 +3,7 @@ package org.jbpm.bpmn2;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jbpm.bpmn2.objects.TestWorkItemHandler;
 import org.kie.KnowledgeBase;
 import org.kie.event.process.DefaultProcessEventListener;
 import org.kie.event.process.ProcessStartedEvent;
@@ -11,10 +12,6 @@ import org.kie.runtime.process.ProcessInstance;
 
 
 public class SignalEventsTest extends JbpmBpmn2TestCase {
-
-	public SignalEventsTest() {
-		super(true);
-	}
 
 	public void testSignalBetweenProcesses() {
 		 KnowledgeBase kbase = createKnowledgeBase("BPMN2-IntermediateCatchSignalSingle.bpmn2", "BPMN2-IntermediateThrowEventSignal.bpmn2");

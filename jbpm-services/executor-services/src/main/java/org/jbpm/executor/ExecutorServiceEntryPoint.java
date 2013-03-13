@@ -6,9 +6,11 @@ package org.jbpm.executor;
 
 import java.util.Date;
 import java.util.List;
+
 import org.jbpm.executor.api.CommandContext;
 import org.jbpm.executor.entities.ErrorInfo;
 import org.jbpm.executor.entities.RequestInfo;
+import org.jbpm.executor.entities.STATUS;
 
 /**
  *
@@ -27,6 +29,8 @@ public interface ExecutorServiceEntryPoint {
     public List<ErrorInfo> getAllErrors();
 
     public List<RequestInfo> getAllRequests();
+    
+    public List<RequestInfo> getRequestsByStatus(List<STATUS> statuses);
 
     public int clearAllRequests();
 
@@ -39,6 +43,8 @@ public interface ExecutorServiceEntryPoint {
     public void init();
 
     public void destroy();
+    
+    public boolean isActive();
 
     public int getInterval();
 
@@ -61,4 +67,8 @@ public interface ExecutorServiceEntryPoint {
     public List<RequestInfo> getRunningRequests();
     
     public List<RequestInfo> getFutureQueuedRequests();
+
+	public RequestInfo getRequestById(Long requestId);
+
+	public List<ErrorInfo> getErrorsByRequestId(Long requestId);
 }

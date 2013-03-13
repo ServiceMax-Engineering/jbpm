@@ -5,8 +5,10 @@
 package org.jbpm.executor.api;
 
 import java.util.List;
+
 import org.jbpm.executor.entities.ErrorInfo;
 import org.jbpm.executor.entities.RequestInfo;
+import org.jbpm.executor.entities.STATUS;
 
 /**
  *
@@ -15,6 +17,8 @@ import org.jbpm.executor.entities.RequestInfo;
 public interface ExecutorQueryService {
     List<RequestInfo> getPendingRequests();
     List<RequestInfo> getPendingRequestById(Long id);
+    RequestInfo getRequestById(Long id);
+    List<ErrorInfo> getErrorsByRequestId(Long id);
     List<RequestInfo> getQueuedRequests();
     List<RequestInfo> getCompletedRequests();
     List<RequestInfo> getInErrorRequests();
@@ -23,4 +27,5 @@ public interface ExecutorQueryService {
     List<RequestInfo> getAllRequests(); 
     List<RequestInfo> getRunningRequests();
     List<RequestInfo> getFutureQueuedRequests();
+    List<RequestInfo> getRequestsByStatus(List<STATUS> statuses);
 }

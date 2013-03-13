@@ -126,7 +126,7 @@ public interface TaskServiceEntryPoint {
 
     List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, List<String> groupIds, String language);
 
-    List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, List<String> groupIds, String language, int firstResult, int maxResult);
+    List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, List<String> groupIds, String language, int firstResult, int maxResults);
 
     List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, String language);
 
@@ -146,7 +146,11 @@ public interface TaskServiceEntryPoint {
 
     List<TaskSummary> getTasksOwnedByExpirationDate(String userId, List<Status> statuses, Date expirationDate);
     
+    List<TaskSummary> getTasksOwnedByExpirationDateOptional(String userId, List<Status> statuses, Date expirationDate);
+    
     List<TaskSummary> getTasksAssignedByGroupsByExpirationDate(List<String> groupIds, String language, Date expirationDate);
+    
+    List<TaskSummary> getTasksAssignedByGroupsByExpirationDateOptional(List<String> groupIds, String language, Date expirationDate);
     
     User getUserById(String userId);
 
