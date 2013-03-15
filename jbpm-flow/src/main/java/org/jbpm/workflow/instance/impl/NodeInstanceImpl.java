@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.common.InternalKnowledgeRuntime;
+import org.drools.core.common.InternalKnowledgeRuntime;
 import org.drools.spi.ProcessContext;
 import org.kie.definition.process.Connection;
 import org.kie.definition.process.Node;
@@ -49,7 +49,6 @@ import org.jbpm.process.instance.impl.ConstraintEvaluator;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.WorkflowRuntimeException;
-import org.jbpm.workflow.instance.node.ActionNodeInstance;
 import org.jbpm.workflow.instance.node.CompositeNodeInstance;
 
 import org.kie.event.process.ProcessEventListener;

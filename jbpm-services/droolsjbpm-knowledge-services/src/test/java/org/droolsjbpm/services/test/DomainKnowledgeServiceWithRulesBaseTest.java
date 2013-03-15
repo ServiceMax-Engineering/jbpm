@@ -23,12 +23,12 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.droolsjbpm.services.api.Domain;
+import org.jbpm.shared.services.api.Domain;
 import org.droolsjbpm.services.api.KnowledgeAdminDataService;
 import org.droolsjbpm.services.api.KnowledgeDataService;
 import org.droolsjbpm.services.api.KnowledgeDomainService;
 import org.droolsjbpm.services.api.RulesNotificationService;
-import org.droolsjbpm.services.api.SessionManager;
+import org.jbpm.shared.services.api.ServicesSessionManager;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
 import org.droolsjbpm.services.impl.SimpleDomainImpl;
 import org.droolsjbpm.services.impl.example.NotificationWorkItemHandler;
@@ -60,7 +60,7 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
     @Inject
     private FileService fs;
     @Inject
-    private SessionManager sessionManager;
+    private ServicesSessionManager sessionManager;
     @Inject
     private KnowledgeDomainService domainService;
     @Inject
@@ -71,7 +71,7 @@ public abstract class DomainKnowledgeServiceWithRulesBaseTest {
     private transient RulesNotificationService rulesNotificationService;
 
     
-    @Test @Ignore // FIX java.lang.ClassCastException: org.drools.common.DefaultFactHandle cannot be cast to org.drools.common.EventFactHandle
+    @Test @Ignore // FIX java.lang.ClassCastException: org.drools.core.common.DefaultFactHandle cannot be cast to org.drools.core.common.EventFactHandle
                   // in CDIRuleAwareProcessEventListener line 40
     public void testReleaseProcessWithRules() throws FileException, InterruptedException {
         Domain myDomain = new SimpleDomainImpl("myDomain");

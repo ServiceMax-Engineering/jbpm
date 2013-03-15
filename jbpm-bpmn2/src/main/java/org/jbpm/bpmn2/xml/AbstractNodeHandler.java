@@ -22,8 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.compiler.xml.XmlDumper;
-import org.drools.rule.builder.dialect.java.JavaDialect;
+import org.drools.compiler.compiler.xml.XmlDumper;
+import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
 import org.drools.xml.BaseAbstractHandler;
 import org.drools.xml.ExtensibleXmlParser;
 import org.drools.xml.Handler;

@@ -25,10 +25,10 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.droolsjbpm.services.api.Domain;
+import org.jbpm.shared.services.api.Domain;
 import org.droolsjbpm.services.api.KnowledgeAdminDataService;
 import org.droolsjbpm.services.api.KnowledgeDataService;
-import org.droolsjbpm.services.api.SessionManager;
+import org.jbpm.shared.services.api.ServicesSessionManager;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
 import org.droolsjbpm.services.impl.SimpleDomainImpl;
 import org.droolsjbpm.services.impl.model.ProcessDesc;
@@ -91,6 +91,7 @@ public class SimpleSessionManagementTest {
                 .addPackage("org.droolsjbpm.services.test")
                 .addPackage("org.droolsjbpm.services.impl.event.listeners")
                 .addPackage("org.droolsjbpm.services.impl.example") 
+                .addPackage("org.droolsjbpm.services.impl.audit")
                 .addPackage("org.droolsjbpm.services.impl.util") 
                 .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
                 .addAsManifestResource("META-INF/Taskorm.xml", ArchivePaths.create("Taskorm.xml"))
@@ -118,7 +119,7 @@ public class SimpleSessionManagementTest {
     protected KnowledgeAdminDataService adminDataService;
 
     @Inject
-    private SessionManager sessionManager;
+    private ServicesSessionManager sessionManager;
     
     
    @Test

@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.common.InternalWorkingMemory;
-import org.drools.common.WorkingMemoryAction;
-import org.drools.marshalling.impl.MarshallerReaderContext;
-import org.drools.marshalling.impl.MarshallerWriteContext;
-import org.drools.marshalling.impl.ProtobufMessages.ActionQueue.Action;
+import org.drools.core.common.InternalKnowledgeRuntime;
+import org.drools.core.common.InternalWorkingMemory;
+import org.drools.core.common.WorkingMemoryAction;
+import org.drools.core.marshalling.impl.MarshallerReaderContext;
+import org.drools.core.marshalling.impl.MarshallerWriteContext;
+import org.drools.core.marshalling.impl.ProtobufMessages.ActionQueue.Action;
 import org.kie.runtime.process.EventListener;
 import org.kie.runtime.process.ProcessInstance;
 import org.jbpm.process.instance.InternalProcessRuntime;

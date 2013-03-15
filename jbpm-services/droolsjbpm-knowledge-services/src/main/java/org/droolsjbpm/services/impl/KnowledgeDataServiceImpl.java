@@ -20,11 +20,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.droolsjbpm.services.api.KnowledgeDataService;
 import org.droolsjbpm.services.api.SessionLocator;
@@ -33,6 +34,11 @@ import org.droolsjbpm.services.impl.model.ProcessDesc;
 import org.droolsjbpm.services.impl.model.ProcessInstanceDesc;
 import org.droolsjbpm.services.impl.model.VariableStateDesc;
 import org.jboss.seam.transaction.Transactional;
+
+import org.jbpm.shared.services.api.JbpmServicesPersistenceManager;
+
+import org.jbpm.process.audit.NodeInstanceLog;
+
 
 /**
  *
@@ -44,163 +50,92 @@ public class KnowledgeDataServiceImpl implements KnowledgeDataService {
 
     Map<String, SessionLocator> ksessionLocators = new HashMap<String, SessionLocator>();
     @Inject
-    private EntityManager em;
+    private JbpmServicesPersistenceManager pm;
 
-    @PostConstruct
-    public void init() {
+    public void setPm(JbpmServicesPersistenceManager pm) {
+        this.pm = pm;
+    }
+
+    public Collection<ProcessDesc> getProcessesByDomainName(String domainName) {
+        List<ProcessDesc> processes = (List<ProcessDesc>) pm.queryWithParametersInTransaction("getProcessesByDomainName", 
+                pm.addParametersToMap("domainName", domainName));
+        return processes;
+    }
+    
+    public Collection<ProcessDesc> getProcessesByFilter(String filter) {
+        List<ProcessDesc> processes = (List<ProcessDesc>) pm.queryWithParametersInTransaction("getProcessesByFilter", 
+                pm.addParametersToMap("filter", filter+"%"));
+        return processes;
+    }
+
+    public Collection<ProcessDesc> getProcesses() {
+        List<ProcessDesc> processes = (List<ProcessDesc>) pm.queryInTransaction("getProcesses");
+        return processes;
     }
 
     public Collection<ProcessInstanceDesc> getProcessInstances() { 
-        List<ProcessInstanceDesc> processInstances = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id ) ").getResultList();
+        List<ProcessInstanceDesc> processInstances = (List<ProcessInstanceDesc>) pm.queryInTransaction("getProcessInstances");
 
         return processInstances;
     }
     
     public Collection<ProcessInstanceDesc> getProcessInstances(List<Integer> states, String initiator) { 
+        
         List<ProcessInstanceDesc> processInstances = null; 
-        Query query = null;
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("states", states);
         if (initiator == null) {
-            query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id ) and pi.state in (:states)");
-            query = query.setParameter("states", states);
+
+            processInstances = (List<ProcessInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstancesByStatus", params);
         } else {
-            query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id and pi.initiator =:initiator) and pi.state in (:states)");
-            query = query.setParameter("states", states);
-            query = query.setParameter("initiator", initiator);
+
+            params.put("initiator", initiator);
+            processInstances = (List<ProcessInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstancesByStatusAndInitiator", params); 
         }
-        processInstances = query.getResultList(); 
+        
         return processInstances;
+        
     }
 
     public Collection<ProcessInstanceDesc> getProcessInstancesBySessionId(String sessionId) {
-        List<ProcessInstanceDesc> processInstances = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.sessionId=:sessionId, pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id )")
-                .setParameter("sessionId", sessionId).getResultList();
+        List<ProcessInstanceDesc> processInstances = (List<ProcessInstanceDesc>)pm.queryStringWithParametersInTransaction("getProcessInstancesBySessionId",
+                pm.addParametersToMap("sessionId", sessionId));
 
         return processInstances;
     }
 
-    public Collection<ProcessDesc> getProcessesByDomainName(String domainName) {
-        List<ProcessDesc> processes = em.createQuery("select pd from ProcessDesc pd where pd.domainName=:domainName GROUP BY pd.id ORDER BY pd.dataTimeStamp DESC")
-                .setParameter("domainName", domainName).getResultList();
-        return processes;
-    }
-    
-    public Collection<ProcessDesc> getProcessesByFilter(String filter) {
-        List<ProcessDesc> processes = em.createQuery("select pd from ProcessDesc pd where pd.id like :filter or pd.name like :filter ORDER BY pd.dataTimeStamp DESC")
-                .setParameter("filter", filter+"%").getResultList();
-        return processes;
-    }
-
-    public Collection<ProcessDesc> getProcesses() {
-        List<ProcessDesc> processes = em.createQuery("select pd from ProcessDesc pd ORDER BY pd.pki DESC, pd.dataTimeStamp DESC").getResultList();
-        return processes;
-    }
 
     public Collection<ProcessInstanceDesc> getProcessInstancesByProcessDefinition(String processDefId){
-      List<ProcessInstanceDesc> processInstances = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.processDefId =:processDefId and pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id and pid.processDefId =:processDefId )")
-                .setParameter("processDefId", processDefId).getResultList();
+      List<ProcessInstanceDesc> processInstances = (List<ProcessInstanceDesc>)pm.queryWithParametersInTransaction("getProcessInstancesByProcessDefinition",
+              pm.addParametersToMap("processDefId", processDefId));
 
         return processInstances;
     }
     
     public ProcessInstanceDesc getProcessInstanceById(long processId) {
-        List<ProcessInstanceDesc> processInstances = em.createQuery("select pid from ProcessInstanceDesc pid where pid.id=:processId ORDER BY pid.pk DESC")
-               .setParameter("processId", processId)
-               .setMaxResults(1).getResultList();
+        List<ProcessInstanceDesc> processInstances = (List<ProcessInstanceDesc>)pm.queryWithParametersInTransaction("getProcessInstanceById", 
+                pm.addParametersToMap("processId", processId, "maxResults", 1));
 
-       return processInstances.get(0);
+        return processInstances.get(0);
    }
 
-    public Collection<NodeInstanceDesc> getProcessInstanceHistory(int sessionId, long processId) {
-        return getProcessInstanceHistory(sessionId, processId, false);
-    }
-
-    public Collection<VariableStateDesc> getVariablesCurrentState(long processInstanceId) {
-        List<VariableStateDesc> variablesState = em.createQuery("select vs FROM VariableStateDesc vs where vs.processInstanceId =:processInstanceId AND vs.pk in (select max(vss.pk) FROM VariableStateDesc vss WHERE vss.processInstanceId =:processInstanceId group by vss.variableId ) order by vs.pk")
-                .setParameter("processInstanceId", processInstanceId)
-                .getResultList();
-
-        return variablesState;
-    }
-
-    public Collection<NodeInstanceDesc> getProcessInstanceHistory(int sessionId, long processId, boolean completed) {
-        List<NodeInstanceDesc> nodeInstances = em.createQuery("select nid from NodeInstanceDesc nid where nid.processInstanceId=:processId AND nid.sessionId=:sessionId AND nid.completed =:completed ORDER BY nid.dataTimeStamp DESC")
-                .setParameter("processId", processId)
-                .setParameter("sessionId", sessionId)
-                .setParameter("completed", completed)
-                .getResultList();
-
-        return nodeInstances;
-    }
-
-    public Collection<NodeInstanceDesc> getProcessInstanceFullHistory(int sessionId, long processId) {
-        List<NodeInstanceDesc> nodeInstances = em.createQuery("select nid from NodeInstanceDesc nid where nid.processInstanceId=:processId AND nid.sessionId=:sessionId ORDER BY nid.dataTimeStamp DESC")
-                .setParameter("processId", processId)
-                .setParameter("sessionId", sessionId)
-                .getResultList();
-
-        return nodeInstances;
-    }
-
-    public Collection<NodeInstanceDesc> getProcessInstanceActiveNodes(int sessionId, long processId) {
-        List<NodeInstanceDesc> completedNodeInstances = em.createQuery("select nid from NodeInstanceDesc nid where nid.processInstanceId=:processId AND nid.sessionId=:sessionId AND nid.completed =:completed ORDER BY nid.dataTimeStamp DESC")
-                .setParameter("processId", processId)
-                .setParameter("sessionId", sessionId)
-                .setParameter("completed", true)
-                .getResultList();
-        
-        List<NodeInstanceDesc> activeNodeInstances = em.createQuery("select nid from NodeInstanceDesc nid where nid.processInstanceId=:processId AND nid.sessionId=:sessionId AND nid.completed =:completed ORDER BY nid.dataTimeStamp DESC")
-                .setParameter("processId", processId)
-                .setParameter("sessionId", sessionId)
-                .setParameter("completed", false)
-                .getResultList();
-        
-        List<NodeInstanceDesc> uncompletedNodeInstances = new ArrayList<NodeInstanceDesc>(activeNodeInstances.size() - completedNodeInstances.size());
-        for(NodeInstanceDesc nid : activeNodeInstances){
-            boolean completed = false;
-            for(NodeInstanceDesc cnid : completedNodeInstances){
-                
-                if(nid.getNodeId() == cnid.getNodeId()){
-                    completed = true;
-                }
-            }
-            if(!completed){
-                uncompletedNodeInstances.add(nid);
-            } 
-        }
-        
-
-        return uncompletedNodeInstances;
-    }
     
-    public Collection<VariableStateDesc> getVariableHistory(long processInstanceId, String variableId) {
-        List<VariableStateDesc> variablesState = em.createQuery("select vs FROM VariableStateDesc vs where vs.processInstanceId =:processInstanceId AND vs.variableId =:variableId order by vs.pk DESC")
-                .setParameter("processInstanceId", processInstanceId)
-                .setParameter("variableId", variableId)
-                .getResultList();
-
-        return variablesState;
-    }
-
     @Override
     public Collection<ProcessInstanceDesc> getProcessInstancesByProcessId(
             List<Integer> states, String processId, String initiator) {
         List<ProcessInstanceDesc> processInstances = null; 
-        Query query = null;
+        Map<String, Object> params = new HashMap<String, Object>();
+
+        params.put("states", states);        
+        params.put("processId", processId +"%");
         if (initiator == null) {
-            query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id ) " +
-            		"and pi.state in (:states) and pi.processId like :processId");
-            query = query.setParameter("states", states);
-            query = query.setParameter("processId", processId +"%");
+  
+            processInstances = (List<ProcessInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstancesByProcessIdAndStatus", params);
         } else {
-            query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id  and pi.initiator =:initiator) " +
-            		"and pi.state in (:states) and pi.processId like :processId");
-            query = query.setParameter("states", states);
-            query = query.setParameter("initiator", initiator);
-            query = query.setParameter("processId", processId +"%");
+            params.put("initiator", initiator);
+            
+            processInstances = (List<ProcessInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstancesByProcessIdAndStatusAndInitiator", params);
         }
-                
-                
-        processInstances = query.getResultList();
         return processInstances;
 
     }
@@ -209,35 +144,77 @@ public class KnowledgeDataServiceImpl implements KnowledgeDataService {
     public Collection<ProcessInstanceDesc> getProcessInstancesByProcessName(
             List<Integer> states, String processName, String initiator) {
         List<ProcessInstanceDesc> processInstances = null; 
-        Query query = null;
+        Map<String, Object> params = new HashMap<String, Object>();
+        
+        params.put("states", states);        
+        params.put("processName", processName +"%");
         if (initiator == null) {
-            query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id ) " +
-                    "and pi.state in (:states) and pi.processName like :processName");
-            query = query.setParameter("states", states);
-            query = query.setParameter("processName", processName +"%");
+  
+            processInstances = (List<ProcessInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstancesByProcessNameAndStatus", params);
         } else {
-            query = em.createQuery("select pi FROM ProcessInstanceDesc pi where pi.pk = (select max(pid.pk) FROM ProcessInstanceDesc pid WHERE pid.id = pi.id  and pi.initiator =:initiator) " +
-                    "and pi.state in (:states) and pi.processName like :processName");
-            query = query.setParameter("states", states);
-            query = query.setParameter("initiator", initiator);
-            query = query.setParameter("processName", processName +"%");
+            params.put("initiator", initiator);
+            
+            processInstances = (List<ProcessInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstancesByProcessNameAndStatusAndInitiator", params);
         }
-                
-                
-        processInstances = query.getResultList();
         return processInstances;
+    }    
+
+    public Collection<NodeInstanceDesc> getProcessInstanceHistory(int sessionId, long processId) {
+        return getProcessInstanceHistory(sessionId, processId, false);
     }
+
+
+    public Collection<NodeInstanceDesc> getProcessInstanceHistory(int sessionId, long processId, boolean completed) {
+        HashMap<String, Object> params = pm.addParametersToMap("processId", processId, "sessionId", sessionId);                
+        if (completed) {
+            params.put("type", NodeInstanceLog.TYPE_EXIT);
+        } else {
+            params.put("type", NodeInstanceLog.TYPE_ENTER);
+        }
+
+        List<NodeInstanceDesc> nodeInstances = (List<NodeInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstanceHistory", params);
+
+        return nodeInstances;
+    }
+
+    public Collection<NodeInstanceDesc> getProcessInstanceFullHistory(int sessionId, long processId) {
+        List<NodeInstanceDesc> nodeInstances = (List<NodeInstanceDesc>)pm.queryWithParametersInTransaction("getProcessInstanceFullHistory", 
+                pm.addParametersToMap("processId", processId, "sessionId", sessionId));
+
+        return nodeInstances;
+    }
+
+    public Collection<NodeInstanceDesc> getProcessInstanceActiveNodes(int sessionId, long processId) {
+        
+        List<NodeInstanceDesc> activeNodeInstances = (List<NodeInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstanceActiveNodes", 
+                pm.addParametersToMap("processId", processId, "sessionId", sessionId));
+        
+        return activeNodeInstances;
+    }
+    
 
     @Override
     public Collection<NodeInstanceDesc> getProcessInstanceCompletedNodes(int sessionId, long processId) {
-        List<NodeInstanceDesc> completedNodeInstances = em.createQuery("select n from NodeInstanceDesc n where n.nodeId in " +
-        		"(select nodeId from NodeInstanceDesc nid where nid.processInstanceId=:processId AND nid.sessionId=:sessionId AND nid.completed =:completed) ORDER BY n.nodeId, n.dataTimeStamp DESC")
-                .setParameter("processId", processId)
-                .setParameter("sessionId", sessionId)
-                .setParameter("completed", true)
-                .getResultList();
-        
+        List<NodeInstanceDesc> completedNodeInstances = (List<NodeInstanceDesc>) pm.queryWithParametersInTransaction("getProcessInstanceCompletedNodes", 
+                pm.addParametersToMap("processId", processId, "sessionId", sessionId));
+
         return completedNodeInstances;
         
     }
+    
+    public Collection<VariableStateDesc> getVariablesCurrentState(long processInstanceId) {
+        List<VariableStateDesc> variablesState = (List<VariableStateDesc>) pm.queryWithParametersInTransaction("getVariablesCurrentState", pm.addParametersToMap("processInstanceId", processInstanceId));
+
+        return variablesState;
+    }
+    
+    public Collection<VariableStateDesc> getVariableHistory(long processInstanceId, String variableId) {
+        List<VariableStateDesc> variablesState = (List<VariableStateDesc>) pm.queryWithParametersInTransaction("getVariableHistory", 
+                pm.addParametersToMap("processInstanceId", processInstanceId,"variableId", variableId));                
+
+        return variablesState;
+    }
+
+
+
 }

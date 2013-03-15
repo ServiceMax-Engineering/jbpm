@@ -13229,8 +13229,8 @@ public final class JBPMMessages {
     
     // optional .org.drools.marshalling.Trigger trigger = 2;
     boolean hasTrigger();
-    org.drools.marshalling.impl.ProtobufMessages.Trigger getTrigger();
-    org.drools.marshalling.impl.ProtobufMessages.TriggerOrBuilder getTriggerOrBuilder();
+    org.drools.core.marshalling.impl.ProtobufMessages.Trigger getTrigger();
+    org.drools.core.marshalling.impl.ProtobufMessages.TriggerOrBuilder getTriggerOrBuilder();
   }
   public static final class ProcessTimer extends
       com.google.protobuf.GeneratedMessage
@@ -13956,20 +13956,20 @@ public final class JBPMMessages {
     
     // optional .org.drools.marshalling.Trigger trigger = 2;
     public static final int TRIGGER_FIELD_NUMBER = 2;
-    private org.drools.marshalling.impl.ProtobufMessages.Trigger trigger_;
+    private org.drools.core.marshalling.impl.ProtobufMessages.Trigger trigger_;
     public boolean hasTrigger() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
-    public org.drools.marshalling.impl.ProtobufMessages.Trigger getTrigger() {
+    public org.drools.core.marshalling.impl.ProtobufMessages.Trigger getTrigger() {
       return trigger_;
     }
-    public org.drools.marshalling.impl.ProtobufMessages.TriggerOrBuilder getTriggerOrBuilder() {
+    public org.drools.core.marshalling.impl.ProtobufMessages.TriggerOrBuilder getTriggerOrBuilder() {
       return trigger_;
     }
     
     private void initFields() {
       timer_ = org.jbpm.marshalling.impl.JBPMMessages.ProcessTimer.TimerInstance.getDefaultInstance();
-      trigger_ = org.drools.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
+      trigger_ = org.drools.core.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -14139,7 +14139,7 @@ public final class JBPMMessages {
         }
         bitField0_ = (bitField0_ & ~0x00000001);
         if (triggerBuilder_ == null) {
-          trigger_ = org.drools.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
+          trigger_ = org.drools.core.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
         } else {
           triggerBuilder_.clear();
         }
@@ -14261,7 +14261,7 @@ public final class JBPMMessages {
               break;
             }
             case 18: {
-              org.drools.marshalling.impl.ProtobufMessages.Trigger.Builder subBuilder = org.drools.marshalling.impl.ProtobufMessages.Trigger.newBuilder();
+              org.drools.core.marshalling.impl.ProtobufMessages.Trigger.Builder subBuilder = org.drools.core.marshalling.impl.ProtobufMessages.Trigger.newBuilder();
               if (hasTrigger()) {
                 subBuilder.mergeFrom(getTrigger());
               }
@@ -14366,20 +14366,20 @@ public final class JBPMMessages {
       }
       
       // optional .org.drools.marshalling.Trigger trigger = 2;
-      private org.drools.marshalling.impl.ProtobufMessages.Trigger trigger_ = org.drools.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
+      private org.drools.core.marshalling.impl.ProtobufMessages.Trigger trigger_ = org.drools.core.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.drools.marshalling.impl.ProtobufMessages.Trigger, org.drools.marshalling.impl.ProtobufMessages.Trigger.Builder, org.drools.marshalling.impl.ProtobufMessages.TriggerOrBuilder> triggerBuilder_;
+          org.drools.core.marshalling.impl.ProtobufMessages.Trigger, org.drools.core.marshalling.impl.ProtobufMessages.Trigger.Builder, org.drools.core.marshalling.impl.ProtobufMessages.TriggerOrBuilder> triggerBuilder_;
       public boolean hasTrigger() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
-      public org.drools.marshalling.impl.ProtobufMessages.Trigger getTrigger() {
+      public org.drools.core.marshalling.impl.ProtobufMessages.Trigger getTrigger() {
         if (triggerBuilder_ == null) {
           return trigger_;
         } else {
           return triggerBuilder_.getMessage();
         }
       }
-      public Builder setTrigger(org.drools.marshalling.impl.ProtobufMessages.Trigger value) {
+      public Builder setTrigger(org.drools.core.marshalling.impl.ProtobufMessages.Trigger value) {
         if (triggerBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -14393,7 +14393,7 @@ public final class JBPMMessages {
         return this;
       }
       public Builder setTrigger(
-          org.drools.marshalling.impl.ProtobufMessages.Trigger.Builder builderForValue) {
+          org.drools.core.marshalling.impl.ProtobufMessages.Trigger.Builder builderForValue) {
         if (triggerBuilder_ == null) {
           trigger_ = builderForValue.build();
           onChanged();
@@ -14403,12 +14403,12 @@ public final class JBPMMessages {
         bitField0_ |= 0x00000002;
         return this;
       }
-      public Builder mergeTrigger(org.drools.marshalling.impl.ProtobufMessages.Trigger value) {
+      public Builder mergeTrigger(org.drools.core.marshalling.impl.ProtobufMessages.Trigger value) {
         if (triggerBuilder_ == null) {
           if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              trigger_ != org.drools.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance()) {
+              trigger_ != org.drools.core.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance()) {
             trigger_ =
-              org.drools.marshalling.impl.ProtobufMessages.Trigger.newBuilder(trigger_).mergeFrom(value).buildPartial();
+              org.drools.core.marshalling.impl.ProtobufMessages.Trigger.newBuilder(trigger_).mergeFrom(value).buildPartial();
           } else {
             trigger_ = value;
           }
@@ -14421,7 +14421,7 @@ public final class JBPMMessages {
       }
       public Builder clearTrigger() {
         if (triggerBuilder_ == null) {
-          trigger_ = org.drools.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
+          trigger_ = org.drools.core.marshalling.impl.ProtobufMessages.Trigger.getDefaultInstance();
           onChanged();
         } else {
           triggerBuilder_.clear();
@@ -14429,12 +14429,12 @@ public final class JBPMMessages {
         bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
-      public org.drools.marshalling.impl.ProtobufMessages.Trigger.Builder getTriggerBuilder() {
+      public org.drools.core.marshalling.impl.ProtobufMessages.Trigger.Builder getTriggerBuilder() {
         bitField0_ |= 0x00000002;
         onChanged();
         return getTriggerFieldBuilder().getBuilder();
       }
-      public org.drools.marshalling.impl.ProtobufMessages.TriggerOrBuilder getTriggerOrBuilder() {
+      public org.drools.core.marshalling.impl.ProtobufMessages.TriggerOrBuilder getTriggerOrBuilder() {
         if (triggerBuilder_ != null) {
           return triggerBuilder_.getMessageOrBuilder();
         } else {
@@ -14442,11 +14442,11 @@ public final class JBPMMessages {
         }
       }
       private com.google.protobuf.SingleFieldBuilder<
-          org.drools.marshalling.impl.ProtobufMessages.Trigger, org.drools.marshalling.impl.ProtobufMessages.Trigger.Builder, org.drools.marshalling.impl.ProtobufMessages.TriggerOrBuilder> 
+          org.drools.core.marshalling.impl.ProtobufMessages.Trigger, org.drools.core.marshalling.impl.ProtobufMessages.Trigger.Builder, org.drools.core.marshalling.impl.ProtobufMessages.TriggerOrBuilder>
           getTriggerFieldBuilder() {
         if (triggerBuilder_ == null) {
           triggerBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.drools.marshalling.impl.ProtobufMessages.Trigger, org.drools.marshalling.impl.ProtobufMessages.Trigger.Builder, org.drools.marshalling.impl.ProtobufMessages.TriggerOrBuilder>(
+              org.drools.core.marshalling.impl.ProtobufMessages.Trigger, org.drools.core.marshalling.impl.ProtobufMessages.Trigger.Builder, org.drools.core.marshalling.impl.ProtobufMessages.TriggerOrBuilder>(
                   trigger_,
                   getParentForChildren(),
                   isClean());
@@ -14469,7 +14469,7 @@ public final class JBPMMessages {
   public static final int PROCESS_INSTANCE_FIELD_NUMBER = 10;
   public static final
     com.google.protobuf.GeneratedMessage.GeneratedExtension<
-      org.drools.marshalling.impl.ProtobufMessages.ProcessData,
+      org.drools.core.marshalling.impl.ProtobufMessages.ProcessData,
       java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance>> processInstance = com.google.protobuf.GeneratedMessage
           .newFileScopedGeneratedExtension(
         org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.class,
@@ -14477,7 +14477,7 @@ public final class JBPMMessages {
   public static final int WORK_ITEM_FIELD_NUMBER = 11;
   public static final
     com.google.protobuf.GeneratedMessage.GeneratedExtension<
-      org.drools.marshalling.impl.ProtobufMessages.ProcessData,
+      org.drools.core.marshalling.impl.ProtobufMessages.ProcessData,
       java.util.List<org.jbpm.marshalling.impl.JBPMMessages.WorkItem>> workItem = com.google.protobuf.GeneratedMessage
           .newFileScopedGeneratedExtension(
         org.jbpm.marshalling.impl.JBPMMessages.WorkItem.class,
@@ -14485,7 +14485,7 @@ public final class JBPMMessages {
   public static final int TIMER_ID_FIELD_NUMBER = 13;
   public static final
     com.google.protobuf.GeneratedMessage.GeneratedExtension<
-      org.drools.marshalling.impl.ProtobufMessages.ProcessData,
+      org.drools.core.marshalling.impl.ProtobufMessages.ProcessData,
       java.lang.Long> timerId = com.google.protobuf.GeneratedMessage
           .newFileScopedGeneratedExtension(
         java.lang.Long.class,
@@ -14493,7 +14493,7 @@ public final class JBPMMessages {
   public static final int PROCESS_TIMER_FIELD_NUMBER = 12;
   public static final
     com.google.protobuf.GeneratedMessage.GeneratedExtension<
-      org.drools.marshalling.impl.ProtobufMessages.ProcessData,
+      org.drools.core.marshalling.impl.ProtobufMessages.ProcessData,
       java.util.List<org.jbpm.marshalling.impl.JBPMMessages.ProcessTimer>> processTimer = com.google.protobuf.GeneratedMessage
           .newFileScopedGeneratedExtension(
         org.jbpm.marshalling.impl.JBPMMessages.ProcessTimer.class,
@@ -14501,7 +14501,7 @@ public final class JBPMMessages {
   public static final int PROC_TIMER_FIELD_NUMBER = 100;
   public static final
     com.google.protobuf.GeneratedMessage.GeneratedExtension<
-      org.drools.marshalling.impl.ProtobufMessages.Timers.Timer,
+      org.drools.core.marshalling.impl.ProtobufMessages.Timers.Timer,
       org.jbpm.marshalling.impl.JBPMMessages.ProcessTimer> procTimer = com.google.protobuf.GeneratedMessage
           .newFileScopedGeneratedExtension(
         org.jbpm.marshalling.impl.JBPMMessages.ProcessTimer.class,
@@ -14923,7 +14923,7 @@ public final class JBPMMessages {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
-          org.drools.marshalling.impl.ProtobufMessages.getDescriptor(),
+          org.drools.core.marshalling.impl.ProtobufMessages.getDescriptor(),
         }, assigner);
   }
   

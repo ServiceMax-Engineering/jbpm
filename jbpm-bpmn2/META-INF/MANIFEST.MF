@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1363158858449
+Bnd-LastModified: 1363159230422
 Build-Jdk: 1.7.0_07
-Build-Timestamp: Wed, 13 Mar 2013 12:43:11 +0530
+Build-Timestamp: Wed, 13 Mar 2013 12:50:08 +0530
 Built-By: anurag
 Bundle-Activator: org.jbpm.osgi.bpmn2.Activator
 Bundle-Description: jBPM BPMN2
@@ -57,7 +57,7 @@ Private-Package: org.jbpm.bpmn2;org.jbpm.bpmn2.core;org.jbpm.bpmn2.handl
  pm.osgi.bpmn2;-split-package:=merge-first
 Require-Bundle: org.jbpm.flow.builder
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-bpmn2
-Scm-Revision: 9f42df7b5656d95fed04d7d2735cf307f8cb794f
+Scm-Revision: 3cc714755203cf71d9c9e2e889e49cf3176735a6
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-bpmn2
 Specification-Title: jBPM :: BPMN2
 Specification-Vendor: JBoss by Red Hat

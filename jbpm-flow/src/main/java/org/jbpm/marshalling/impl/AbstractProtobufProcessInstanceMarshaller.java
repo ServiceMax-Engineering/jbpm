@@ -25,13 +25,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.common.DefaultFactHandle;
-import org.drools.common.InternalRuleBase;
-import org.drools.common.InternalWorkingMemory;
-import org.drools.marshalling.impl.MarshallerReaderContext;
-import org.drools.marshalling.impl.MarshallerWriteContext;
-import org.drools.marshalling.impl.PersisterHelper;
-import org.drools.marshalling.impl.ProtobufMessages.Header;
+import org.drools.core.common.DefaultFactHandle;
+import org.drools.core.common.InternalRuleBase;
+import org.drools.core.common.InternalWorkingMemory;
+import org.drools.core.marshalling.impl.MarshallerReaderContext;
+import org.drools.core.marshalling.impl.MarshallerWriteContext;
+import org.drools.core.marshalling.impl.PersisterHelper;
+import org.drools.core.marshalling.impl.ProtobufMessages.Header;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceContent;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceContent.RuleSetNode.TextMapEntry;
 import org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance.NodeInstanceType;
@@ -399,7 +399,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
             ExtensionRegistry registry = PersisterHelper.buildRegistry( context, null ); 
             Header _header;
             try {
-                _header = PersisterHelper.readFromStreamWithHeaderPreloaded( context, registry );
+                _header = PersisterHelper.readFromStreamWithHeaderPreloaded(context, registry);
             } catch ( ClassNotFoundException e ) {
                 // Java 5 does not accept [new IOException(String, Throwable)]
                 IOException ioe =  new IOException( "Error deserializing process instance." );

@@ -7,8 +7,8 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import org.drools.WorkingMemory;
-import org.drools.command.impl.*;
-import org.drools.compiler.PackageBuilderConfiguration;
+import org.drools.core.command.impl.*;
+import org.drools.compiler.compiler.PackageBuilderConfiguration;
 import org.drools.event.*;
 import org.drools.impl.EnvironmentFactory;
 import org.drools.impl.StatefulKnowledgeSessionImpl;

@@ -13,11 +13,11 @@
 	</logger>
 
     <!--  marshalling utils -->
-	<logger name="org.drools.marshalling.util.CompareViaReflectionUtil">
+	<logger name="org.drools.persistence.marshalling.util.CompareViaReflectionUtil">
 		<level value="INFO"/>
 	</logger>
   
-	<logger name="org.drools.marshalling.util">
+	<logger name="org.drools.core.marshalling.util">
 		<level value="DEBUG"/>
 	</logger>
 

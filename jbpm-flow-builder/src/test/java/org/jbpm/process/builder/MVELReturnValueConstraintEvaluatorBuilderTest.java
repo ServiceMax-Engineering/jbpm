@@ -6,15 +6,15 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.drools.common.InternalKnowledgeRuntime;
-import org.drools.compiler.DialectCompiletimeRegistry;
-import org.drools.compiler.PackageBuilder;
-import org.drools.compiler.ReturnValueDescr;
+import org.drools.core.common.InternalKnowledgeRuntime;
+import org.drools.compiler.compiler.DialectCompiletimeRegistry;
+import org.drools.compiler.compiler.PackageBuilder;
+import org.drools.compiler.compiler.ReturnValueDescr;
 import org.drools.definitions.impl.KnowledgePackageImp;
 import org.drools.rule.MVELDialectRuntimeData;
 import org.drools.rule.Package;
-import org.drools.rule.builder.PackageBuildContext;
-import org.drools.rule.builder.dialect.mvel.MVELDialect;
+import org.drools.compiler.rule.builder.PackageBuildContext;
+import org.drools.compiler.rule.builder.dialect.mvel.MVELDialect;
 import org.jbpm.process.builder.dialect.mvel.MVELReturnValueEvaluatorBuilder;
 import org.jbpm.process.instance.impl.MVELReturnValueEvaluator;
 import org.jbpm.process.instance.impl.ReturnValueConstraintEvaluator;

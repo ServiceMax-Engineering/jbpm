@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1363158810668
+Bnd-LastModified: 1363159213910
 Build-Jdk: 1.7.0_07
-Build-Timestamp: Wed, 13 Mar 2013 12:43:11 +0530
+Build-Timestamp: Wed, 13 Mar 2013 12:50:08 +0530
 Built-By: anurag
 Bundle-Activator: org.jbpm.osgi.flow.core.Activator
 Bundle-Description: jBPM Flow
@@ -199,7 +199,7 @@ Private-Package: org.jbpm.marshalling.impl;org.jbpm.osgi.flow.core;org.j
  t
 Require-Bundle: org.drools.core
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-flow
-Scm-Revision: 9f42df7b5656d95fed04d7d2735cf307f8cb794f
+Scm-Revision: 3cc714755203cf71d9c9e2e889e49cf3176735a6
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-flow
 Specification-Title: jBPM :: Flow
 Specification-Vendor: JBoss by Red Hat

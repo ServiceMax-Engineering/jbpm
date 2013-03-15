@@ -16,8 +16,8 @@
 
 package org.jbpm.bpmn2.xml;
 
-import org.drools.compiler.xml.XmlDumper;
-import org.drools.rule.builder.dialect.java.JavaDialect;
+import org.drools.compiler.compiler.xml.XmlDumper;
+import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.node.ActionNode;
