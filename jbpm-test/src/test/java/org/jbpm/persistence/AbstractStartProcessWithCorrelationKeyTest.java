@@ -23,12 +23,12 @@ import org.jbpm.task.api.TaskServiceEntryPoint;
 import org.jbpm.task.query.TaskSummary;
 import org.jbpm.test.JbpmJUnitTestCase;
 import org.junit.Test;
-import org.kie.KieInternalServices;
-import org.kie.process.CorrelationAwareProcessRuntime;
-import org.kie.process.CorrelationKey;
-import org.kie.process.CorrelationKeyFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.internal.KieInternalServices;
+import org.kie.internal.process.CorrelationAwareProcessRuntime;
+import org.kie.internal.process.CorrelationKey;
+import org.kie.internal.process.CorrelationKeyFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.ProcessInstance;
 
 public abstract class AbstractStartProcessWithCorrelationKeyTest extends JbpmJUnitTestCase {
     

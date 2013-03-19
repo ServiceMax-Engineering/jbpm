@@ -10,15 +10,15 @@ import junit.framework.TestCase;
 
 import org.jbpm.Person;
 import org.jbpm.workflow.instance.node.StateNodeInstance;
-import org.kie.KnowledgeBase;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.NodeInstance;
-import org.kie.runtime.process.ProcessInstance;
-import org.kie.runtime.process.WorkflowProcessInstance;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.api.io.ResourceType;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
 
 public class ProcessStateTest extends TestCase {
     
@@ -449,7 +449,7 @@ public class ProcessStateTest extends TestCase {
             "  </connections>\n" +
             "\n" +
             "</process>");
-        kbuilder.add( ResourceFactory.newReaderResource( source ), ResourceType.DRF );
+        kbuilder.add( ResourceFactory.newReaderResource(source), ResourceType.DRF );
         KnowledgeBase kbase = kbuilder.newKnowledgeBase();
         StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
         List<String> list = new ArrayList<String>();
@@ -543,7 +543,7 @@ public class ProcessStateTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"s\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        <value>a</value>\n" +
             "      </variable>\n" +
             "    </variables>\n" +
@@ -611,7 +611,7 @@ public class ProcessStateTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"s\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        <value>a</value>\n" +
             "      </variable>\n" +
             "    </variables>\n" +

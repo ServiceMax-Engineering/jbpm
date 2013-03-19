@@ -15,7 +15,7 @@
  */
 package org.jbpm.marshalling.util;
 
-import static org.kie.runtime.EnvironmentName.ENTITY_MANAGER_FACTORY;
+import static org.kie.api.runtime.EnvironmentName.ENTITY_MANAGER_FACTORY;
 import static org.jbpm.marshalling.util.MarshallingDBUtil.*;
 import static org.jbpm.persistence.util.PersistenceUtil.*;
 import static org.junit.Assert.*;
@@ -33,26 +33,26 @@ import javax.transaction.TransactionManager;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import org.drools.SessionConfiguration;
+import org.drools.core.SessionConfiguration;
 import org.drools.core.util.DroolsStreamUtils;
 import org.drools.core.util.StringUtils;
-import org.drools.impl.EnvironmentFactory;
+import org.drools.core.impl.EnvironmentFactory;
 import org.drools.core.marshalling.impl.InputMarshaller;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.ProcessMarshaller;
 import org.drools.core.marshalling.impl.ProtobufMarshaller;
 import org.drools.persistence.info.SessionInfo;
 import org.drools.persistence.info.WorkItemInfo;
-import org.drools.process.instance.WorkItem;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.marshalling.Marshaller;
-import org.kie.marshalling.MarshallerFactory;
-import org.kie.marshalling.ObjectMarshallingStrategy;
-import org.kie.runtime.Environment;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessInstance;
-import org.drools.time.impl.DefaultTimerJobInstance;
+import org.drools.core.process.instance.WorkItem;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.marshalling.Marshaller;
+import org.kie.internal.marshalling.MarshallerFactory;
+import org.kie.api.marshalling.ObjectMarshallingStrategy;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.drools.core.time.impl.DefaultTimerJobInstance;
 import org.jbpm.marshalling.impl.ProcessMarshallerImpl;
 import org.junit.Test;
 import org.slf4j.Logger;

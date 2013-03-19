@@ -6,25 +6,28 @@ import java.util.*;
 
 import junit.framework.TestCase;
 
-import org.drools.SessionConfiguration;
+import org.drools.core.SessionConfiguration;
 import org.drools.core.audit.WorkingMemoryInMemoryLogger;
 import org.drools.core.audit.event.LogEvent;
 import org.drools.core.audit.event.RuleFlowNodeLogEvent;
-import org.drools.impl.EnvironmentFactory;
+import org.drools.core.impl.EnvironmentFactory;
 import org.jbpm.bpmn2.objects.TestWorkItemHandler;
 import org.jbpm.process.audit.*;
 import org.jbpm.process.audit.AuditLoggerFactory.Type;
 import org.jbpm.process.instance.event.DefaultSignalManagerFactory;
 import org.jbpm.process.instance.impl.DefaultProcessInstanceManagerFactory;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
-import org.kie.KnowledgeBase;
-import org.kie.builder.*;
-import org.kie.definition.process.Node;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.persistence.jpa.JPAKnowledgeService;
-import org.kie.runtime.*;
-import org.kie.runtime.process.*;
+import org.kie.internal.KnowledgeBase;
+import org.kie.api.definition.process.Node;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderError;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.api.runtime.*;
+import org.kie.api.runtime.process.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

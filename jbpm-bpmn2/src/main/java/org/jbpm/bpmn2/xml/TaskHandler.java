@@ -27,11 +27,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.drools.process.core.Work;
-import org.drools.process.core.datatype.DataType;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
-import org.drools.process.core.impl.WorkImpl;
-import org.drools.xml.ExtensibleXmlParser;
+import org.drools.core.process.core.Work;
+import org.drools.core.process.core.datatype.DataType;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.core.process.core.impl.WorkImpl;
+import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.ItemDefinition;
 import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;

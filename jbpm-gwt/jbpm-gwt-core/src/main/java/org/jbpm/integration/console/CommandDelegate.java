@@ -28,12 +28,12 @@ import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.jbpm.workflow.instance.node.CompositeNodeInstance;
 import org.kie.KnowledgeBase;
-import org.kie.command.Context;
-import org.kie.definition.KnowledgePackage;
-import org.kie.definition.process.Process;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.NodeInstance;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.api.command.Context;
+import org.kie.api.definition.KnowledgePackage;
+import org.kie.api.definition.process.Process;
+import org.kie.api.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.ProcessInstance;
 
 import java.util.ArrayList;
 import java.util.Collection;

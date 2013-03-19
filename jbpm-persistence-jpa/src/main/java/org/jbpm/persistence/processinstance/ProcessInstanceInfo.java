@@ -26,9 +26,9 @@ import javax.persistence.Version;
 
 import org.drools.core.common.InternalKnowledgeRuntime;
 import org.drools.core.common.InternalRuleBase;
-import org.drools.event.ProcessEventSupport;
-import org.drools.impl.InternalKnowledgeBase;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.event.ProcessEventSupport;
+import org.drools.core.impl.InternalKnowledgeBase;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.MarshallerWriteContext;
 import org.drools.core.marshalling.impl.PersisterHelper;
@@ -40,8 +40,8 @@ import org.jbpm.marshalling.impl.ProtobufRuleFlowProcessInstanceMarshaller;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.process.instance.impl.ProcessInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
-import org.kie.runtime.Environment;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.process.ProcessInstance;
 
 @Entity
 @SequenceGenerator(name="processInstanceInfoIdSeq", sequenceName="PROCESS_INSTANCE_INFO_ID_SEQ")

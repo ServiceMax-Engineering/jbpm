@@ -16,13 +16,13 @@
 
 package org.jbpm.workflow.instance.node;
 
-import org.drools.RuntimeDroolsException;
+import org.drools.core.RuntimeDroolsException;
 import org.drools.core.common.InternalFactHandle;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.rule.Declaration;
-import org.drools.runtime.rule.impl.InternalAgenda;
-import org.drools.spi.Activation;
-import org.drools.time.TimeUtils;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.rule.Declaration;
+import org.drools.core.runtime.rule.impl.InternalAgenda;
+import org.drools.core.spi.Activation;
+import org.drools.core.time.TimeUtils;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.core.timer.BusinessCalendar;
 import org.jbpm.process.core.timer.DateTimeUtils;
@@ -38,10 +38,10 @@ import org.jbpm.workflow.core.node.StateBasedNode;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.impl.ExtendedNodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
-import org.kie.event.rule.MatchCreatedEvent;
-import org.kie.runtime.KnowledgeRuntime;
-import org.kie.runtime.process.EventListener;
-import org.kie.runtime.process.NodeInstance;
+import org.kie.api.event.rule.MatchCreatedEvent;
+import org.kie.internal.runtime.KnowledgeRuntime;
+import org.kie.api.runtime.process.EventListener;
+import org.kie.api.runtime.process.NodeInstance;
 import org.mvel2.MVEL;
 
 import java.util.ArrayList;
@@ -323,7 +323,7 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
         for ( Iterator<?> it = declarations.values().iterator(); it.hasNext(); ) {
             Declaration declaration = (Declaration) it.next();
             if ("processInstance".equals(declaration.getIdentifier())
-            		|| "org.kie.runtime.process.WorkflowProcessInstance".equals(declaration.getTypeName())) {
+            		|| "org.kie.api.runtime.process.WorkflowProcessInstance".equals(declaration.getTypeName())) {
                 Object value = declaration.getValue(
                     ((StatefulKnowledgeSessionImpl) getProcessInstance().getKnowledgeRuntime()).session,
                     ((InternalFactHandle) activation.getTuple().get(declaration)).getObject());

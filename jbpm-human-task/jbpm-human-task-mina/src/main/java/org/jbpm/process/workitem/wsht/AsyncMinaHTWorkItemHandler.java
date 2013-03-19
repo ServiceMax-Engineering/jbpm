@@ -20,8 +20,9 @@ import org.jbpm.task.service.TaskClient;
 import org.jbpm.task.service.mina.MinaTaskClientConnector;
 import org.jbpm.task.service.mina.MinaTaskClientHandler;
 import org.jbpm.task.utils.OnErrorAction;
-import org.kie.SystemEventListenerFactory;
-import org.kie.runtime.KnowledgeRuntime;
+import org.kie.internal.SystemEventListenerFactory;
+import org.kie.internal.runtime.KnowledgeRuntime;
+
 /**
  *
  * This class provides the default configurations for a Mina WorkItem Handler

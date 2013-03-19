@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.drools.process.instance.impl.WorkItemImpl;
+import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.jbpm.process.workitem.wsht.AsyncGenericHTWorkItemHandler;
 import org.jbpm.process.workitem.wsht.MyObject;
 import org.jbpm.task.AccessType;
@@ -42,8 +42,8 @@ import org.jbpm.task.service.responsehandlers.BlockingTaskOperationResponseHandl
 import org.jbpm.task.service.responsehandlers.BlockingTaskSummaryResponseHandler;
 import org.jbpm.task.utils.ContentMarshallerHelper;
 import org.jbpm.task.utils.OnErrorAction;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
 
 public abstract class WSHumanTaskHandlerBaseAsyncTest extends BaseTest {
 

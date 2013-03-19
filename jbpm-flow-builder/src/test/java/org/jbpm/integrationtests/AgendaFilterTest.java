@@ -1,22 +1,22 @@
 package org.jbpm.integrationtests;
 
 import org.drools.core.command.runtime.rule.FireAllRulesCommand;
-import org.drools.event.DebugProcessEventListener;
-import org.drools.rule.Rule;
+import org.drools.core.event.DebugProcessEventListener;
+import org.drools.core.rule.Rule;
 import org.junit.Test;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.command.Command;
-import org.kie.command.CommandFactory;
-import org.kie.definition.type.FactType;
-import org.kie.event.rule.DebugAgendaEventListener;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.rule.AgendaFilter;
-import org.kie.runtime.rule.Match;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.api.command.Command;
+import org.kie.internal.command.CommandFactory;
+import org.kie.api.definition.type.FactType;
+import org.kie.api.event.rule.DebugAgendaEventListener;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.rule.AgendaFilter;
+import org.kie.api.runtime.rule.Match;
 
 import java.util.ArrayList;
 import java.util.List;

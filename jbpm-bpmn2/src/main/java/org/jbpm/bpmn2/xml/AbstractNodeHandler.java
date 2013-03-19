@@ -24,9 +24,9 @@ import java.util.Map;
 
 import org.drools.compiler.compiler.xml.XmlDumper;
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
-import org.drools.xml.BaseAbstractHandler;
-import org.drools.xml.ExtensibleXmlParser;
-import org.drools.xml.Handler;
+import org.drools.core.xml.BaseAbstractHandler;
+import org.drools.core.xml.ExtensibleXmlParser;
+import org.drools.core.xml.Handler;
 import org.jbpm.bpmn2.core.Association;
 import org.jbpm.bpmn2.core.Lane;
 import org.jbpm.bpmn2.core.SequenceFlow;
@@ -88,7 +88,7 @@ public abstract class AbstractNodeHandler extends BaseAbstractHandler implements
             // id is not in the expected format, generating a new one
             long newId = 0;
             NodeContainer nodeContainer = (NodeContainer) parser.getParent();
-            for (org.kie.definition.process.Node n: nodeContainer.getNodes()) {
+            for (org.kie.api.definition.process.Node n: nodeContainer.getNodes()) {
                 if (n.getId() > newId) {
                     newId = n.getId();
                 }

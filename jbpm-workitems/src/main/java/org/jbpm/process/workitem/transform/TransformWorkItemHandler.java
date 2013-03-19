@@ -20,9 +20,9 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.drools.process.instance.WorkItemHandler;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.process.WorkItemManager;
+import org.drools.core.process.instance.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemManager;
 
 public class TransformWorkItemHandler implements WorkItemHandler {
 

@@ -21,9 +21,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.process.core.datatype.DataType;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
-import org.drools.xml.ExtensibleXmlParser;
+import org.drools.core.process.core.datatype.DataType;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.ItemDefinition;
 import org.jbpm.bpmn2.core.SequenceFlow;
@@ -147,7 +147,7 @@ public class SubProcessHandler extends AbstractNodeHandler {
 				ForEachNode forEachNode = new ForEachNode();
 				forEachNode.setId(node.getId());
 				forEachNode.setName(node.getName());
-				for (org.kie.definition.process.Node subNode: ((CompositeContextNode) node).getNodes()) {
+				for (org.kie.api.definition.process.Node subNode: ((CompositeContextNode) node).getNodes()) {
 					forEachNode.addNode(subNode);
 				}
 				forEachNode.setMetaData("UniqueId",

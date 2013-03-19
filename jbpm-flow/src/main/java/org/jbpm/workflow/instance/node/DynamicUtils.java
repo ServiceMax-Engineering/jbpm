@@ -21,21 +21,21 @@ import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.core.command.impl.GenericCommand;
 import org.drools.core.command.impl.KnowledgeCommandContext;
 import org.drools.core.common.InternalKnowledgeRuntime;
-import org.drools.event.ProcessEventSupport;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.process.instance.WorkItemManager;
-import org.drools.process.instance.impl.WorkItemImpl;
+import org.drools.core.event.ProcessEventSupport;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.process.instance.WorkItemManager;
+import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
-import org.kie.command.Context;
-import org.kie.definition.process.Process;
-import org.kie.runtime.KieRuntime;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.NodeInstance;
-import org.kie.runtime.process.WorkItem;
+import org.kie.internal.command.Context;
+import org.kie.api.definition.process.Process;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.KieRuntime;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.WorkItem;
 
 import java.util.Map;
 
@@ -49,7 +49,7 @@ public class DynamicUtils {
 	}
 	
 	public static void addDynamicWorkItem(
-			final org.kie.runtime.process.ProcessInstance dynamicProcessInstance, KieRuntime ksession,
+			final org.kie.api.runtime.process.ProcessInstance dynamicProcessInstance, KieRuntime ksession,
 			String workItemName, Map<String, Object> parameters) {
 		internalAddDynamicWorkItem((WorkflowProcessInstance) dynamicProcessInstance, null, ksession, workItemName, parameters);
 	}
@@ -118,7 +118,7 @@ public class DynamicUtils {
 	}
 	
 	public static void addDynamicSubProcess(
-			final org.kie.runtime.process.ProcessInstance processInstance, KieRuntime ksession,
+			final org.kie.api.runtime.process.ProcessInstance processInstance, KieRuntime ksession,
 			final String processId, final Map<String, Object> parameters) {
 		internalAddDynamicSubProcess((WorkflowProcessInstance) processInstance, null, ksession, processId, parameters);
 	}

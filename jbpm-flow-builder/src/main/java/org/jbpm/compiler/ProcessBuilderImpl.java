@@ -25,7 +25,7 @@ import java.util.Map;
 
 import javax.xml.parsers.FactoryConfigurationError;
 
-import org.drools.RuntimeDroolsException;
+import org.drools.core.RuntimeDroolsException;
 import org.drools.compiler.compiler.Dialect;
 import org.drools.compiler.compiler.DialectCompiletimeRegistry;
 import org.drools.compiler.compiler.*;
@@ -68,12 +68,12 @@ import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.Trigger;
-import org.kie.definition.process.Connection;
-import org.kie.definition.process.Node;
-import org.kie.definition.process.NodeContainer;
-import org.kie.definition.process.Process;
-import org.kie.definition.process.WorkflowProcess;
-import org.kie.io.Resource;
+import org.kie.api.definition.process.Connection;
+import org.kie.api.definition.process.Node;
+import org.kie.api.definition.process.NodeContainer;
+import org.kie.api.definition.process.Process;
+import org.kie.api.definition.process.WorkflowProcess;
+import org.kie.api.io.Resource;
 
 /**
  * A ProcessBuilder can be used to build processes based on XML files
@@ -140,7 +140,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
             
             PackageRegistry pkgRegistry = this.packageBuilder.getPackageRegistry(process.getPackageName());
 			if (pkgRegistry != null) {
-				org.drools.rule.Package p = pkgRegistry.getPackage();
+				org.drools.core.rule.Package p = pkgRegistry.getPackage();
             
 	            if (p != null) {
 	            

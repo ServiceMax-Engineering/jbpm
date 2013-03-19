@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.drools.process.instance.impl.WorkItemImpl;
+import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.jbpm.process.workitem.email.EmailWorkItemHandler;
 import org.jbpm.task.Content;
 import org.jbpm.task.Deadline;
@@ -47,8 +47,8 @@ import org.jbpm.task.UserInfo;
 import org.jbpm.task.utils.ContentMarshallerHelper;
 import org.kie.internal.utils.ChainedProperties;
 import org.kie.internal.utils.ClassLoaderUtil;
-import org.kie.runtime.Environment;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.process.WorkItemManager;
 import org.mvel2.templates.TemplateRuntime;
 
 public class DefaultEscalatedDeadlineHandler

@@ -35,7 +35,7 @@ import javax.persistence.Persistence;
 import org.drools.core.audit.WorkingMemoryLogger;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.core.command.impl.KnowledgeCommandContext;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
 import org.jbpm.integration.console.HumanTaskService;
 import org.jbpm.integration.console.TaskClientFactory;
 import org.jbpm.integration.console.Utils;
@@ -44,15 +44,15 @@ import org.jbpm.task.AsyncTaskService;
 import org.jbpm.task.service.local.LocalTaskService;
 import org.kie.KnowledgeBase;
 import org.kie.KnowledgeBaseFactory;
-import org.kie.event.process.ProcessEventListener;
-import org.kie.event.rule.AgendaEventListener;
-import org.kie.event.rule.WorkingMemoryEventListener;
-import org.kie.persistence.jpa.JPAKnowledgeService;
-import org.kie.runtime.Environment;
-import org.kie.runtime.EnvironmentName;
-import org.kie.runtime.KieSessionConfiguration;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.WorkItemHandler;
+import org.kie.api.event.process.ProcessEventListener;
+import org.kie.api.event.rule.AgendaEventListener;
+import org.kie.api.event.rule.WorkingMemoryEventListener;
+import org.kie.api.persistence.jpa.JPAKnowledgeService;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.EnvironmentName;
+import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.WorkItemHandler;
 import org.mvel2.MVEL;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.ParserContext;
@@ -232,10 +232,10 @@ public class MVELSingleSessionManager extends AbstractSessionManager {
                     } else if (listener instanceof WorkingMemoryEventListener) {
                         ksession.addEventListener((WorkingMemoryEventListener) listener);
                         
-                    } else if (listener instanceof org.drools.event.AgendaEventListener) {
+                    } else if (listener instanceof org.drools.core.event.AgendaEventListener) {
                         ((StatefulKnowledgeSessionImpl)  ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
                                 .getCommandService().getContext()).getStatefulKnowledgesession() )
-                                .session.addEventListener((org.drools.event.AgendaEventListener)listener);
+                                .session.addEventListener((org.drools.core.event.AgendaEventListener)listener);
                     }
                 } catch (Exception e) {
                     logger.error("Addition of event listener " + eventListenerDef + " failed due to " + e.getMessage(), e);

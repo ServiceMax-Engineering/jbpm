@@ -23,23 +23,23 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.StatefulSession;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.StatefulSession;
 import org.drools.core.common.InternalWorkingMemory;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
+import org.drools.core.rule.Package;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.junit.Test;
-import org.kie.event.process.ProcessCompletedEvent;
-import org.kie.event.process.ProcessEvent;
-import org.kie.event.process.ProcessEventListener;
-import org.kie.event.process.ProcessNodeLeftEvent;
-import org.kie.event.process.ProcessNodeTriggeredEvent;
-import org.kie.event.process.ProcessStartedEvent;
-import org.kie.event.process.ProcessVariableChangedEvent;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.api.event.process.ProcessCompletedEvent;
+import org.kie.api.event.process.ProcessEvent;
+import org.kie.api.event.process.ProcessEventListener;
+import org.kie.api.event.process.ProcessNodeLeftEvent;
+import org.kie.api.event.process.ProcessNodeTriggeredEvent;
+import org.kie.api.event.process.ProcessStartedEvent;
+import org.kie.api.event.process.ProcessVariableChangedEvent;
+import org.kie.api.runtime.process.ProcessInstance;
 
 public class ProcessEventListenerTest extends TestCase {
 
@@ -59,7 +59,7 @@ public class ProcessEventListenerTest extends TestCase {
 
         ((InternalWorkingMemory)session).getProcessRuntime().addEventListener(listener);
         ProcessInstance processInstance =
-        	((InternalWorkingMemory)session).getProcessRuntime().startProcess("org.drools.event");
+        	((InternalWorkingMemory)session).getProcessRuntime().startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals("MyValue", ((VariableScopeInstance)
                                     ((org.jbpm.process.instance.ProcessInstance) processInstance)
@@ -68,7 +68,7 @@ public class ProcessEventListenerTest extends TestCase {
         for (ProcessEvent e: processEventList) {
         	System.out.println(e);
         }
-        assertEquals( "org.drools.event", ((ProcessStartedEvent) processEventList.get(2)).getProcessInstance().getProcessId());
+        assertEquals( "org.drools.core.event", ((ProcessStartedEvent) processEventList.get(2)).getProcessInstance().getProcessId());
 
     }
     
@@ -122,12 +122,12 @@ public class ProcessEventListenerTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
             "    <variables>\n" +
             "      <variable name=\"MyVar\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        <value>SomeText</value>\n" +
             "      </variable>\n" +
             "    </variables>\n" +

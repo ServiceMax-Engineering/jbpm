@@ -2,11 +2,11 @@ package org.jbpm.compiler.xml.processes;
 
 import java.util.HashSet;
 
-import org.drools.process.core.datatype.DataType;
-import org.drools.process.core.datatype.impl.type.StringDataType;
-import org.drools.xml.BaseAbstractHandler;
-import org.drools.xml.ExtensibleXmlParser;
-import org.drools.xml.Handler;
+import org.drools.core.process.core.datatype.DataType;
+import org.drools.core.process.core.datatype.impl.type.StringDataType;
+import org.drools.core.xml.BaseAbstractHandler;
+import org.drools.core.xml.ExtensibleXmlParser;
+import org.drools.core.xml.Handler;
 import org.jbpm.process.core.ValueObject;
 import org.jbpm.workflow.core.Node;
 import org.xml.sax.Attributes;

@@ -6,18 +6,18 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.WorkingMemory;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.WorkingMemory;
 import org.drools.core.common.InternalWorkingMemory;
 import org.drools.compiler.compiler.PackageBuilder;
 import org.drools.compiler.compiler.PackageRegistry;
 import org.drools.compiler.lang.descr.ActionDescr;
-import org.drools.rule.MVELDialectRuntimeData;
-import org.drools.rule.Package;
+import org.drools.core.rule.MVELDialectRuntimeData;
+import org.drools.core.rule.Package;
 import org.drools.compiler.rule.builder.PackageBuildContext;
 import org.drools.compiler.rule.builder.dialect.mvel.MVELDialect;
-import org.drools.spi.ProcessContext;
+import org.drools.core.spi.ProcessContext;
 import org.jbpm.process.builder.dialect.mvel.MVELActionBuilder;
 import org.jbpm.process.instance.impl.Action;
 import org.jbpm.process.instance.impl.MVELAction;

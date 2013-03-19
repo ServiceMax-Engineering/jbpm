@@ -25,8 +25,8 @@ import org.jbpm.eventmessaging.Payload;
 import org.jbpm.task.Content;
 import org.jbpm.task.Task;
 import org.jbpm.task.query.TaskSummary;
-import org.kie.SystemEventListener;
-import org.kie.task.service.ResponseHandler;
+import org.kie.internal.SystemEventListener;
+import org.kie.internal.task.service.ResponseHandler;
 
 public class TaskClientHandler {
 

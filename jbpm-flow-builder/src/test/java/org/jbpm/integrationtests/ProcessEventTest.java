@@ -5,16 +5,16 @@ import java.io.StringReader;
 
 import junit.framework.TestCase;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.StatefulSession;
-import org.drools.WorkingMemory;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.StatefulSession;
+import org.drools.core.WorkingMemory;
 import org.drools.core.common.InternalWorkingMemory;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
+import org.drools.core.rule.Package;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.ProcessInstance;
 
 public class ProcessEventTest extends TestCase {
     
@@ -25,12 +25,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -64,7 +64,7 @@ public class ProcessEventTest extends TestCase {
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
         ProcessInstance processInstance =
-            session.startProcess("org.drools.event");
+            session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals("MyValue", ((VariableScopeInstance) 
     		((org.jbpm.process.instance.ProcessInstance) processInstance).getContextInstance(
@@ -78,12 +78,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -112,7 +112,7 @@ public class ProcessEventTest extends TestCase {
         RuleBase ruleBase = RuleBaseFactory.newRuleBase();
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
-        ProcessInstance processInstance = session.startProcess("org.drools.event");
+        ProcessInstance processInstance = session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         
         session = SerializationHelper.getSerialisedStatefulSession(session);
@@ -131,12 +131,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -165,7 +165,7 @@ public class ProcessEventTest extends TestCase {
         RuleBase ruleBase = RuleBaseFactory.newRuleBase();
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
-        ProcessInstance processInstance = session.startProcess("org.drools.event");
+        ProcessInstance processInstance = session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals("SomeText", ((VariableScopeInstance) 
     		((org.jbpm.process.instance.ProcessInstance) processInstance).getContextInstance(
@@ -187,12 +187,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -221,7 +221,7 @@ public class ProcessEventTest extends TestCase {
         RuleBase ruleBase = RuleBaseFactory.newRuleBase();
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
-        ProcessInstance processInstance = session.startProcess("org.drools.event");
+        ProcessInstance processInstance = session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals("SomeText", ((VariableScopeInstance) 
     		((org.jbpm.process.instance.ProcessInstance) processInstance).getContextInstance(
@@ -240,12 +240,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -291,7 +291,7 @@ public class ProcessEventTest extends TestCase {
         ruleBase.addPackage( pkg );
         WorkingMemory workingMemory = ruleBase.newStatefulSession();
         ProcessInstance processInstance =
-            workingMemory.startProcess("org.drools.event");
+            workingMemory.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals("MyValue", ((VariableScopeInstance)
     		((org.jbpm.process.instance.ProcessInstance) processInstance).getContextInstance(
@@ -305,12 +305,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -351,7 +351,7 @@ public class ProcessEventTest extends TestCase {
         RuleBase ruleBase = RuleBaseFactory.newRuleBase();
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
-        ProcessInstance processInstance = session.startProcess("org.drools.event");
+        ProcessInstance processInstance = session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
 
         session = SerializationHelper.getSerialisedStatefulSession(session);
@@ -370,12 +370,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -416,7 +416,7 @@ public class ProcessEventTest extends TestCase {
         RuleBase ruleBase = RuleBaseFactory.newRuleBase();
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
-        ProcessInstance processInstance = session.startProcess("org.drools.event");
+        ProcessInstance processInstance = session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
 
         session = SerializationHelper.getSerialisedStatefulSession(session);
@@ -435,12 +435,12 @@ public class ProcessEventTest extends TestCase {
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xs:schemaLocation=\"http://drools.org/drools-5.0/process drools-processes-5.0.xsd\"\n" +
-            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.event\" package-name=\"org.drools\" version=\"1\" >\n" +
+            "         type=\"RuleFlow\" name=\"flow\" id=\"org.drools.core.event\" package-name=\"org.drools\" version=\"1\" >\n" +
             "\n" +
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"MyVar\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -481,7 +481,7 @@ public class ProcessEventTest extends TestCase {
         RuleBase ruleBase = RuleBaseFactory.newRuleBase();
         ruleBase.addPackage( pkg );
         StatefulSession session = ruleBase.newStatefulSession();
-        ProcessInstance processInstance = session.startProcess("org.drools.event");
+        ProcessInstance processInstance = session.startProcess("org.drools.core.event");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
 
         session = SerializationHelper.getSerialisedStatefulSession(session);

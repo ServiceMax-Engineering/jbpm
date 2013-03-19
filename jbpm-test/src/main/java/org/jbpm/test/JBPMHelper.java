@@ -7,14 +7,14 @@ import java.util.Properties;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
-import org.drools.impl.EnvironmentFactory;
+import org.drools.core.impl.EnvironmentFactory;
 import org.h2.tools.Server;
 
-import org.kie.KnowledgeBase;
-import org.kie.persistence.jpa.JPAKnowledgeService;
-import org.kie.runtime.Environment;
-import org.kie.runtime.EnvironmentName;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.EnvironmentName;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.jdbc.PoolingDataSource;

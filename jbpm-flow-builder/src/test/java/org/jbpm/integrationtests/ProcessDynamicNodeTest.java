@@ -6,24 +6,26 @@ import java.util.*;
 
 import junit.framework.TestCase;
 
-import org.drools.*;
 import org.drools.compiler.compiler.DroolsError;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.WorkingMemory;
+import org.drools.core.rule.Package;
 import org.jbpm.integrationtests.handler.TestWorkItemHandler;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.workflow.instance.node.DynamicNodeInstance;
 import org.jbpm.workflow.instance.node.DynamicUtils;
-import org.kie.KnowledgeBase;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.logger.KnowledgeRuntimeLogger;
-import org.kie.logger.KnowledgeRuntimeLoggerFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.process.WorkflowProcessInstance;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.logger.KnowledgeRuntimeLogger;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.internal.logger.KnowledgeRuntimeLoggerFactory;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
 
 public class ProcessDynamicNodeTest extends TestCase {
     
@@ -262,7 +264,7 @@ public class ProcessDynamicNodeTest extends TestCase {
                 "  <header>\n" +
         		"    <variables>\n" +
         		"      <variable name=\"x\" >\n" +
-        		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+        		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
         		"        <value>SomeText</value>\n" +
         		"      </variable>\n" +
         		"    </variables>\n" +

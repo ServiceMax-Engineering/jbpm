@@ -28,15 +28,15 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import org.drools.process.core.ParameterDefinition;
-import org.drools.process.core.Work;
-import org.drools.process.core.datatype.impl.type.IntegerDataType;
-import org.drools.process.core.datatype.impl.type.ListDataType;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
-import org.drools.process.core.datatype.impl.type.StringDataType;
-import org.drools.process.core.impl.ParameterDefinitionImpl;
-import org.drools.process.core.impl.WorkImpl;
-import org.drools.xml.SemanticModules;
+import org.drools.core.process.core.ParameterDefinition;
+import org.drools.core.process.core.Work;
+import org.drools.core.process.core.datatype.impl.type.IntegerDataType;
+import org.drools.core.process.core.datatype.impl.type.ListDataType;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.core.process.core.datatype.impl.type.StringDataType;
+import org.drools.core.process.core.impl.ParameterDefinitionImpl;
+import org.drools.core.process.core.impl.WorkImpl;
+import org.drools.core.xml.SemanticModules;
 import org.jbpm.Person;
 import org.jbpm.compiler.xml.ProcessSemanticModule;
 import org.jbpm.compiler.xml.XmlProcessReader;
@@ -76,7 +76,7 @@ import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.core.node.TimerNode;
 import org.jbpm.workflow.core.node.WorkItemNode;
-import org.kie.definition.process.Process;
+import org.kie.api.definition.process.Process;
 
 public class XMLPersistenceTest extends TestCase {
     
@@ -84,7 +84,7 @@ public class XMLPersistenceTest extends TestCase {
         RuleFlowProcess process = new RuleFlowProcess() {
             private static final long serialVersionUID = 510l;
             int id = 0;
-            public void addNode(org.kie.definition.process.Node node) {
+            public void addNode(org.kie.api.definition.process.Node node) {
                 ((Node) node).setId(++id);
                 super.addNode(node);
             }
@@ -141,7 +141,7 @@ public class XMLPersistenceTest extends TestCase {
         RuleFlowProcess process = new RuleFlowProcess() {
             private static final long serialVersionUID = 510l;
             int id = 0;
-            public void addNode(org.kie.definition.process.Node node) {
+            public void addNode(org.kie.api.definition.process.Node node) {
                 ((Node) node).setId(++id);
                 super.addNode(node);
             }

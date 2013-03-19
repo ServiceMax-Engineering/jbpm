@@ -14,15 +14,15 @@ import org.jbpm.task.service.ContentData;
 import org.jbpm.task.service.SyncTaskServiceWrapper;
 import org.jbpm.task.service.hornetq.AsyncHornetQTaskClient;
 import org.jbpm.task.utils.ContentMarshallerHelper;
-import org.kie.KnowledgeBase;
-import org.kie.SystemEventListenerFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.logger.KnowledgeRuntimeLogger;
-import org.kie.logger.KnowledgeRuntimeLoggerFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.SystemEventListenerFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.logger.KnowledgeRuntimeLogger;
+import org.kie.internal.logger.KnowledgeRuntimeLoggerFactory;
+import org.kie.api.io.ResourceType;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
 public class HumanTaskExample {
 
@@ -142,7 +142,7 @@ public class HumanTaskExample {
         return kbuilder.newKnowledgeBase();
     }
 
-    private static class SystemEventListener implements org.kie.SystemEventListener {
+    private static class SystemEventListener implements org.kie.internal.SystemEventListener {
 
         public void debug(String arg0) {
         }

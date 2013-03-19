@@ -29,14 +29,18 @@ import org.jbpm.bpmn2.objects.*;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
 import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
 import org.junit.*;
-import org.kie.*;
-import org.kie.builder.*;
-import org.kie.event.process.DefaultProcessEventListener;
-import org.kie.event.process.ProcessStartedEvent;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.KieSession;
-import org.kie.runtime.process.*;
+import org.kie.api.KieBase;
+import org.kie.api.event.process.DefaultProcessEventListener;
+import org.kie.api.event.process.ProcessStartedEvent;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderError;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.process.*;
 import org.w3c.dom.Document;
 
 public class StandaloneBPMNProcessTest extends NewJbpmBpmn2TestBase {

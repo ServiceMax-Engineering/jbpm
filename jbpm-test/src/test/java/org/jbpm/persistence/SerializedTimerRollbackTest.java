@@ -27,10 +27,10 @@ import org.jbpm.task.User;
 import org.jbpm.task.query.TaskSummary;
 
 import org.junit.Test;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.ProcessInstance;
 
 import bitronix.tm.TransactionManagerServices;
 import javax.naming.InitialContext;

@@ -1,16 +1,16 @@
 package org.jbpm.integrationtests;
 
-import org.drools.RuleBase;
-import org.drools.SessionConfiguration;
-import org.drools.StatefulSession;
+import org.drools.core.RuleBase;
+import org.drools.core.SessionConfiguration;
+import org.drools.core.StatefulSession;
 import org.drools.core.util.DroolsStreamUtils;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.reteoo.ReteooStatefulSession;
-import org.kie.marshalling.Marshaller;
-import org.kie.marshalling.MarshallerFactory;
-import org.kie.marshalling.ObjectMarshallingStrategy;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.drools.core.impl.EnvironmentFactory;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.reteoo.ReteooStatefulSession;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.marshalling.Marshaller;
+import org.kie.internal.marshalling.MarshallerFactory;
+import org.kie.api.marshalling.ObjectMarshallingStrategy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

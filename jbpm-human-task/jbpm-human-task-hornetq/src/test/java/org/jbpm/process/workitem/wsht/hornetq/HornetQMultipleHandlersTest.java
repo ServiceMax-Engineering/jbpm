@@ -18,7 +18,7 @@ package org.jbpm.process.workitem.wsht.hornetq;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.process.instance.impl.WorkItemImpl;
+import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.jbpm.process.workitem.wsht.AsyncHornetQHTWorkItemHandler;
 import org.jbpm.process.workitem.wsht.HornetQHTWorkItemHandler;
 import org.jbpm.task.AsyncTaskService;
@@ -33,8 +33,8 @@ import org.jbpm.task.service.responsehandlers.BlockingTaskOperationResponseHandl
 import org.jbpm.task.service.responsehandlers.BlockingTaskSummaryResponseHandler;
 import org.jbpm.task.utils.OnErrorAction;
 import org.junit.Test;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
 
 public class HornetQMultipleHandlersTest extends BaseTest {
 

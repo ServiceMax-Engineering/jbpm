@@ -6,18 +6,18 @@ import java.util.*;
 
 import junit.framework.TestCase;
 
-import org.drools.io.impl.ReaderResource;
+import org.drools.core.io.impl.ReaderResource;
 import org.jbpm.Message;
 import org.jbpm.integrationtests.handler.TestWorkItemHandler;
-import org.kie.KnowledgeBase;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.ObjectFilter;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessInstance;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.rule.FactHandle;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.ObjectFilter;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.rule.FactHandle;
 
 public class ProcessActionTest extends TestCase {
     
@@ -41,18 +41,18 @@ public class ProcessActionTest extends TestCase {
             "    <workItem id=\"2\" name=\"HumanTask\" >\n" +
             "      <work name=\"Human Task\" >\n" +
             "        <parameter name=\"ActorId\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>John Doe</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"TaskName\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>Do something</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Priority\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Comment\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "      </work>\n" +
             "      <onEntry>\n" +
@@ -108,7 +108,7 @@ public class ProcessActionTest extends TestCase {
 			"    </globals>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"variable\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -172,7 +172,7 @@ public class ProcessActionTest extends TestCase {
 			"    </globals>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"variable\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>SomeText</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -239,7 +239,7 @@ public class ProcessActionTest extends TestCase {
 			"    </globals>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"person\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.ProcessActionTest.TestVariable\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.ProcessActionTest.TestVariable\" />\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
             "  </header>\n" +
@@ -293,7 +293,7 @@ public class ProcessActionTest extends TestCase {
 			"    </globals>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"person\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"TestVariable\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"TestVariable\" />\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
             "  </header>\n" +

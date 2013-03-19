@@ -6,21 +6,21 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.drools.FactHandle;
-import org.drools.RuleBase;
-import org.drools.RuleBaseConfiguration;
-import org.drools.RuleBaseFactory;
-import org.drools.StatefulSession;
-import org.drools.WorkingMemory;
+import org.drools.core.FactHandle;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseConfiguration;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.StatefulSession;
+import org.drools.core.WorkingMemory;
 import org.drools.core.common.DefaultAgenda;
 import org.drools.compiler.compiler.PackageBuilder;
 import org.drools.compiler.compiler.PackageBuilder.PackageMergeException;
-import org.drools.event.ActivationCancelledEvent;
-import org.drools.event.AgendaEventListener;
-import org.drools.event.DefaultAgendaEventListener;
-import org.drools.rule.Package;
-import org.kie.runtime.process.ProcessInstance;
-import org.kie.runtime.rule.Match;
+import org.drools.core.event.ActivationCancelledEvent;
+import org.drools.core.event.AgendaEventListener;
+import org.drools.core.event.DefaultAgendaEventListener;
+import org.drools.core.rule.Package;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.rule.Match;
 
 public class ProcessFlowControlTest extends TestCase {
     protected RuleBase getRuleBase() throws Exception {

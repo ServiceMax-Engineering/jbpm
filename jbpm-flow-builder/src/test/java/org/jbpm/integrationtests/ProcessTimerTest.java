@@ -10,21 +10,21 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
-import org.drools.ClockType;
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.SessionConfiguration;
-import org.drools.StatefulSession;
+import org.drools.core.ClockType;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.SessionConfiguration;
+import org.drools.core.StatefulSession;
 import org.drools.core.common.InternalWorkingMemory;
 import org.drools.compiler.compiler.DroolsError;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
-import org.drools.time.SessionPseudoClock;
+import org.drools.core.rule.Package;
+import org.drools.core.time.SessionPseudoClock;
 import org.jbpm.Message;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
-import org.kie.runtime.conf.ClockTypeOption;
+import org.kie.api.runtime.conf.ClockTypeOption;
 
 public class ProcessTimerTest extends TestCase {
 
@@ -128,10 +128,10 @@ public class ProcessTimerTest extends TestCase {
 			"    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"x\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.IntegerDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.IntegerDataType\" />\n" +
             "      </variable>\n" +
             "      <variable name=\"y\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.IntegerDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.IntegerDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
 			"  </header>\n" +
@@ -308,7 +308,7 @@ public class ProcessTimerTest extends TestCase {
 			"    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"x\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.IntegerDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.IntegerDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
 			"  </header>\n" +

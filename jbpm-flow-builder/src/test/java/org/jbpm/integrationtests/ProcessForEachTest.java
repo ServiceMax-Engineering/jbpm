@@ -9,15 +9,15 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.WorkingMemory;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.WorkingMemory;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
+import org.drools.core.rule.Package;
 import org.jbpm.process.instance.ProcessInstance;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
 
 public class ProcessForEachTest extends TestCase {
     
@@ -35,7 +35,7 @@ public class ProcessForEachTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -95,7 +95,7 @@ public class ProcessForEachTest extends TestCase {
             "  <header>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -106,7 +106,7 @@ public class ProcessForEachTest extends TestCase {
             "        <workItem id=\"1\" name=\"Log\" >\n" +
             "          <work name=\"Log\" >\n" +
             "            <parameter name=\"Message\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "            </parameter>\n" +
             "          </work>\n" +
             "          <mapping type=\"in\" from=\"item\" to=\"Message\" />" +
@@ -172,7 +172,7 @@ public class ProcessForEachTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -231,7 +231,7 @@ public class ProcessForEachTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -287,7 +287,7 @@ public class ProcessForEachTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -376,7 +376,7 @@ public class ProcessForEachTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -465,7 +465,7 @@ public class ProcessForEachTest extends TestCase {
             "    </globals>\n" +
             "    <variables>\n" +
             "      <variable name=\"collection\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +

@@ -18,8 +18,8 @@ package org.jbpm.process.instance;
 
 import java.util.Collection;
 
-import org.kie.process.CorrelationKey;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.internal.process.CorrelationKey;
+import org.kie.api.runtime.process.ProcessInstance;
 
 public interface ProcessInstanceManager {
 

@@ -27,15 +27,15 @@ import org.drools.compiler.compiler.BPMN2ProcessFactory;
 import org.drools.compiler.compiler.BPMN2ProcessProvider;
 import org.drools.compiler.compiler.PackageBuilder;
 import org.drools.compiler.compiler.PackageBuilderConfiguration;
-import org.drools.io.impl.ByteArrayResource;
+import org.drools.core.io.impl.ByteArrayResource;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
 import org.droolsjbpm.services.impl.model.ProcessDesc;
 import org.jbpm.task.TaskDef;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderError;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.definition.KnowledgePackage;
-import org.kie.io.ResourceType;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderError;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.api.io.ResourceType;
 
 /**
  *
@@ -193,7 +193,7 @@ public class BPMN2DataServiceImpl implements BPMN2DataService {
         
         KnowledgePackage pckg = kbuilder.getKnowledgePackages().iterator().next();
         
-        org.kie.definition.process.Process process = pckg.getProcesses().iterator().next();
+        org.kie.api.definition.process.Process process = pckg.getProcesses().iterator().next();
         return new ProcessDesc(process.getId(), process.getName(), process.getVersion()
                 , process.getPackageName(), process.getType(), process.getKnowledgeType().name(),
                 process.getNamespace(), null);

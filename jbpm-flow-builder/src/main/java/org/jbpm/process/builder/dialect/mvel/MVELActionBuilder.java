@@ -8,7 +8,7 @@ import org.drools.core.base.mvel.MVELCompilationUnit;
 import org.drools.compiler.compiler.BoundIdentifiers;
 import org.drools.compiler.compiler.DescrBuildError;
 import org.drools.compiler.lang.descr.ActionDescr;
-import org.drools.rule.MVELDialectRuntimeData;
+import org.drools.core.rule.MVELDialectRuntimeData;
 import org.drools.compiler.rule.builder.PackageBuildContext;
 import org.drools.compiler.rule.builder.dialect.mvel.MVELAnalysisResult;
 import org.drools.compiler.rule.builder.dialect.mvel.MVELDialect;
@@ -83,7 +83,7 @@ public class MVELActionBuilder
                                                                                        boundIdentifiers,
                                                                                        null,
                                                                                        "context",
-                                                                                       org.kie.runtime.process.ProcessContext.class );
+                                                                                       org.kie.api.runtime.process.ProcessContext.class );
             context.setTypesafe( typeSafe );
             
             Set<String> variableNames = analysis.getNotBoundedIdentifiers();
@@ -114,7 +114,7 @@ public class MVELActionBuilder
                                                                        variables,
                                                                        context,
                                                                        "context",
-                                                                       org.kie.runtime.process.ProcessContext.class);
+                                                                       org.kie.api.runtime.process.ProcessContext.class);
             MVELAction expr = new MVELAction( unit, context.getDialect().getId() );
             
             

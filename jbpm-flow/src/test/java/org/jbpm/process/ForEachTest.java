@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.core.common.AbstractRuleBase;
-import org.drools.impl.InternalKnowledgeBase;
-import org.drools.process.core.datatype.impl.type.ListDataType;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.core.impl.InternalKnowledgeBase;
+import org.drools.core.process.core.datatype.impl.type.ListDataType;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
 import org.jbpm.Person;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.instance.impl.Action;
@@ -40,17 +40,17 @@ import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.ForEachNode;
 import org.jbpm.workflow.core.node.StartNode;
 import org.junit.Test;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessContext;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.ProcessContext;
 
 public class ForEachTest {
     
 	@Test
     public void testForEach() {
         RuleFlowProcess process = new RuleFlowProcess();
-        process.setId("org.drools.process.foreach");
+        process.setId("org.drools.core.process.foreach");
         process.setName("ForEach Process");
         
         List<Variable> variables = new ArrayList<Variable>();
@@ -110,7 +110,7 @@ public class ForEachTest {
         
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
         ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess(process);
-        StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();        
+        StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
         
         Map<String, Object> parameters = new HashMap<String, Object>();
         List<Person> persons = new ArrayList<Person>();
@@ -118,7 +118,7 @@ public class ForEachTest {
         persons.add(new Person("Jane Doe"));
         persons.add(new Person("Jack"));
         parameters.put("persons", persons);
-        ksession.startProcess("org.drools.process.foreach", parameters);
+        ksession.startProcess("org.drools.core.process.foreach", parameters);
         assertEquals(3, myList.size());
     }
 

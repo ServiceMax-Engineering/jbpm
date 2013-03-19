@@ -6,12 +6,12 @@ import java.util.*;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
-import org.drools.WorkingMemory;
+import org.drools.core.WorkingMemory;
 import org.drools.core.command.impl.*;
 import org.drools.compiler.compiler.PackageBuilderConfiguration;
-import org.drools.event.*;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.event.*;
+import org.drools.core.impl.EnvironmentFactory;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
 import org.jbpm.bpmn2.*;
 import org.jbpm.bpmn2.objects.Person;
 import org.jbpm.bpmn2.objects.TestWorkItemHandler;
@@ -25,18 +25,22 @@ import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.jbpm.workflow.instance.node.CompositeContextNodeInstance;
 import org.jbpm.workflow.instance.node.ForEachNodeInstance;
 import org.junit.Test;
-import org.kie.*;
-import org.kie.builder.*;
-import org.kie.command.Context;
-import org.kie.definition.process.Process;
-import org.kie.event.process.*;
-import org.kie.event.process.DefaultProcessEventListener;
-import org.kie.event.rule.DebugAgendaEventListener;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.persistence.jpa.JPAKnowledgeService;
-import org.kie.runtime.*;
-import org.kie.runtime.process.*;
+import org.kie.internal.command.Context;
+import org.kie.api.definition.process.Process;
+import org.kie.api.event.process.*;
+import org.kie.api.event.process.DefaultProcessEventListener;
+import org.kie.api.event.rule.DebugAgendaEventListener;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderConfiguration;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.api.runtime.*;
+import org.kie.api.runtime.process.*;
 
 public class SimplePersistenceBPMNProcessTest extends JbpmBpmn2TestCase {
 
@@ -337,7 +341,7 @@ public class SimplePersistenceBPMNProcessTest extends JbpmBpmn2TestCase {
         kbase.addKnowledgePackages(kbuilder.getKnowledgePackages());
         final StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         
-        final org.drools.event.AgendaEventListener agendaEventListener = new org.drools.event.AgendaEventListener() {
+        final org.drools.core.event.AgendaEventListener agendaEventListener = new org.drools.core.event.AgendaEventListener() {
             public void activationCreated(ActivationCreatedEvent event, WorkingMemory workingMemory){
                 ksession.fireAllRules();
             }

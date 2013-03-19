@@ -15,13 +15,13 @@ import org.jbpm.task.utils.OnErrorAction;
 import org.jbpm.test.JBPMHelper;
 import org.kie.KieBase;
 import org.kie.SystemEventListenerFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.logger.KnowledgeRuntimeLogger;
-import org.kie.logger.KnowledgeRuntimeLoggerFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.api.builder.KnowledgeBuilder;
+import org.kie.api.builder.KnowledgeBuilderFactory;
+import org.kie.api.io.ResourceFactory;
+import org.kie.api.io.ResourceType;
+import org.kie.api.logger.KnowledgeRuntimeLogger;
+import org.kie.api.logger.KnowledgeRuntimeLoggerFactory;
+import org.kie.api.runtime.StatefulKnowledgeSession;
 
 /**
  * This is a sample file to launch a process.

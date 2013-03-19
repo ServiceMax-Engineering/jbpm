@@ -8,15 +8,15 @@ import junit.framework.TestCase;
 
 import org.jbpm.Person;
 import org.jbpm.integrationtests.handler.TestWorkItemHandler;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.definition.KnowledgePackage;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.*;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.*;
 
 public class ProcessWorkItemTest extends TestCase {
     
@@ -32,17 +32,17 @@ public class ProcessWorkItemTest extends TestCase {
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"UserName\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>John Doe</value>\n" +
     		"      </variable>\n" +
      		"      <variable name=\"Person\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
     		"      </variable>\n" +
     		"      <variable name=\"MyObject\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"      </variable>\n" +
     		"      <variable name=\"Number\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.IntegerDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.IntegerDataType\" />\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
             "  </header>\n" +
@@ -52,25 +52,25 @@ public class ProcessWorkItemTest extends TestCase {
             "    <workItem id=\"2\" name=\"HumanTask\" >\n" +
             "      <work name=\"Human Task\" >\n" +
             "        <parameter name=\"ActorId\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>#{UserName}</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Content\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>#{Person.name}</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"TaskName\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>Do something</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Priority\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Comment\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Attachment\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "      </work>\n" +
             "      <mapping type=\"in\" from=\"MyObject\" to=\"Attachment\" />" +
@@ -145,17 +145,17 @@ public class ProcessWorkItemTest extends TestCase {
             "  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"UserName\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>John Doe</value>\n" +
     		"      </variable>\n" +
      		"      <variable name=\"Person\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
     		"      </variable>\n" +
     		"      <variable name=\"MyObject\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"      </variable>\n" +
     		"      <variable name=\"Number\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.IntegerDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.IntegerDataType\" />\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
             "  </header>\n" +
@@ -165,25 +165,25 @@ public class ProcessWorkItemTest extends TestCase {
             "    <workItem id=\"2\" name=\"HumanTask\" >\n" +
             "      <work name=\"Human Task\" >\n" +
             "        <parameter name=\"ActorId\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>#{UserName}</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Content\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>#{Person.name}</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"TaskName\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>Do something</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Priority\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Comment\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Attachment\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        </parameter>\n" +
             "      </work>\n" +
             "      <mapping type=\"in\" from=\"MyObject\" to=\"Attachment\" />" +

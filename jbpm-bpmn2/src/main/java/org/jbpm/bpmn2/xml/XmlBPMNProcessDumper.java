@@ -20,12 +20,12 @@ import java.io.StringReader;
 import java.util.*;
 
 import org.drools.compiler.compiler.xml.XmlDumper;
-import org.drools.process.core.Work;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.core.process.core.Work;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
-import org.drools.xml.Handler;
-import org.drools.xml.SemanticModule;
-import org.drools.xml.SemanticModules;
+import org.drools.core.xml.Handler;
+import org.drools.core.xml.SemanticModule;
+import org.drools.core.xml.SemanticModules;
 import org.jbpm.bpmn2.core.Association;
 import org.jbpm.bpmn2.core.DataStore;
 import org.jbpm.bpmn2.core.Definitions;
@@ -54,11 +54,11 @@ import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.Trigger;
 import org.jbpm.workflow.core.node.WorkItemNode;
-import org.kie.definition.process.Connection;
-import org.kie.definition.process.Node;
-import org.kie.definition.process.NodeContainer;
-import org.kie.definition.process.Process;
-import org.kie.definition.process.WorkflowProcess;
+import org.kie.api.definition.process.Connection;
+import org.kie.api.definition.process.Node;
+import org.kie.api.definition.process.NodeContainer;
+import org.kie.api.definition.process.Process;
+import org.kie.api.definition.process.WorkflowProcess;
 
 public class XmlBPMNProcessDumper implements XmlProcessDumper {
 	
@@ -599,26 +599,20 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
                     }
                 }
             } else if (node instanceof ActionNode) {
-                ActionNode actionNode = (ActionNode) node;
-                DroolsConsequenceAction action = (DroolsConsequenceAction) actionNode
-                        .getAction();
-                if (action != null) {
-                    String s = action.getConsequence();
-                    if (s.startsWith("org.drools.process.instance.context.exception.ExceptionScopeInstance scopeInstance = (org.drools.process.instance.context.exception.ExceptionScopeInstance) ((org.drools.workflow.instance.NodeInstance) kcontext.getNodeInstance()).resolveContextInstance(org.drools.process.core.context.exception.ExceptionScope.EXCEPTION_SCOPE, \"")) {
-                        s = s.substring(327);
-                        String type = s.substring(0, s.indexOf("\""));
-                        if (!escalations.contains(type)) {
-                            escalations.add(type);
-                            xmlDump.append("  <escalation id=\""
-                                    + XmlBPMNProcessDumper
-                                            .replaceIllegalCharsAttribute(type)
-                                    + "\" escalationCode=\""
-                                    + XmlBPMNProcessDumper
-                                            .replaceIllegalCharsAttribute(type)
-                                    + "\" />" + EOL);
-                        }
-                    }
-                }
+            	ActionNode actionNode = (ActionNode) node;
+            	DroolsConsequenceAction action = (DroolsConsequenceAction) actionNode.getAction();
+        		if (action != null) {
+        		    String s = action.getConsequence();
+	            	if (s.startsWith("org.drools.core.process.instance.context.exception.ExceptionScopeInstance scopeInstance = (org.drools.core.process.instance.context.exception.ExceptionScopeInstance) ((org.drools.workflow.instance.NodeInstance) kcontext.getNodeInstance()).resolveContextInstance(org.drools.core.process.core.context.exception.ExceptionScope.EXCEPTION_SCOPE, \"")) {
+	            		s = s.substring(327);
+	                    String type = s.substring(0, s.indexOf("\""));
+	            		if (!escalations.contains(type)) {
+	            			escalations.add(type);
+		                    xmlDump.append(
+	                            "  <escalation id=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(type) + "\" escalationCode=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(type) + "\" />" + EOL);
+	            		}
+	            	}
+        		}
             } else if (node instanceof EventNode) {
                 EventNode eventNode = (EventNode) node;
                 String type = (String) eventNode.getMetaData("EscalationEvent");

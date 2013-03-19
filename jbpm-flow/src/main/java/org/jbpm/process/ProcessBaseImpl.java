@@ -16,22 +16,22 @@
 
 package org.jbpm.process;
 
-import org.drools.RuleBase;
-import org.drools.SessionConfiguration;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.impl.InternalKnowledgeBase;
-import org.kie.definition.KiePackage;
-import org.kie.definition.KnowledgePackage;
-import org.kie.definition.process.Process;
-import org.kie.definition.rule.Query;
-import org.kie.definition.rule.Rule;
-import org.kie.definition.type.FactType;
-import org.kie.event.kiebase.KieBaseEventListener;
-import org.kie.runtime.Environment;
-import org.kie.runtime.KieSession;
-import org.kie.runtime.KieSessionConfiguration;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.StatelessKnowledgeSession;
+import org.drools.core.RuleBase;
+import org.drools.core.SessionConfiguration;
+import org.drools.core.impl.EnvironmentFactory;
+import org.drools.core.impl.InternalKnowledgeBase;
+import org.kie.api.definition.KiePackage;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.api.definition.process.Process;
+import org.kie.api.definition.rule.Query;
+import org.kie.api.definition.rule.Rule;
+import org.kie.api.definition.type.FactType;
+import org.kie.api.event.kiebase.KieBaseEventListener;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.internal.runtime.StatelessKnowledgeSession;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.KieSessionConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -20,10 +20,10 @@ import org.drools.core.common.InternalKnowledgeRuntime;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
-import org.kie.definition.process.WorkflowProcess;
-import org.kie.runtime.KieRuntime;
-import org.kie.runtime.process.NodeInstance;
 import org.jbpm.process.instance.ProcessInstance;
+import org.kie.api.definition.process.WorkflowProcess;
+import org.kie.api.runtime.KieRuntime;
+import org.kie.api.runtime.process.NodeInstance;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +58,7 @@ public class WorkflowProcessInstanceUpgrader {
             return;
         }
         synchronized (processInstance) {
-        	org.kie.definition.process.Process oldProcess = processInstance.getProcess();
+        	org.kie.api.definition.process.Process oldProcess = processInstance.getProcess();
 	        processInstance.disconnect();
 	        processInstance.setProcess(oldProcess);
 	        updateNodeInstances(processInstance, nodeMapping);

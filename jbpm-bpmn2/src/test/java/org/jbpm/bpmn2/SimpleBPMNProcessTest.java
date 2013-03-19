@@ -32,9 +32,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.drools.compiler.compiler.PackageBuilderConfiguration;
-import org.drools.impl.KnowledgeBaseFactoryServiceImpl;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
-import org.drools.process.instance.impl.WorkItemImpl;
+import org.drools.core.impl.KnowledgeBaseFactoryServiceImpl;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.jbpm.bpmn2.core.Association;
 import org.jbpm.bpmn2.core.DataStore;
 import org.jbpm.bpmn2.core.Definitions;
@@ -59,34 +59,34 @@ import org.jbpm.workflow.instance.node.DynamicUtils;
 import org.jbpm.workflow.instance.node.ForEachNodeInstance;
 import org.jbpm.workflow.instance.node.ForEachNodeInstance.ForEachJoinNodeInstance;
 import org.joda.time.DateTime;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderConfiguration;
-import org.kie.builder.KnowledgeBuilderError;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.definition.process.Process;
-import org.kie.event.process.DefaultProcessEventListener;
-import org.kie.event.process.ProcessEventListener;
-import org.kie.event.process.ProcessNodeLeftEvent;
-import org.kie.event.process.ProcessNodeTriggeredEvent;
-import org.kie.event.process.ProcessStartedEvent;
-import org.kie.event.process.ProcessVariableChangedEvent;
-import org.kie.event.rule.AfterMatchFiredEvent;
-import org.kie.event.rule.AgendaEventListener;
-import org.kie.event.rule.BeforeMatchFiredEvent;
-import org.kie.event.rule.MatchCancelledEvent;
-import org.kie.event.rule.MatchCreatedEvent;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.NodeInstance;
-import org.kie.runtime.process.ProcessInstance;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
-import org.kie.runtime.process.WorkflowProcessInstance;
-import org.kie.runtime.rule.FactHandle;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderConfiguration;
+import org.kie.internal.builder.KnowledgeBuilderError;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.api.definition.process.Process;
+import org.kie.api.event.process.DefaultProcessEventListener;
+import org.kie.api.event.process.ProcessEventListener;
+import org.kie.api.event.process.ProcessNodeLeftEvent;
+import org.kie.api.event.process.ProcessNodeTriggeredEvent;
+import org.kie.api.event.process.ProcessStartedEvent;
+import org.kie.api.event.process.ProcessVariableChangedEvent;
+import org.kie.api.event.rule.AfterMatchFiredEvent;
+import org.kie.api.event.rule.AgendaEventListener;
+import org.kie.api.event.rule.BeforeMatchFiredEvent;
+import org.kie.api.event.rule.MatchCancelledEvent;
+import org.kie.api.event.rule.MatchCreatedEvent;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
+import org.kie.api.runtime.rule.FactHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -386,13 +386,13 @@ public class SimpleBPMNProcessTest extends JbpmBpmn2TestCase {
 				ksession.fireAllRules();
 			}
 			public void matchCancelled(MatchCancelledEvent event) {}
-			public void beforeRuleFlowGroupDeactivated(org.kie.event.rule.RuleFlowGroupDeactivatedEvent event) {}
-			public void beforeRuleFlowGroupActivated(org.kie.event.rule.RuleFlowGroupActivatedEvent event) {}
+			public void beforeRuleFlowGroupDeactivated(org.kie.api.event.rule.RuleFlowGroupDeactivatedEvent event) {}
+			public void beforeRuleFlowGroupActivated(org.kie.api.event.rule.RuleFlowGroupActivatedEvent event) {}
 			public void beforeMatchFired(BeforeMatchFiredEvent event) {}
-			public void agendaGroupPushed(org.kie.event.rule.AgendaGroupPushedEvent event) {}
-			public void agendaGroupPopped(org.kie.event.rule.AgendaGroupPoppedEvent event) {}
-			public void afterRuleFlowGroupDeactivated(org.kie.event.rule.RuleFlowGroupDeactivatedEvent event) {}
-			public void afterRuleFlowGroupActivated(org.kie.event.rule.RuleFlowGroupActivatedEvent event) { 
+			public void agendaGroupPushed(org.kie.api.event.rule.AgendaGroupPushedEvent event) {}
+			public void agendaGroupPopped(org.kie.api.event.rule.AgendaGroupPoppedEvent event) {}
+			public void afterRuleFlowGroupDeactivated(org.kie.api.event.rule.RuleFlowGroupDeactivatedEvent event) {}
+			public void afterRuleFlowGroupActivated(org.kie.api.event.rule.RuleFlowGroupActivatedEvent event) {
 				ksession.fireAllRules();
 			}
             public void afterMatchFired(AfterMatchFiredEvent event) {}

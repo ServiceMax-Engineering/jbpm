@@ -22,9 +22,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.drools.core.common.AbstractRuleBase;
-import org.drools.impl.InternalKnowledgeBase;
-import org.drools.process.core.Work;
-import org.drools.process.core.impl.WorkImpl;
+import org.drools.core.impl.InternalKnowledgeBase;
+import org.drools.core.process.core.Work;
+import org.drools.core.process.core.impl.WorkImpl;
 import org.jbpm.process.instance.impl.Action;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.DroolsAction;
@@ -38,13 +38,13 @@ import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.junit.Before;
 import org.junit.Test;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessContext;
-import org.kie.runtime.process.WorkItem;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.ProcessContext;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
 
 public class SubProcessTest {
 
@@ -60,7 +60,7 @@ public class SubProcessTest {
 	@Test
     public void testSynchronousSubProcess() {
         RuleFlowProcess process = new RuleFlowProcess();
-        process.setId("org.drools.process.process");
+        process.setId("org.drools.core.process.process");
         process.setName("Process");
         
         StartNode startNode = new StartNode();
@@ -74,7 +74,7 @@ public class SubProcessTest {
         SubProcessNode subProcessNode = new SubProcessNode();
         subProcessNode.setName("SubProcessNode");
         subProcessNode.setId(3);
-        subProcessNode.setProcessId("org.drools.process.subprocess");
+        subProcessNode.setProcessId("org.drools.core.process.subprocess");
         process.addNode(subProcessNode);
         new ConnectionImpl(
             startNode, Node.CONNECTION_DEFAULT_TYPE,
@@ -89,7 +89,7 @@ public class SubProcessTest {
         ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess(process);
         
         process = new RuleFlowProcess();
-        process.setId("org.drools.process.subprocess");
+        process.setId("org.drools.core.process.subprocess");
         process.setName("SubProcess");
         
         startNode = new StartNode();
@@ -123,7 +123,7 @@ public class SubProcessTest {
         ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess(process);
         
         StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
-        ksession.startProcess("org.drools.process.process");
+        ksession.startProcess("org.drools.core.process.process");
         assertTrue(executed);
         assertEquals(0, ksession.getProcessInstances().size());
     }
@@ -131,7 +131,7 @@ public class SubProcessTest {
 	@Test
     public void testAsynchronousSubProcess() {
         RuleFlowProcess process = new RuleFlowProcess();
-        process.setId("org.drools.process.process");
+        process.setId("org.drools.core.process.process");
         process.setName("Process");
         
         StartNode startNode = new StartNode();
@@ -145,7 +145,7 @@ public class SubProcessTest {
         SubProcessNode subProcessNode = new SubProcessNode();
         subProcessNode.setName("SubProcessNode");
         subProcessNode.setId(3);
-        subProcessNode.setProcessId("org.drools.process.subprocess");
+        subProcessNode.setProcessId("org.drools.core.process.subprocess");
         process.addNode(subProcessNode);
         new ConnectionImpl(
             startNode, Node.CONNECTION_DEFAULT_TYPE,
@@ -160,7 +160,7 @@ public class SubProcessTest {
         ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess(process);
         
         process = new RuleFlowProcess();
-        process.setId("org.drools.process.subprocess");
+        process.setId("org.drools.core.process.subprocess");
         process.setName("SubProcess");
         
         startNode = new StartNode();
@@ -197,7 +197,7 @@ public class SubProcessTest {
 			public void abortWorkItem(WorkItem workItem, WorkItemManager manager) {
 			}
         });
-        ksession.startProcess("org.drools.process.process");
+        ksession.startProcess("org.drools.core.process.process");
         assertNotNull(workItem);
         assertEquals(2, ksession.getProcessInstances().size());
         
@@ -209,7 +209,7 @@ public class SubProcessTest {
     public void testNonExistentSubProcess() {
 	    String nonExistentSubProcessName = "nonexistent.process";
         RuleFlowProcess process = new RuleFlowProcess();
-        process.setId("org.drools.process.process");
+        process.setId("org.drools.core.process.process");
         process.setName("Process");
         StartNode startNode = new StartNode();
         startNode.setName("Start");
@@ -234,7 +234,7 @@ public class SubProcessTest {
         
         StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
         try{
-            ksession.startProcess("org.drools.process.process");
+            ksession.startProcess("org.drools.core.process.process");
             fail("should throw exception");
         } catch (RuntimeException re){
             assertTrue(re.getMessage().contains( nonExistentSubProcessName ));

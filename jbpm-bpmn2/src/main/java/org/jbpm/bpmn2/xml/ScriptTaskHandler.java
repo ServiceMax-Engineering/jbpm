@@ -17,8 +17,8 @@
 package org.jbpm.bpmn2.xml;
 
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
-import org.drools.xml.ExtensibleXmlParser;
 import org.jbpm.workflow.core.Connection;
+import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.impl.ConnectionImpl;

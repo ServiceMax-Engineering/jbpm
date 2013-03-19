@@ -1,13 +1,13 @@
 package org.jbpm.process.audit;
 
-import org.drools.WorkingMemory;
-import org.drools.impl.StatelessKnowledgeSessionImpl;
+import org.drools.core.WorkingMemory;
+import org.drools.core.impl.StatelessKnowledgeSessionImpl;
 import org.jbpm.process.audit.event.AuditEventBuilder;
 import org.jbpm.process.audit.event.DefaultAuditEventBuilderImpl;
-import org.kie.event.process.ProcessEventListener;
-import org.kie.runtime.Environment;
-import org.kie.runtime.KieSession;
-import org.kie.runtime.KnowledgeRuntime;
+import org.kie.api.event.process.ProcessEventListener;
+import org.kie.internal.runtime.KnowledgeRuntime;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.KieSession;
 
 public abstract class AbstractAuditLogger implements ProcessEventListener {
     

@@ -5,11 +5,11 @@ import java.io.StringReader;
 
 import junit.framework.TestCase;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.WorkingMemory;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.WorkingMemory;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
+import org.drools.core.rule.Package;
 import org.jbpm.Person;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
@@ -45,7 +45,7 @@ public class ProcessRuleFlowGroupTest extends TestCase {
             "package org.jbpm;\n" +
             "\n" +
             "import org.jbpm.Person;\n" +
-            "import org.kie.runtime.process.ProcessContext;\n" +
+            "import org.kie.api.runtime.process.ProcessContext;\n" +
             "\n" +
             "rule MyRule ruleflow-group \"MyGroup\" dialect \"mvel\" \n" +
             "  when\n" +

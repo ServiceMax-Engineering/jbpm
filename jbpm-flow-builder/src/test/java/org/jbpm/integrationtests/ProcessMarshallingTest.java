@@ -7,26 +7,28 @@ import java.util.*;
 
 import junit.framework.TestCase;
 
-import org.drools.*;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.impl.StatefulKnowledgeSessionImpl;
-import org.drools.reteoo.ReteooWorkingMemory;
-import org.drools.rule.Package;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.StatefulSession;
+import org.drools.core.impl.StatefulKnowledgeSessionImpl;
+import org.drools.core.reteoo.ReteooWorkingMemory;
+import org.drools.core.rule.Package;
 import org.jbpm.Person;
 import org.jbpm.integrationtests.handler.TestWorkItemHandler;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.marshalling.Marshaller;
-import org.kie.marshalling.MarshallerFactory;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.*;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.api.marshalling.Marshaller;
+import org.kie.internal.marshalling.MarshallerFactory;
+import org.kie.api.runtime.process.*;
 
 public class ProcessMarshallingTest extends TestCase {
 
@@ -63,7 +65,7 @@ public class ProcessMarshallingTest extends TestCase {
 			"</process>";
         
         KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
-        kbuilder.add( ResourceFactory.newReaderResource( new StringReader( rule ) ), ResourceType.DRL );
+        kbuilder.add( ResourceFactory.newReaderResource(new StringReader(rule)), ResourceType.DRL );
         kbuilder.add( ResourceFactory.newReaderResource( new StringReader( process ) ), ResourceType.DRF );
 
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
@@ -100,7 +102,7 @@ public class ProcessMarshallingTest extends TestCase {
     		"  <header>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"myVariable\" >\n" +
-    		"        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"        <value>OldValue</value>\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
@@ -110,19 +112,19 @@ public class ProcessMarshallingTest extends TestCase {
     		"    <workItem id=\"2\" name=\"Email\" >\n" +
     		"      <work name=\"Email\" >\n" +
     		"        <parameter name=\"Subject\" >\n" +
-    		"          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"          <value>Mail</value>\n" +
     		"        </parameter>\n" +
     		"        <parameter name=\"Text\" >\n" +
-    		"          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"          <value>This is an email</value>\n" +
     		"        </parameter>\n" +
     		"        <parameter name=\"To\" >\n" +
-    		"          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"          <value>you@mail.com</value>\n" +
     		"        </parameter>\n" +
     		"        <parameter name=\"From\" >\n" +
-    		"          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"          <value>me@mail.com</value>\n" +
     		"        </parameter>\n" +
     		"      </work>\n" +
@@ -198,7 +200,7 @@ public class ProcessMarshallingTest extends TestCase {
             "    <workItem id=\"12\" name=\"Log\" >\n" +
             "      <work name=\"Log\" >\n" +
             "        <parameter name=\"Message\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>This is a log message</value>\n" +
             "        </parameter>\n" +
             "      </work>\n" +
@@ -206,7 +208,7 @@ public class ProcessMarshallingTest extends TestCase {
             "    <composite id=\"13\" name=\"CompositeNode\" >\n" +
             "      <variables>\n" +
             "        <variable name=\"x\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>x-value</value>\n" +
             "        </variable>\n" +
             "      </variables>\n" +
@@ -214,35 +216,35 @@ public class ProcessMarshallingTest extends TestCase {
             "        <humanTask id=\"1\" name=\"Human Task\" swimlane=\"swimlane\" >\n" +
             "          <work name=\"Human Task\" >\n" +
             "            <parameter name=\"ActorId\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "              <value>John Doe</value>\n" +
             "            </parameter>\n" +
             "            <parameter name=\"Priority\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "            </parameter>\n" +
             "            <parameter name=\"TaskName\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "              <value>Do something !</value>\n" +
             "            </parameter>\n" +
             "            <parameter name=\"Comment\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "            </parameter>\n" +
             "          </work>\n" +
             "        </humanTask>\n" +
             "        <humanTask id=\"2\" name=\"Human Task\" swimlane=\"swimlane\" >\n" +
             "          <work name=\"Human Task\" >\n" +
             "            <parameter name=\"ActorId\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "            </parameter>\n" +
             "            <parameter name=\"Priority\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "            </parameter>\n" +
             "            <parameter name=\"TaskName\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "              <value>Do something else !</value>\n" +
             "            </parameter>\n" +
             "            <parameter name=\"Comment\" >\n" +
-            "              <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "              <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "            </parameter>\n" +
             "          </work>\n" +
             "          <mapping type=\"in\" from=\"x\" to=\"Priority\" />\n" +
@@ -366,7 +368,7 @@ public class ProcessMarshallingTest extends TestCase {
             "    <header>\n" +
             "      <variables>\n" +
             "        <variable name=\"list\" >\n" +
-    		"          <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
+    		"          <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"java.util.List\" />\n" +
     		"        </variable>\n" +
     		"      </variables>\n" +
     		"    </header>\n" +
@@ -377,16 +379,16 @@ public class ProcessMarshallingTest extends TestCase {
     		"          <humanTask id=\"1\" name=\"Human Task\" >\n" +
     		"            <work name=\"Human Task\" >\n" +
     		"              <parameter name=\"Comment\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"              </parameter>\n" +
     		"              <parameter name=\"ActorId\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"              </parameter>\n" +
     		"              <parameter name=\"Priority\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"              </parameter>\n" +
     		"              <parameter name=\"TaskName\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"                <value>Do something: #{item}</value>\n" +
     		"              </parameter>\n" +
     		"            </work>\n" +
@@ -394,16 +396,16 @@ public class ProcessMarshallingTest extends TestCase {
     		"          <humanTask id=\"2\" name=\"Human Task Again\" >\n" +
     		"            <work name=\"Human Task\" >\n" +
     		"              <parameter name=\"Comment\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"              </parameter>\n" +
     		"              <parameter name=\"ActorId\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"              </parameter>\n" +
     		"              <parameter name=\"Priority\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"              </parameter>\n" +
     		"              <parameter name=\"TaskName\" >\n" +
-    		"                <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+    		"                <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
     		"                <value>Do something else: #{item}</value>\n" +
     		"              </parameter>\n" +
     		"            </work>\n" +
@@ -619,11 +621,11 @@ public class ProcessMarshallingTest extends TestCase {
             "  <header>\n" +
             "    <variables>\n" +
             "      <variable name=\"myVariable\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "        <value>OldValue</value>\n" +
             "      </variable>\n" +
             "      <variable name=\"myPerson\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\"/>\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\"/>\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>\n" +
@@ -632,11 +634,11 @@ public class ProcessMarshallingTest extends TestCase {
             "    <workItem id=\"2\" name=\"Email\" >\n" +
             "      <work name=\"Report\" >\n" +
             "        <parameter name=\"Subject\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>Mail</value>\n" +
             "        </parameter>\n" +
             "        <parameter name=\"Subject\" >\n" +
-            "          <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "          <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "          <value>Mail</value>\n" +
             "        </parameter>\n" +
             "      </work>\n" +

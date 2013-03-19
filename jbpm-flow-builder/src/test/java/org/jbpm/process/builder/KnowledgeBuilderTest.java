@@ -4,12 +4,12 @@ import java.util.Collection;
 
 import junit.framework.TestCase;
 
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.definition.KnowledgePackage;
-import org.kie.definition.process.Process;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.api.definition.process.Process;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.api.io.ResourceType;
 
 public class KnowledgeBuilderTest extends TestCase {
 	

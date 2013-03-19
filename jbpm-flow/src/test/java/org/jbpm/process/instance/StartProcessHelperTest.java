@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.kie.KnowledgeBase;
-import org.kie.definition.process.Process;
+import org.kie.internal.KnowledgeBase;
+import org.kie.api.definition.process.Process;
 import org.jbpm.process.core.impl.ProcessImpl;
 import org.junit.Test;
 

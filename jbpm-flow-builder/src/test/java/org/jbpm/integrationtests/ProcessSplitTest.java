@@ -10,25 +10,25 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-import org.drools.RuleBase;
-import org.drools.RuleBaseFactory;
-import org.drools.WorkingMemory;
+import org.drools.core.RuleBase;
+import org.drools.core.RuleBaseFactory;
+import org.drools.core.WorkingMemory;
 import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.rule.Package;
+import org.drools.core.rule.Package;
 import org.jbpm.Person;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderError;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.definition.KnowledgePackage;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderError;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.api.io.ResourceType;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.ProcessInstance;
 
 public class ProcessSplitTest extends TestCase {
     
@@ -50,7 +50,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -128,14 +128,14 @@ public class ProcessSplitTest extends TestCase {
             "  <header>" +
             "    <imports>" +
             "      <import name=\"org.jbpm.Person\" />" +
-            "      <import name=\"org.kie.runtime.process.WorkflowProcessInstance\" />" +
+            "      <import name=\"org.kie.api.runtime.process.WorkflowProcessInstance\" />" +
             "    </imports>" +
             "    <globals>" +
             "      <global identifier=\"list\" type=\"java.util.List\" />" +
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -224,7 +224,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"person\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -290,7 +290,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -356,7 +356,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"person\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.Person\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -422,7 +422,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -488,7 +488,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -554,7 +554,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -620,7 +620,7 @@ public class ProcessSplitTest extends TestCase {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +

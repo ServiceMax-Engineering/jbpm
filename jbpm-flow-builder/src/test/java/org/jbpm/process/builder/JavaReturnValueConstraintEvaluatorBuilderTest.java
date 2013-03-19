@@ -10,9 +10,9 @@ import org.drools.core.common.InternalKnowledgeRuntime;
 import org.drools.compiler.compiler.DialectCompiletimeRegistry;
 import org.drools.compiler.compiler.PackageBuilder;
 import org.drools.compiler.compiler.ReturnValueDescr;
-import org.drools.definitions.impl.KnowledgePackageImp;
+import org.drools.core.definitions.impl.KnowledgePackageImp;
 import org.drools.compiler.lang.descr.ProcessDescr;
-import org.drools.rule.Package;
+import org.drools.core.rule.Package;
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
 import org.jbpm.process.builder.dialect.ProcessDialectRegistry;
 import org.jbpm.process.builder.dialect.java.JavaReturnValueEvaluatorBuilder;
@@ -20,10 +20,10 @@ import org.jbpm.process.instance.impl.ReturnValueConstraintEvaluator;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
 import org.jbpm.workflow.core.impl.WorkflowProcessImpl;
 import org.jbpm.workflow.instance.node.SplitInstance;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.definition.KnowledgePackage;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
 public class JavaReturnValueConstraintEvaluatorBuilderTest extends TestCase {
 

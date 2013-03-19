@@ -22,9 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.xml.BaseAbstractHandler;
-import org.drools.xml.ExtensibleXmlParser;
-import org.drools.xml.Handler;
+import org.drools.core.xml.BaseAbstractHandler;
+import org.drools.core.xml.ExtensibleXmlParser;
+import org.drools.core.xml.Handler;
 import org.jbpm.bpmn2.core.*;
 import org.jbpm.bpmn2.core.Error;
 import org.jbpm.compiler.xml.ProcessBuildData;
@@ -57,8 +57,8 @@ import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.StateBasedNode;
 import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.Trigger;
-import org.kie.definition.process.Node;
-import org.kie.definition.process.NodeContainer;
+import org.kie.api.definition.process.Node;
+import org.kie.api.definition.process.NodeContainer;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.jbpm.workflow.core.node.StateBasedNode;
@@ -344,9 +344,9 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             
                             
                             action = new DroolsConsequenceAction("java", 
-                                    (cancelActivity ? "org.kie.runtime.process.WorkflowProcessInstance pi = (org.kie.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
+                                    (cancelActivity ? "org.kie.api.runtime.process.WorkflowProcessInstance pi = (org.kie.api.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
                                     "long nodeInstanceId = -1;"+
-                                    "for (org.kie.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
+                                    "for (org.kie.api.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
                                      "   if (" +attachedToNodeId +" == nodeInstance.getNodeId()) {"+
                                      "       nodeInstanceId = nodeInstance.getId();"+
                                      "       break;"+
@@ -385,9 +385,9 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             
                             
                             action = new DroolsConsequenceAction("java", 
-                                    "org.kie.runtime.process.WorkflowProcessInstance pi = (org.kie.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
+                                    "org.kie.api.runtime.process.WorkflowProcessInstance pi = (org.kie.api.runtime.process.WorkflowProcessInstance) kcontext.getProcessInstance();"+
                                     "long nodeInstanceId = -1;"+
-                                    "for (org.kie.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
+                                    "for (org.kie.api.runtime.process.NodeInstance nodeInstance : pi.getNodeInstances()) {"+
                                     
                                      "   if (" +attachedToNodeId +" == nodeInstance.getNodeId()) {"+
                                      "       nodeInstanceId = nodeInstance.getId();"+
@@ -465,6 +465,20 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                         exceptionHandler.setFaultVariable("__variable__");
                         exceptionScope.setExceptionHandler(messageCode,
                                 exceptionHandler);
+/* jboss merge had below code, but we want message to trigger exception
+                        DroolsConsequenceAction actionAttachedTo =  new DroolsConsequenceAction("java", "" +
+                        		"org.kie.api.definition.process.Node node = context.getNodeInstance().getNode().getNodeContainer().getNode(" +id+ ");" +
+                        		"if (node instanceof org.jbpm.workflow.core.node.EventNode) {" +
+                        		" ((org.jbpm.workflow.core.node.EventNode)node).getEventFilters().clear();" +
+                        		"((org.jbpm.workflow.core.node.EventNode)node).addEventFilter(new org.jbpm.process.core.event.EventFilter () " +
+                        		"{public boolean acceptsEvent(String type, Object event) { return false;}});" +
+                        		"}");
+                     
+
+                        actionsAttachedTo.add(actionAttachedTo);
+                        stateBasedNode.setActions(StateBasedNode.EVENT_NODE_EXIT, actionsAttachedTo);
+                        
+*/
                     } else if (type.startsWith("Condition-")) {
                         String processId = ((RuleFlowProcess) nodeContainer).getId();
                         String eventType = "RuleFlowStateEvent-" + processId + "-" + ((EventNode) node).getUniqueId() + "-" + attachedTo;
@@ -491,7 +505,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             actionsAttachedTo = new ArrayList<DroolsAction>();
                         }
                         DroolsConsequenceAction actionAttachedTo =  new DroolsConsequenceAction("java", "" +
-                                "org.kie.definition.process.Node node = context.getNodeInstance().getNode().getNodeContainer().getNode(" +id+ ");" +
+                                "org.kie.api.definition.process.Node node = context.getNodeInstance().getNode().getNodeContainer().getNode(" +id+ ");" +
                                 "if (node instanceof org.jbpm.workflow.core.node.EventNode) {" +
                                 " ((org.jbpm.workflow.core.node.EventNode)node).getEventFilters().clear();" +
                                 "((org.jbpm.workflow.core.node.EventNode)node).addEventFilter(new org.jbpm.process.core.event.EventFilter () " +
@@ -537,7 +551,7 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                 Constraint constraint = new ConstraintImpl();
                 constraint.setConstraint(condition);
                 constraint.setType("rule");
-                for (org.kie.definition.process.Connection connection: stateNode.getDefaultOutgoingConnections()) {
+                for (org.kie.api.definition.process.Connection connection: stateNode.getDefaultOutgoingConnections()) {
                     stateNode.setConstraint(connection, constraint);
                 }
             } else if (node instanceof NodeContainer) {
@@ -649,6 +663,5 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
 		
 		return constraint;
 	}
-
 
 }

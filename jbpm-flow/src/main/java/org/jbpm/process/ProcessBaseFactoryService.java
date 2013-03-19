@@ -18,15 +18,15 @@ package org.jbpm.process;
 
 import java.util.Properties;
 
-import org.drools.RuleBaseConfiguration;
-import org.drools.SessionConfiguration;
-import org.drools.impl.EnvironmentFactory;
-import org.kie.KnowledgeBase;
-import org.kie.KieBaseConfiguration;
-import org.kie.KnowledgeBaseFactoryService;
-import org.kie.runtime.Environment;
-import org.kie.runtime.KieSessionConfiguration;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.drools.core.RuleBaseConfiguration;
+import org.drools.core.SessionConfiguration;
+import org.drools.core.impl.EnvironmentFactory;
+import org.kie.internal.KieBaseConfiguration;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactoryService;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.KieSessionConfiguration;
 
 public class ProcessBaseFactoryService implements KnowledgeBaseFactoryService {
 

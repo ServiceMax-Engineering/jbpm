@@ -16,7 +16,7 @@
 
 package org.jbpm.workflow.instance.node;
 
-import org.drools.RuntimeDroolsException;
+import org.drools.core.RuntimeDroolsException;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.StartProcessHelper;
@@ -26,11 +26,11 @@ import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
 import org.jbpm.workflow.instance.impl.VariableScopeResolverFactory;
-import org.kie.KieBase;
-import org.kie.definition.process.Node;
-import org.kie.definition.process.Process;
-import org.kie.runtime.process.EventListener;
-import org.kie.runtime.process.NodeInstance;
+import org.kie.api.KieBase;
+import org.kie.api.definition.process.Node;
+import org.kie.api.definition.process.Process;
+import org.kie.api.runtime.process.EventListener;
+import org.kie.api.runtime.process.NodeInstance;
 import org.mvel2.MVEL;
 
 import java.util.HashMap;

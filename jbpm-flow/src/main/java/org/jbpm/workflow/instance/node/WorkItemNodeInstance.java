@@ -20,20 +20,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.drools.WorkItemHandlerNotFoundException;
-import org.kie.definition.process.Node;
-import org.drools.process.core.Work;
-import org.drools.process.core.datatype.DataType;
-import org.drools.process.core.datatype.impl.type.ObjectDataType;
-import org.drools.process.instance.WorkItem;
-import org.drools.process.instance.WorkItemManager;
-import org.drools.process.instance.impl.WorkItemImpl;
-import org.kie.runtime.KnowledgeRuntime;
-import org.kie.runtime.process.EventListener;
-import org.kie.runtime.process.NodeInstance;
-import org.drools.spi.ProcessContext;
+import org.drools.core.WorkItemHandlerNotFoundException;
+import org.kie.api.definition.process.Node;
+import org.drools.core.process.core.Work;
+import org.drools.core.process.core.datatype.DataType;
+import org.drools.core.process.instance.WorkItem;
+import org.drools.core.process.instance.WorkItemManager;
+import org.drools.core.process.instance.impl.WorkItemImpl;
+import org.kie.internal.runtime.KnowledgeRuntime;
+import org.kie.api.runtime.process.EventListener;
+import org.kie.api.runtime.process.NodeInstance;
+import org.drools.core.spi.ProcessContext;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ProcessInstance;
@@ -109,7 +107,7 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
             try {
                 ((WorkItemManager) ((ProcessInstance) getProcessInstance())
                     .getKnowledgeRuntime().getWorkItemManager()).internalExecuteWorkItem(
-                        (org.drools.process.instance.WorkItem) workItem);
+                        (org.drools.core.process.instance.WorkItem) workItem);
             } catch (WorkItemHandlerNotFoundException wihnfe){
                 getProcessInstance().setState( ProcessInstance.STATE_ABORTED );
                 throw wihnfe;

@@ -10,15 +10,15 @@ import org.jbpm.bpmn2.objects.Status;
 import org.jbpm.bpmn2.objects.TestWorkItemHandler;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.kie.KnowledgeBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.event.process.*;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.WorkItem;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.api.event.process.*;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.WorkItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +32,7 @@ public class MultipleProcessesPerThreadTest {
     
     private static Logger logger = LoggerFactory.getLogger(MultipleProcessesPerThreadTest.class);
     
-    protected static StatefulKnowledgeSession createStatefulKnowledgeSession(KnowledgeBase kbase) { 
+    protected static StatefulKnowledgeSession createStatefulKnowledgeSession(KnowledgeBase kbase) {
         return kbase.newStatefulKnowledgeSession();
     }
     

@@ -20,20 +20,20 @@ import java.util.*;
 
 import junit.framework.Assert;
 
-import org.drools.SessionConfiguration;
-import org.drools.impl.EnvironmentFactory;
+import org.drools.core.SessionConfiguration;
+import org.drools.core.impl.EnvironmentFactory;
 import org.jbpm.bpmn2.handler.LoggingTaskHandlerWrapper.InputParameter;
 import org.jbpm.process.instance.event.DefaultSignalManagerFactory;
 import org.jbpm.process.instance.impl.DefaultProcessInstanceManagerFactory;
 import org.junit.After;
 import org.junit.Test;
-import org.kie.KieBase;
-import org.kie.KnowledgeBaseFactory;
-import org.kie.builder.KnowledgeBuilder;
-import org.kie.builder.KnowledgeBuilderFactory;
-import org.kie.io.ResourceFactory;
-import org.kie.io.ResourceType;
-import org.kie.runtime.KieSession;
+import org.kie.api.KieBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.KieSession;
 
 public class LoggingTaskHandlerWrapperTest extends Assert {
 

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.process.instance.impl.WorkItemImpl;
+import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.jbpm.process.workitem.wsht.AbstractHTWorkItemHandler;
 import org.jbpm.process.workitem.wsht.AsyncGenericHTWorkItemHandler;
 import org.jbpm.process.workitem.wsht.AsyncMinaHTWorkItemHandler;
@@ -37,8 +37,8 @@ import org.jbpm.task.service.responsehandlers.BlockingTaskOperationResponseHandl
 import org.jbpm.task.service.responsehandlers.BlockingTaskSummaryResponseHandler;
 import org.jbpm.task.utils.OnErrorAction;
 import org.junit.Test;
-import org.kie.runtime.process.WorkItemHandler;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
 
 public class MinaMultipleHandlersTest extends BaseTest {
 

@@ -52,9 +52,8 @@ import org.jbpm.task.query.TaskSummary;
 import org.jbpm.task.service.TaskService.ScheduledTaskDeadline;
 import org.jbpm.task.service.persistence.TaskPersistenceManager;
 import org.jbpm.task.utils.ContentMarshallerHelper;
-import org.kie.KieBase;
-import org.kie.KnowledgeBase;
-import org.kie.runtime.KieSession;
+import org.kie.internal.KnowledgeBase;
+import org.kie.api.runtime.KieSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

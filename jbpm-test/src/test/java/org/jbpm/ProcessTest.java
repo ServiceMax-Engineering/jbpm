@@ -2,8 +2,8 @@ package org.jbpm;
 
 import org.jbpm.test.JbpmJUnitTestCase;
 import org.junit.Test;
-import org.kie.runtime.StatefulKnowledgeSession;
-import org.kie.runtime.process.ProcessInstance;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.process.ProcessInstance;
 
 /**
  * This is a sample file to test a process.

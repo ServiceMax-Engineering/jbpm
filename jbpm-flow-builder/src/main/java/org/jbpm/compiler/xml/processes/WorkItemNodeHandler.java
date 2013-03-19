@@ -6,10 +6,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.process.core.ParameterDefinition;
-import org.drools.process.core.Work;
-import org.drools.process.core.datatype.DataType;
-import org.drools.xml.ExtensibleXmlParser;
+import org.drools.core.process.core.ParameterDefinition;
+import org.drools.core.process.core.Work;
+import org.drools.core.process.core.datatype.DataType;
+import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.compiler.xml.XmlWorkflowProcessDumper;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.node.WorkItemNode;

@@ -27,7 +27,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMessage.RecipientType;
 
-import org.drools.process.instance.impl.DefaultWorkItemManager;
+import org.drools.core.process.instance.impl.DefaultWorkItemManager;
 import org.jbpm.task.BaseTest;
 import org.jbpm.task.Content;
 import org.jbpm.task.MockUserInfo;
@@ -42,7 +42,7 @@ import org.jbpm.task.service.ContentData;
 import org.jbpm.task.service.DefaultEscalatedDeadlineHandler;
 import org.jbpm.task.service.TaskServer;
 import org.jbpm.task.utils.ContentMarshallerHelper;
-import org.kie.runtime.process.WorkItemManager;
+import org.kie.api.runtime.process.WorkItemManager;
 import org.subethamail.wiser.Wiser;
 import org.subethamail.wiser.WiserMessage;
 

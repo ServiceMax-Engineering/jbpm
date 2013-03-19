@@ -11,10 +11,10 @@ import org.jbpm.persistence.util.PersistenceUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
-import org.kie.KnowledgeBase;
-import org.kie.persistence.jpa.JPAKnowledgeService;
-import org.kie.runtime.Environment;
-import org.kie.runtime.StatefulKnowledgeSession;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.Environment;
 
 /**
  * Class to reproduce bug with multiple threads using persistence and each
@@ -38,7 +38,7 @@ public class OneProcessPerThreadPersistenceTest extends OneProcessPerThreadTest 
         cleanUp(context);
     }
 
-    protected StatefulKnowledgeSession createStatefulKnowledgeSession(KnowledgeBase kbase) { 
+    protected StatefulKnowledgeSession createStatefulKnowledgeSession(KnowledgeBase kbase) {
         Environment env = createEnvironment(context);
         return JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
     }
