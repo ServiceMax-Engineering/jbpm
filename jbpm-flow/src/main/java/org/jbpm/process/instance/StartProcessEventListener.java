@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.common.InternalKnowledgeRuntime;
-import org.kie.runtime.process.EventListener;
-import org.drools.spi.ProcessContext;
+import org.drools.core.common.InternalKnowledgeRuntime;
+import org.kie.api.runtime.process.EventListener;
+import org.drools.core.spi.ProcessContext;
 import org.jbpm.process.core.event.EventFilter;
 import org.jbpm.process.instance.impl.AssignmentAction;
 

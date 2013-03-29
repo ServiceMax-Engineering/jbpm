@@ -16,7 +16,7 @@
 
 package org.jbpm.ruleflow.instance;
 
-import org.kie.definition.process.Node;
+import org.kie.api.definition.process.Node;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.instance.NodeInstance;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;

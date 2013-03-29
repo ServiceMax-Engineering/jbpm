@@ -187,7 +187,7 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
                 ((WorkItem) workItem).setParameter(entry.getKey(), s);
             }
         }
-        ((org.drools.process.instance.WorkItemManager) 
+        ((org.drools.core.process.instance.WorkItemManager) 
                 ((ProcessInstance) getProcessInstance()).getKnowledgeRuntime().getWorkItemManager()).internalAddWorkItem(workItem);
         return workItem;
     }

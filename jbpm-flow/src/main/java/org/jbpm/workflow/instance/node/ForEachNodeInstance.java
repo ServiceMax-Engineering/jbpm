@@ -248,7 +248,7 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
                 }
             } else if(!getForEachNode().isParallel()) {
             	org.jbpm.workflow.instance.NodeInstance _instance = null;
-            	for( org.kie.runtime.process.NodeInstance nodeInstance : getNodeInstanceContainer().getNodeInstances()) {
+            	for( org.kie.api.runtime.process.NodeInstance nodeInstance : getNodeInstanceContainer().getNodeInstances()) {
             		if(nodeInstance != this) {
             			_instance = (org.jbpm.workflow.instance.NodeInstance) nodeInstance;
             			break;
