@@ -21,28 +21,14 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <executions>
-          <execution>
-            <id>manifest</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
 <manifestLocation>META-INF</manifestLocation>
           <instructions>
-            <_removeheaders>Ignore-Package</_removeheaders>
             <Bundle-SymbolicName>org.jbpm.flow.core;singleton:=true</Bundle-SymbolicName>
-            <Require-Bundle>org.drools.core</Require-Bundle>
-            <Import-Package>!org.drools.*,
-              <!-- java compilers are optional: only need one at most -->
-              org.codehaus.janino.*;resolution:=optional,org.eclipse.jdt.*;resolution:=optional,
-              *</Import-Package>
-            <Export-Package>org.jbpm.process.*,org.jbpm.workflow.*,org.jbpm.ruleflow.*,org.jbpm.marshalling.*,org.jbpm.*</Export-Package>
-            <DynamicImport-Package>*</DynamicImport-Package>
+            <Import-Package>
+                javax.swing.*;resolution:=optional,
+                *
+            </Import-Package>
             <Bundle-Activator>org.jbpm.osgi.flow.core.Activator</Bundle-Activator>
           </instructions>
         </configuration>
@@ -95,6 +81,10 @@
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.opensymphony.quartz</groupId>
+      <artifactId>quartz</artifactId>
     </dependency>
   </dependencies>
 </project>

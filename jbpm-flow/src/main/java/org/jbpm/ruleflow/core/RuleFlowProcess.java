@@ -16,8 +16,10 @@
 
 package org.jbpm.ruleflow.core;
 
-import org.kie.api.definition.process.Node;
-import org.kie.api.definition.process.NodeContainer;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jbpm.process.core.context.exception.ExceptionScope;
 import org.jbpm.process.core.context.swimlane.SwimlaneContext;
 import org.jbpm.process.core.context.variable.VariableScope;
@@ -25,6 +27,8 @@ import org.jbpm.workflow.core.impl.NodeContainerImpl;
 import org.jbpm.workflow.core.impl.WorkflowProcessImpl;
 import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StartNode;
+import org.kie.api.definition.process.Node;
+import org.kie.api.definition.process.NodeContainer;
 
 public class RuleFlowProcess extends WorkflowProcessImpl {
 
@@ -70,10 +74,14 @@ public class RuleFlowProcess extends WorkflowProcessImpl {
             if (nodes[i] instanceof StartNode || (nodes[i].getIncomingConnections().isEmpty() && nodes[i] instanceof Split)) {
                 return nodes[i];
                 // return start node that is not event based node
-                // if (((StartNode) nodes[i]).getTriggers() == null || ((StartNode) nodes[i]).getTriggers().isEmpty()) {
-                //     return (StartNode) nodes[i];
-                // }
-                // startNodeIndex = i;
+/*
+                if ((((StartNode) nodes[i]).getTriggers() == null 
+                        || ((StartNode) nodes[i]).getTriggers().isEmpty())
+                        && ((StartNode) nodes[i]).getTimer() == null) {
+                    return (StartNode) nodes[i];
+                }
+                startNodeIndex = i;
+*/
             }
         }
         // if (startNodeIndex > -1) {
@@ -91,7 +99,22 @@ public class RuleFlowProcess extends WorkflowProcessImpl {
         }
         return null;
     }
-    
+    public List<StartNode> getTimerStart() {
+        Node[] nodes = getNodes();
+
+        List<StartNode> timerStartNodes = new ArrayList<StartNode>();
+        for (int i = 0; i < nodes.length; i++) {
+            if (nodes[i] instanceof StartNode) {
+                // return start node that is not event based node
+                if (((StartNode) nodes[i]).getTimer() != null) {
+                    timerStartNodes.add((StartNode) nodes[i]);
+                }
+            }
+        }
+
+        return timerStartNodes;
+    }
+
     private class WorkflowProcessNodeContainer extends NodeContainerImpl {
         
         private static final long serialVersionUID = 510l;
@@ -101,7 +124,7 @@ public class RuleFlowProcess extends WorkflowProcessImpl {
             StartNode startNode = getStartNodeForValidation();
             if ((node instanceof StartNode) && (startNode != null && startNode.getTriggers() == null)) {
                 // ignore start nodes that are event based
-                if (((StartNode) node).getTriggers() == null || ((StartNode) node).getTriggers().isEmpty()) {
+                if ((((StartNode) node).getTriggers() == null || ((StartNode) node).getTriggers().isEmpty()) && ((StartNode) node).getTimer() == null) {
                     throw new IllegalArgumentException(
                         "A RuleFlowProcess cannot have more than one start node!");
                 }

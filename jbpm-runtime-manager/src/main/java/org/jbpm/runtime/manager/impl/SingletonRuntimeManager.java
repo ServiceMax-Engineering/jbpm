@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import javax.annotation.PostConstruct;
-
 import org.kie.internal.runtime.manager.Context;
 import org.kie.internal.runtime.manager.Disposable;
 import org.kie.internal.runtime.manager.Runtime;
@@ -18,25 +16,29 @@ import org.kie.internal.runtime.manager.TaskServiceFactory;
 
 public class SingletonRuntimeManager extends AbstractRuntimeManager {
     
+
+    
     private Runtime singleton;
     private SessionFactory factory;
     private TaskServiceFactory taskServiceFactory;
-    
+
     public SingletonRuntimeManager() {
-        super(null);
+        super(null, null);
         // no-op just for cdi, spring and other frameworks
     }
     
-    public SingletonRuntimeManager(RuntimeEnvironment environment, SessionFactory factory, TaskServiceFactory taskServiceFactory) {
-        super(environment);
+    public SingletonRuntimeManager(RuntimeEnvironment environment, SessionFactory factory, TaskServiceFactory taskServiceFactory, String identifier) {
+        super(environment, identifier);
         this.factory = factory;
         this.taskServiceFactory = taskServiceFactory;
+        this.identifier = identifier;
     }
-    @PostConstruct
+    
     public void init() {
+
         // TODO should we proxy/wrap the ksession so we capture dispose.destroy method calls?
-        String location = System.getProperty("jbpm.conf.dir", System.getProperty("java.io.tmpdir"));
-        Integer knownSessionId = getPersistedSessionId(location);
+        String location = getLocation();
+        Integer knownSessionId = getPersistedSessionId(location, identifier);
         if (knownSessionId > 0) {
             try {
                 this.singleton = new SynchronizedRuntimeImpl(factory.findKieSessionById(knownSessionId), taskServiceFactory.newTaskService());
@@ -47,7 +49,7 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
         
         if (this.singleton == null) {
             this.singleton = new SynchronizedRuntimeImpl(factory.newKieSession(), taskServiceFactory.newTaskService());
-            persistSessionId(location, singleton.getKieSession().getId());
+            persistSessionId(location, identifier, singleton.getKieSession().getId());
         }
         ((RuntimeImpl) singleton).setManager(this);
         registerItems(this.singleton);
@@ -55,7 +57,7 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public Runtime getRuntime(Context context) {
+    public Runtime getRuntime(Context context) {        
         // always return the same instance
         return this.singleton;
     }
@@ -67,21 +69,23 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
 
     @Override
     public void close() {
+        super.close();
         // dispose singleton session only when manager is closing
         if (this.singleton instanceof Disposable) {
             ((Disposable) this.singleton).dispose();
         }
         factory.close();
-        this.singleton = null;     
+        this.singleton = null;   
     }
     
     /**
      * Retrieves session id from serialized file named jbpmSessionId.ser from given location.
      * @param location directory where jbpmSessionId.ser file should be
+     * @param identifier of the manager owning this ksessionId
      * @return sessionId if file was found otherwise 0
      */
-    protected int getPersistedSessionId(String location) {
-        File sessionIdStore = new File(location + File.separator + "jbpmSessionId.ser");
+    protected int getPersistedSessionId(String location, String identifier) {
+        File sessionIdStore = new File(location + File.separator + identifier+ "-jbpmSessionId.ser");
         if (sessionIdStore.exists()) {
             Integer knownSessionId = null; 
             FileInputStream fis = null;
@@ -97,18 +101,19 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
             } catch (Exception e) {
                 return 0;
             } finally {
-                if (fis != null) {
-                    try {
-                        fis.close();
-                    } catch (IOException e) {
-                    }
-                }
                 if (in != null) {
                     try {
                         in.close();
                     } catch (IOException e) {
                     }
                 }
+                if (fis != null) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                    }
+                }
+ 
             }
             
         } else {
@@ -119,16 +124,17 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
     /**
      * Stores gives ksessionId in a serialized file in given location under jbpmSessionId.ser file name
      * @param location directory where serialized file should be stored
+     * @param identifier of the manager owning this ksessionId
      * @param ksessionId value of ksessionId to be stored
      */
-    protected void persistSessionId(String location, int ksessionId) {
+    protected void persistSessionId(String location, String identifier, int ksessionId) {
         if (location == null) {
             return;
         }
         FileOutputStream fos = null;
         ObjectOutputStream out = null;
         try {
-            fos = new FileOutputStream(location + File.separator + "jbpmSessionId.ser");
+            fos = new FileOutputStream(location + File.separator + identifier + "-jbpmSessionId.ser");
             out = new ObjectOutputStream(fos);
             out.writeObject(Integer.valueOf(ksessionId));
             out.close();
@@ -148,6 +154,14 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
                 }
             }
         }
+    }
+    
+    protected String getLocation() {
+        String location = System.getProperty("jbpm.data.dir", System.getProperty("jboss.server.data.dir"));
+        if (location == null) {
+            location = System.getProperty("java.io.tmpdir");
+        }
+        return location;
     }
 
     public SessionFactory getFactory() {

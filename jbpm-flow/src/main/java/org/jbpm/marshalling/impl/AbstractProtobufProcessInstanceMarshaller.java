@@ -420,6 +420,9 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         	process = processInstance.getProcess();
         } else {
             process = ruleBase.getProcess( processId );
+            if (process == null) {
+            	throw new RuntimeException("Could not find process " + processId + " when restoring process instance " + processInstance.getId());
+            }
             processInstance.setProcess( process );
         }
         processInstance.setKnowledgeRuntime( wm.getKnowledgeRuntime() );

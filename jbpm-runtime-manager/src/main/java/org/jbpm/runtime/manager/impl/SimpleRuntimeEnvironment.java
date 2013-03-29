@@ -2,9 +2,8 @@ package org.jbpm.runtime.manager.impl;
 
 import java.util.Properties;
 
-import javax.persistence.EntityManagerFactory;
-
 import org.drools.core.impl.EnvironmentFactory;
+import org.jbpm.process.core.timer.GlobalSchedulerService;
 import org.jbpm.runtime.manager.impl.mapper.InMemoryMapper;
 import org.kie.api.KieBase;
 import org.kie.api.io.Resource;
@@ -20,7 +19,7 @@ import org.kie.internal.runtime.manager.RegisterableItemsFactory;
 import org.kie.internal.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.task.api.UserGroupCallback;
 
-public class SimpleRuntimeEnvironment implements RuntimeEnvironment {
+public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerProvider {
     
     protected Environment environment;
     protected KieSessionConfiguration configuration;
@@ -29,6 +28,7 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment {
     protected RegisterableItemsFactory registerableItemsFactory;
     protected Mapper mapper;
     protected UserGroupCallback userGroupCallback;
+    protected GlobalSchedulerService schedulerService;
     
     protected Properties sessionConfigProperties;
     
@@ -94,13 +94,7 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment {
     
     @Override
     public void close() {
-        if (usePersistence()) {
-            EntityManagerFactory emf = (EntityManagerFactory) environment.get(EnvironmentName.ENTITY_MANAGER_FACTORY);
-            if (emf != null && emf.isOpen()) {
-                emf.close();
-            }
-        }
-        
+
     }
 
     protected void addIfPresent(String name, Environment copy) {
@@ -136,5 +130,25 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment {
     
     public void setUserGroupCallback(UserGroupCallback userGroupCallback) {
         this.userGroupCallback = userGroupCallback;
+    }
+    public Properties getSessionConfigProperties() {
+        return sessionConfigProperties;
+    }
+    public void setSessionConfigProperties(Properties sessionConfigProperties) {
+        this.sessionConfigProperties = sessionConfigProperties;
+    }
+    public void setRegisterableItemsFactory(
+            RegisterableItemsFactory registerableItemsFactory) {
+        this.registerableItemsFactory = registerableItemsFactory;
+    }
+    public void setMapper(Mapper mapper) {
+        this.mapper = mapper;
+    }
+    @Override
+    public GlobalSchedulerService getSchedulerService() {
+        return this.schedulerService;
+    }
+    public void setSchedulerService(GlobalSchedulerService schedulerService) {
+        this.schedulerService = schedulerService;
     }
 }

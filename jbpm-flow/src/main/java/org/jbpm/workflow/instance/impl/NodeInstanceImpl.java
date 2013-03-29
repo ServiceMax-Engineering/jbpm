@@ -167,12 +167,14 @@ public abstract class NodeInstanceImpl implements
     		hidden = true;
     	}
     	
-    	Collection<Connection> incoming = getNode().getIncomingConnections(type);
-    	for (Connection conn : incoming) {
-    	    if (conn.getFrom().getId() == from.getNodeId()) {
-    	        this.metaData.put("IncomingConnection", conn.getMetaData().get("UniqueId"));
-    	        break;
-    	    }
+    	if (from != null) {
+	    	Collection<Connection> incoming = getNode().getIncomingConnections(type);
+	    	for (Connection conn : incoming) {
+	    	    if (conn.getFrom().getId() == from.getNodeId()) {
+	    	        this.metaData.put("IncomingConnection", conn.getMetaData().get("UniqueId"));
+	    	        break;
+	    	    }
+	    	}
     	}
     	InternalKnowledgeRuntime kruntime = getProcessInstance().getKnowledgeRuntime();
     	if (!hidden) {
