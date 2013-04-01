@@ -29,6 +29,7 @@
                 javax.swing.*;resolution:=optional,
                 *
             </Import-Package>
+            <Export-Package>org.jbpm.process.*,org.jbpm.workflow.*,org.jbpm.ruleflow.*,org.jbpm.marshalling.*,org.jbpm.*</Export-Package>
             <Bundle-Activator>org.jbpm.osgi.flow.core.Activator</Bundle-Activator>
           </instructions>
         </configuration>
