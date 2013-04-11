@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1363159230422
+Bnd-LastModified: 1365115191075
 Build-Jdk: 1.7.0_07
-Build-Timestamp: Wed, 13 Mar 2013 12:50:08 +0530
+Build-Timestamp: Thu, 4 Apr 2013 15:38:28 -0700
 Built-By: anurag
 Bundle-Activator: org.jbpm.osgi.bpmn2.Activator
 Bundle-Description: jBPM BPMN2
@@ -9,24 +9,16 @@ Bundle-DocURL: http://www.jboss.org/
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
 Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: BPMN2
-Bundle-SymbolicName: org.jbpm.bpmn2;singleton:=true
+Bundle-SymbolicName: org.jbpm.bpmn2
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.SNAPSHOT
+Bundle-Version: 6.0.0.20130404-1538
 Created-By: Apache Maven Bundle Plugin
-DynamicImport-Package: *
-Export-Package: org.jbpm.bpmn2.xml;uses:="org.kie.definition.process,org
- .jbpm.bpmn2.core,org.w3c.dom,org.xml.sax,org.jbpm.bpmn2.xml.di";version
- ="6.0.0.SNAPSHOT",org.jbpm.bpmn2;uses:="org.jbpm.bpmn2.xml,org.jbpm.bpm
- n2.xpath";version="6.0.0.SNAPSHOT",org.jbpm.bpmn2.core;version="6.0.0.S
- NAPSHOT",org.jbpm.bpmn2.xpath;uses:="org.mvel2,javax.xml.xpath,org.kie.
- runtime.process,javax.xml.namespace,javax.xml.transform,javax.xml.parse
- rs,org.w3c.dom,net.sf.saxon.xpath,net.sf.saxon.pattern,net.sf.saxon.om,
- net.sf.saxon.expr,net.sf.saxon";version="6.0.0.SNAPSHOT",org.jbpm.bpmn2
- .handler;uses:="org.kie.runtime.process,org.slf4j,org.kie.runtime";vers
- ion="6.0.0.SNAPSHOT",org.jbpm.osgi.bpmn2;uses:="org.jbpm.bpmn2,org.osgi
- .framework,org.kie";version="6.0.0.SNAPSHOT",org.jbpm.bpmn2.xml.di;uses
- :="org.w3c.dom,org.xml.sax,org.kie.definition.process,org.jbpm.bpmn2.co
- re";version="6.0.0.SNAPSHOT"
+Export-Package: org.jbpm.bpmn2;version="6.0.0.20130404-1538",org.jbpm.bp
+ mn2.core;version="6.0.0.20130404-1538",org.jbpm.bpmn2.handler;version="
+ 6.0.0.20130404-1538",org.jbpm.bpmn2.xml;version="6.0.0.20130404-1538",o
+ rg.jbpm.bpmn2.xml.di;version="6.0.0.20130404-1538",org.jbpm.bpmn2.xpath
+ ;version="6.0.0.20130404-1538",org.jbpm.osgi.bpmn2;version="6.0.0.20130
+ 404-1538"
 Implementation-Title: jBPM :: BPMN2
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-bpmn2/
 Implementation-Vendor: JBoss by Red Hat
@@ -34,9 +26,20 @@ Implementation-Vendor-Id: org.jbpm
 Implementation-Version: 6.0.0-SNAPSHOT
 Import-Package: javax.xml.namespace,javax.xml.parsers,javax.xml.transfor
  m,javax.xml.xpath,net.sf.saxon,net.sf.saxon.expr,net.sf.saxon.om,net.sf
- .saxon.pattern,net.sf.saxon.xpath,org.kie,org.kie.definition.process,or
- g.kie.runtime,org.kie.runtime.process,org.mvel2,org.osgi.framework,org.
- slf4j,org.w3c.dom,org.xml.sax
+ .saxon.pattern,net.sf.saxon.xpath,org.drools.compiler.compiler,org.droo
+ ls.compiler.compiler.xml,org.drools.compiler.lang.descr,org.drools.comp
+ iler.rule.builder,org.drools.core.process.core,org.drools.core.process.
+ core.datatype,org.drools.core.process.core.datatype.impl.type,org.drool
+ s.core.process.core.impl,org.drools.core.process.instance,org.drools.co
+ re.xml,org.jbpm.compiler.xml,org.jbpm.process.builder,org.jbpm.process.
+ builder.dialect,org.jbpm.process.core,org.jbpm.process.core.context.exc
+ eption,org.jbpm.process.core.context.swimlane,org.jbpm.process.core.con
+ text.variable,org.jbpm.process.core.event,org.jbpm.process.core.impl,or
+ g.jbpm.process.core.timer,org.jbpm.process.instance.impl,org.jbpm.rulef
+ low.core,org.jbpm.workflow.core,org.jbpm.workflow.core.impl,org.jbpm.wo
+ rkflow.core.node,org.kie.api,org.kie.api.definition.process,org.kie.api
+ .runtime,org.kie.api.runtime.process,org.mvel2,org.osgi.framework,org.s
+ lf4j,org.w3c.dom,org.xml.sax
 Include-Resource: META-INF/BPMN20.xsd=src/main/resources/META-INF/BPMN20
  .xsd,META-INF/BPMN2SemanticModule.conf=src/main/resources/META-INF/BPMN
  2SemanticModule.conf,META-INF/BPMNDI.xsd=src/main/resources/META-INF/BP
@@ -55,9 +58,8 @@ Os-Version: 10.6.8
 Private-Package: org.jbpm.bpmn2;org.jbpm.bpmn2.core;org.jbpm.bpmn2.handl
  er;org.jbpm.bpmn2.xml;org.jbpm.bpmn2.xml.di;org.jbpm.bpmn2.xpath;org.jb
  pm.osgi.bpmn2;-split-package:=merge-first
-Require-Bundle: org.jbpm.flow.builder
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-bpmn2
-Scm-Revision: 3cc714755203cf71d9c9e2e889e49cf3176735a6
+Scm-Revision: 5bcb7e390c44849f3ae2f6a071b0225f53360f4d
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-bpmn2
 Specification-Title: jBPM :: BPMN2
 Specification-Vendor: JBoss by Red Hat

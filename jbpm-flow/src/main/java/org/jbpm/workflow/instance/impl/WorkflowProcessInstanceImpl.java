@@ -55,6 +55,10 @@ import org.kie.api.definition.process.NodeContainer;
 import org.kie.api.definition.process.WorkflowProcess;
 import org.kie.api.runtime.process.EventListener;
 import org.kie.api.runtime.process.NodeInstanceContainer;
+import org.kie.internal.runtime.KnowledgeRuntime;
+import org.kie.internal.runtime.manager.RuntimeEngine;
+import org.kie.internal.runtime.manager.RuntimeManager;
+import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
 
 /**
  * Default implementation of a RuleFlow process instance.
@@ -71,6 +75,7 @@ public abstract class WorkflowProcessInstanceImpl extends ProcessInstanceImpl
 	private long nodeInstanceCounter = 0;
 	private Map<String, List<EventListener>> eventListeners = new HashMap<String, List<EventListener>>();
 	private Map<String, List<EventListener>> externalEventListeners = new HashMap<String, List<EventListener>>();
+	
 
 	public NodeContainer getNodeContainer() {
 		return getWorkflowProcess();
@@ -268,7 +273,15 @@ public abstract class WorkflowProcessInstanceImpl extends ProcessInstanceImpl
             processRuntime.getProcessInstanceManager().removeProcessInstance(this);
             processRuntime.getProcessEventSupport().fireAfterProcessCompleted(this, kruntime);
 
-            processRuntime.getSignalManager().signalEvent("processInstanceCompleted:" + getId(), this);
+            
+            RuntimeManager manager = (RuntimeManager) kruntime.getEnvironment().get("RuntimeManager");
+            if (getParentProcessInstanceId() > 0 && manager != null) {
+                RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get(getParentProcessInstanceId()));
+                KnowledgeRuntime managedkruntime = (KnowledgeRuntime) runtime.getKieSession();
+                managedkruntime.signalEvent("processInstanceCompleted:" + getId(), this);
+            } else {
+                processRuntime.getSignalManager().signalEvent("processInstanceCompleted:" + getId(), this);    
+            }
         }
 
 		if (state == ProcessInstance.STATE_SUSPENDED) {

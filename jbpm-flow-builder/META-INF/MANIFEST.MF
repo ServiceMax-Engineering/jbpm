@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1363159218422
+Bnd-LastModified: 1365115149113
 Build-Jdk: 1.7.0_07
-Build-Timestamp: Wed, 13 Mar 2013 12:50:08 +0530
+Build-Timestamp: Thu, 4 Apr 2013 15:38:28 -0700
 Built-By: anurag
 Bundle-Activator: org.jbpm.osgi.flow.compiler.Activator
 Bundle-Description: jBPM Flow Builder
@@ -11,40 +11,40 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: Flow Builder
 Bundle-SymbolicName: org.jbpm.flow.builder;singleton:=true
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.SNAPSHOT
+Bundle-Version: 6.0.0.20130404-1538
 Created-By: Apache Maven Bundle Plugin
-DynamicImport-Package: *
-Export-Package: org.jbpm.compiler.xml;uses:="org.kie.definition.process,
- org.jbpm.compiler.xml.processes,javax.xml.parsers,org.xml.sax";version=
- "6.0.0.SNAPSHOT",org.jbpm.process.workitem;uses:="org.mvel2";version="6
- .0.0.SNAPSHOT",org.jbpm.process.builder.dialect.java;uses:="org.mvel2.t
- emplates,org.mvel2.integration,org.mvel2.integration.impl,org.jbpm.proc
- ess.builder,org.kie.definition.process,org.jbpm.process.builder.dialect
- ,org.mvel2";version="6.0.0.SNAPSHOT",org.jbpm.compiler.xml.processes;us
- es:="org.kie.definition.process,org.w3c.dom,org.xml.sax,org.jbpm.compil
- er.xml,javax.xml.transform,javax.xml.transform.stream";version="6.0.0.S
- NAPSHOT",org.jbpm.process.builder;uses:="org.kie.definition.process,org
- .jbpm.process.builder.dialect,org.jbpm.compiler";version="6.0.0.SNAPSHO
- T",org.jbpm.compiler;uses:="org.kie.definition.process,org.kie.internal
- .utils,org.jbpm.compiler.xml.processes,org.kie.io,org.jbpm.compiler.xml
- ,javax.xml.parsers,org.jbpm.process.builder.dialect,org.jbpm.process.bu
- ilder";version="6.0.0.SNAPSHOT",org.jbpm.process.builder.dialect;uses:=
- "org.jbpm.process.builder,org.jbpm.process.builder.dialect.java,org.jbp
- m.process.builder.dialect.mvel";version="6.0.0.SNAPSHOT",org.jbpm.proce
- ss.builder.dialect.mvel;uses:="org.mvel2,org.kie.runtime.process,org.jb
- pm.process.builder,org.jbpm.process.builder.dialect";version="6.0.0.SNA
- PSHOT",org.jbpm.osgi.flow.compiler;uses:="org.osgi.framework";version="
- 6.0.0.SNAPSHOT"
+Export-Package: org.jbpm.compiler;version="6.0.0.20130404-1538",org.jbpm
+ .compiler.xml;version="6.0.0.20130404-1538",org.jbpm.compiler.xml.proce
+ sses;version="6.0.0.20130404-1538",org.jbpm.osgi.flow.compiler;version=
+ "6.0.0.20130404-1538",org.jbpm.process.builder;version="6.0.0.20130404-
+ 1538",org.jbpm.process.builder.dialect;version="6.0.0.20130404-1538",or
+ g.jbpm.process.builder.dialect.java;version="6.0.0.20130404-1538",org.j
+ bpm.process.builder.dialect.mvel;version="6.0.0.20130404-1538",org.jbpm
+ .process.workitem;version="6.0.0.20130404-1538"
 Implementation-Title: jBPM :: Flow Builder
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-flow-builder/
 Implementation-Vendor: JBoss by Red Hat
 Implementation-Vendor-Id: org.jbpm
 Implementation-Version: 6.0.0-SNAPSHOT
 Import-Package: javax.xml.parsers,javax.xml.transform,javax.xml.transfor
- m.stream,org.kie.definition.process,org.kie.internal.utils,org.kie.io,o
- rg.kie.runtime.process,org.mvel2,org.mvel2.integration,org.mvel2.integr
- ation.impl,org.mvel2.templates,org.osgi.framework,org.w3c.dom,org.xml.s
- ax
+ m.stream,org.drools.compiler.commons.jci.problems,org.drools.compiler.c
+ ommons.jci.readers,org.drools.compiler.compiler,org.drools.compiler.com
+ piler.xml,org.drools.compiler.lang.descr,org.drools.compiler.rule.build
+ er,org.drools.compiler.rule.builder.dialect.java,org.drools.compiler.ru
+ le.builder.dialect.mvel,org.drools.core,org.drools.core.base,org.drools
+ .core.base.mvel,org.drools.core.process.core,org.drools.core.process.co
+ re.datatype,org.drools.core.process.core.datatype.impl.type,org.drools.
+ core.process.core.impl,org.drools.core.rule,org.drools.core.spi,org.dro
+ ols.core.util,org.drools.core.xml,org.jbpm.process.core,org.jbpm.proces
+ s.core.context.exception,org.jbpm.process.core.context.swimlane,org.jbp
+ m.process.core.context.variable,org.jbpm.process.core.event,org.jbpm.pr
+ ocess.core.impl,org.jbpm.process.core.timer,org.jbpm.process.core.valid
+ ation,org.jbpm.process.instance.impl,org.jbpm.ruleflow.core,org.jbpm.ru
+ leflow.core.validation,org.jbpm.workflow.core,org.jbpm.workflow.core.im
+ pl,org.jbpm.workflow.core.node,org.kie.api.definition.process,org.kie.a
+ pi.io,org.kie.api.runtime.process,org.kie.internal.utils,org.mvel2,org.
+ mvel2.integration,org.mvel2.integration.impl,org.mvel2.templates,org.os
+ gi.framework,org.w3c.dom,org.xml.sax
 Include-Resource: org/jbpm/process/builder/dialect/java/javaInvokers.mve
  l=src/main/resources/org/jbpm/process/builder/dialect/java/javaInvokers
  .mvel,org/jbpm/process/builder/dialect/java/javaRule.mvel=src/main/reso
@@ -59,10 +59,9 @@ Private-Package: org.jbpm.compiler;org.jbpm.compiler.xml;org.jbpm.compil
  rg.jbpm.process.builder.dialect;org.jbpm.process.builder.dialect.java;o
  rg.jbpm.process.builder.dialect.mvel;org.jbpm.process.workitem;-split-p
  ackage:=merge-first
-Require-Bundle: org.jbpm.flow.core, org.drools.compiler
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-flow-bui
  lder
-Scm-Revision: 3cc714755203cf71d9c9e2e889e49cf3176735a6
+Scm-Revision: 5bcb7e390c44849f3ae2f6a071b0225f53360f4d
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-flow-builder
 Specification-Title: jBPM :: Flow Builder
 Specification-Vendor: JBoss by Red Hat

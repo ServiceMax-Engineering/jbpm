@@ -90,7 +90,8 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 .setProcessId( workFlow.getProcessId() )
                 .setState( workFlow.getState() )
                 .setNodeInstanceCounter( workFlow.getNodeInstanceCounter() )
-                .setProcessType( workFlow.getProcess().getType() );
+                .setProcessType( workFlow.getProcess().getType() )
+                .setParentProcessInstanceId(workFlow.getParentProcessInstanceId());
         if (workFlow.getProcessXml() != null) {
             _instance.setProcessXml( workFlow.getProcessXml());
         }
@@ -427,6 +428,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         }
         processInstance.setKnowledgeRuntime( wm.getKnowledgeRuntime() );
         processInstance.setState( _instance.getState() );
+        processInstance.setParentProcessInstanceId(_instance.getParentProcessInstanceId());
         long nodeInstanceCounter = _instance.getNodeInstanceCounter();
 
         if ( _instance.getSwimlaneContextCount() > 0 ) {

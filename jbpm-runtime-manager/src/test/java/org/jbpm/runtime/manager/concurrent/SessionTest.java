@@ -18,11 +18,10 @@ import org.drools.persistence.SingleSessionCommandService;
 import org.hibernate.StaleObjectStateException;
 import org.jbpm.process.audit.JPAProcessInstanceDbLog;
 import org.jbpm.process.audit.ProcessInstanceLog;
-import org.jbpm.runtime.manager.impl.DefaultRuntimeEnvironment;
-import org.jbpm.runtime.manager.impl.SimpleRuntimeEnvironment;
+import org.jbpm.runtime.manager.impl.RuntimeEnvironmentBuilder;
 import org.jbpm.runtime.manager.util.TestUtil;
-import org.jbpm.task.exception.PermissionDeniedException;
-import org.jbpm.task.identity.JBossUserGroupCallbackImpl;
+import org.jbpm.services.task.exception.PermissionDeniedException;
+import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
 import org.jbpm.workflow.instance.node.HumanTaskNodeInstance;
 import org.junit.After;
 import org.junit.Before;
@@ -32,6 +31,7 @@ import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkflowProcessInstance;
 import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.runtime.manager.RuntimeManager;
 import org.kie.internal.runtime.manager.RuntimeManagerFactory;
 import org.kie.internal.runtime.manager.context.EmptyContext;
@@ -55,6 +55,8 @@ public class SessionTest {
 	private PoolingDataSource pds;
 	private UserGroupCallback userGroupCallback;  
 	
+	private RuntimeManager manager; 
+	
     @Before
     public void setup() {
         TestUtil.cleanupSingletonSessionId();
@@ -69,8 +71,9 @@ public class SessionTest {
     
     @After
     public void teardown() {
-
-        
+        if (manager != null) {
+            manager.close();
+        }
         pds.close();
     }
 
@@ -84,13 +87,14 @@ public class SessionTest {
 	@Ignore
 	public void testSingletonSessionMemory() throws Exception {
 		for (int i = 0; i < 1000; i++) {
-		    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-		    environment.setUserGroupCallback(userGroupCallback);
-	        environment.addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2);
+		    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	                .userGroupCallback(userGroupCallback)
+	                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
+	                .get();
 	        
 	        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newSingletonRuntimeManager(environment);  
-	        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
-	        manager.disposeRuntime(runtime);
+	        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
+	        manager.disposeRuntimeEngine(runtime);
 			manager.close();
 			System.gc();
 			Thread.sleep(100);
@@ -101,13 +105,15 @@ public class SessionTest {
 	
 	@Test
 	public void testSingletonSession() throws Exception {
-	    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-	    environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2);
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
+                .get();
+	    
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newSingletonRuntimeManager(environment);  
+        manager = RuntimeManagerFactory.Factory.get().newSingletonRuntimeManager(environment);  
 		completedStart = 0;
 		for (int i=0; i<nbThreadsProcess; i++) {
 			new Thread(new StartProcessRunnable(manager, i)).start();
@@ -134,19 +140,20 @@ public class SessionTest {
         logs = JPAProcessInstanceDbLog.findProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(nbThreadsProcess*nbInvocations, logs.size());
-        manager.close();
 		System.out.println("Done");
 	}
 	
 	@Test
 	public void testNewSession() throws Exception {
-	    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-	    environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2);
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
+                .get();
+
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
+        manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
 		completedStart = 0;
 		for (int i=0; i<nbThreadsProcess; i++) {
 			new StartProcessRunnable(manager, i).run();
@@ -172,19 +179,20 @@ public class SessionTest {
 		logs = JPAProcessInstanceDbLog.findProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(nbThreadsProcess*nbInvocations, logs.size());
-		manager.close();
 		System.out.println("Done");
 	}
 	
     @Test
     public void testSessionPerProcessInstance() throws Exception {
-        SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-        environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2);
+        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
+                .get();
+        
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerProcessInstanceRuntimeManager(environment);
+        manager = RuntimeManagerFactory.Factory.get().newPerProcessInstanceRuntimeManager(environment);
         completedStart = 0;
         for (int i=0; i<nbThreadsProcess; i++) {
             new StartProcessPerProcessInstanceRunnable(manager, i).run();
@@ -209,20 +217,19 @@ public class SessionTest {
         // completed
         logs = JPAProcessInstanceDbLog.findProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
-        assertEquals(nbThreadsProcess*nbInvocations, logs.size());
-        
-        manager.close();
+        assertEquals(nbThreadsProcess*nbInvocations, logs.size());        
         System.out.println("Done");
     }
     
     @Test
     public void testNewSessionSuccess() throws Exception {
-        SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-        environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2);
+        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
+                .get();
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+        manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
         UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
         ut.begin();
         
@@ -236,7 +243,7 @@ public class SessionTest {
         List<Status> statusses = new ArrayList<Status>();
         statusses.add(Status.Reserved);
 
-        runtime = manager.getRuntime(EmptyContext.get());
+        runtime = manager.getRuntimeEngine(EmptyContext.get());
         assertNotNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
         
         List<TaskSummary> tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
@@ -252,9 +259,9 @@ public class SessionTest {
         assertNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
         tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
         assertEquals(0, tasks.size());
-        manager.disposeRuntime(runtime);
+        manager.disposeRuntimeEngine(runtime);
         
-        runtime = manager.getRuntime(EmptyContext.get());
+        runtime = manager.getRuntimeEngine(EmptyContext.get());
         ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
         ut.begin();        
         processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
@@ -279,19 +286,19 @@ public class SessionTest {
         assertNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
         tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
         assertEquals(0, tasks.size());
-        manager.disposeRuntime(runtime);
+        manager.disposeRuntimeEngine(runtime);
         
-        manager.close();
     }
 	
 	@Test
 	public void testNewSessionFail() throws Exception {
-	    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-	    environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2);
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
+                .get();
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+        manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 		UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 		ut.begin();		
 		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
@@ -307,7 +314,7 @@ public class SessionTest {
 		List<Status> statusses = new ArrayList<Status>();
 		statusses.add(Status.Reserved);
 
-		runtime = manager.getRuntime(EmptyContext.get());
+		runtime = manager.getRuntimeEngine(EmptyContext.get());
 		assertNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
 		List<TaskSummary> tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
 		assertEquals(0, tasks.size());
@@ -331,9 +338,9 @@ public class SessionTest {
 		runtime.getTaskService().start(taskId, "mary");
 		runtime.getTaskService().complete(taskId, "mary", null);
 		ut.rollback();
-		manager.disposeRuntime(runtime);
+		manager.disposeRuntimeEngine(runtime);
 		
-		runtime = manager.getRuntime(EmptyContext.get());
+		runtime = manager.getRuntimeEngine(EmptyContext.get());
 		assertNotNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
 		tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
 		assertEquals(1, tasks.size());
@@ -348,19 +355,19 @@ public class SessionTest {
 		assertNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
 		tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
 		assertEquals(0, tasks.size());
-		manager.disposeRuntime(runtime);
+		manager.disposeRuntimeEngine(runtime);
 		
-		manager.close();
 	}
 	
 	@Test
 	public void testNewSessionFailBefore() throws Exception {
-		SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-		environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sampleFailBefore.bpmn"), ResourceType.BPMN2);
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sampleFailBefore.bpmn"), ResourceType.BPMN2)
+                .get();
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+        manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 		try{
 			ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
 			fail("Started process instance " + processInstance.getId());
@@ -370,27 +377,27 @@ public class SessionTest {
 
 		// TODO: whenever transaction fails, do we need to dispose? can we?
 		// sessionManager.dispose();
-		manager.disposeRuntime(runtime);
+		manager.disposeRuntimeEngine(runtime);
 
 		List<Status> statusses = new ArrayList<Status>();
 		statusses.add(Status.Reserved);
 
-		runtime = manager.getRuntime(EmptyContext.get());
+		runtime = manager.getRuntimeEngine(EmptyContext.get());
 		List<TaskSummary> tasks = runtime.getTaskService().getTasksAssignedAsPotentialOwner("mary", "en-UK");
 		assertEquals(0, tasks.size());
 		
-		manager.disposeRuntime(runtime);
-		manager.close();
+		manager.disposeRuntimeEngine(runtime);
 	}
 	
 	@Test
 	public void testNewSessionFailAfter() throws Exception {
-	    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-	    environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sampleFailAfter.bpmn"), ResourceType.BPMN2);
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sampleFailAfter.bpmn"), ResourceType.BPMN2)
+                .get();
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+        manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 
 		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
 		long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
@@ -421,24 +428,24 @@ public class SessionTest {
 		}
 		// TODO: whenever transaction fails, do we need to dispose? can we?
 		// sessionManager.dispose();
-		manager.disposeRuntime(runtime);
+		manager.disposeRuntimeEngine(runtime);
 
-		runtime = manager.getRuntime(EmptyContext.get());
+		runtime = manager.getRuntimeEngine(EmptyContext.get());
 		tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
 		assertEquals(1, tasks.size());
 		
-		manager.disposeRuntime(runtime);
-		manager.close();
+		manager.disposeRuntimeEngine(runtime);
 	}
 	
 	@Test
 	public void testNewSessionFailAfter2() throws Exception {
-	    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment();
-	    environment.setUserGroupCallback(userGroupCallback);
-        environment.addAsset(ResourceFactory.newClassPathResource("sampleFailAfter.bpmn"), ResourceType.BPMN2);
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .userGroupCallback(userGroupCallback)
+                .addAsset(ResourceFactory.newClassPathResource("sampleFailAfter.bpmn"), ResourceType.BPMN2)
+                .get();
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+        manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 
 		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
 		long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
@@ -462,17 +469,16 @@ public class SessionTest {
 
 		// TODO: whenever transaction fails, do we need to dispose? can we?
 		// sessionManager.dispose();
-		manager.disposeRuntime(runtime);
+		manager.disposeRuntimeEngine(runtime);
 
-		runtime = manager.getRuntime(EmptyContext.get());
+		runtime = manager.getRuntimeEngine(EmptyContext.get());
 		tasks = runtime.getTaskService().getTasksOwned("mary", statusses, "en-UK");
 		assertEquals(1, tasks.size());
 		
-		manager.disposeRuntime(runtime);
-        manager.close();
+		manager.disposeRuntimeEngine(runtime);
 	}
 	
-	private void testStartProcess(org.kie.internal.runtime.manager.Runtime runtime) throws Exception {
+	private void testStartProcess(org.kie.internal.runtime.manager.RuntimeEngine runtime) throws Exception {
 		
 		long taskId; 
 		synchronized((SingleSessionCommandService) ((CommandBasedStatefulKnowledgeSession) runtime.getKieSession()).getCommandService()) {
@@ -501,10 +507,10 @@ public class SessionTest {
 		public void run() {
 			try {
 				for (int i=0; i<nbInvocations; i++) {
-				    org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+				    org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 //					System.out.println("Thread " + counter + " doing call " + i);
 					testStartProcess(runtime);
-					manager.disposeRuntime(runtime);
+					manager.disposeRuntimeEngine(runtime);
 				}
 //				System.out.println("Process thread " + counter + " completed");
 				completedStart++;
@@ -513,7 +519,7 @@ public class SessionTest {
 			}
 		}
 	}
-	private boolean testCompleteTask(org.kie.internal.runtime.manager.Runtime runtime) throws InterruptedException, Exception {
+	private boolean testCompleteTask(org.kie.internal.runtime.manager.RuntimeEngine runtime) throws InterruptedException, Exception {
 		boolean result = false;
 		List<Status> statusses = new ArrayList<Status>();
 		statusses.add(Status.Reserved);
@@ -558,7 +564,7 @@ public class SessionTest {
 		return result;
 	}
 	
-	private boolean testCompleteTaskByProcessInstance(org.kie.internal.runtime.manager.Runtime runtime, long piId) throws InterruptedException, Exception {
+	private boolean testCompleteTaskByProcessInstance(org.kie.internal.runtime.manager.RuntimeEngine runtime, long piId) throws InterruptedException, Exception {
         boolean result = false;
         List<Status> statusses = new ArrayList<Status>();
         statusses.add(Status.Reserved);
@@ -607,9 +613,9 @@ public class SessionTest {
 			try {
 				int i = 0;
 				while (i < nbInvocations) {
-				    org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+				    org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 					boolean success = testCompleteTask(runtime);
-					manager.disposeRuntime(runtime);
+					manager.disposeRuntimeEngine(runtime);
 					if (success) {
 						i++;
 					}
@@ -632,10 +638,10 @@ public class SessionTest {
         public void run() {
             try {
                 for (int i=0; i<nbInvocations; i++) {
-                    org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(ProcessInstanceIdContext.get());
+                    org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get());
 //                  System.out.println("Thread " + counter + " doing call " + i);
                     testStartProcess(runtime);
-                    manager.disposeRuntime(runtime);
+                    manager.disposeRuntimeEngine(runtime);
                 }
 //              System.out.println("Process thread " + counter + " completed");
                 completedStart++;
@@ -659,12 +665,12 @@ public class SessionTest {
 
                     long processInstanceId = (nbInvocations *counter)+1 + i;
 //                    System.out.println("pi id " + processInstanceId + " counter " + counter);
-                    org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(ProcessInstanceIdContext.get(processInstanceId));
+                    org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get(processInstanceId));
                     boolean success = false;
                     
                     success = testCompleteTaskByProcessInstance(runtime, processInstanceId);
                     
-                    manager.disposeRuntime(runtime);
+                    manager.disposeRuntimeEngine(runtime);
                     if (success) {
                         i++;
                     }

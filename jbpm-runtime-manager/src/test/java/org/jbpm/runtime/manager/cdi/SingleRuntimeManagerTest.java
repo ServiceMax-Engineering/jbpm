@@ -41,21 +41,22 @@ public class SingleRuntimeManagerTest {
     @Deployment()
     public static Archive<?> createDeployment() {
         return ShrinkWrap.create(JavaArchive.class, "jbpm-runtime-manager.jar")
+
                 .addPackage("org.jbpm.task")
                 .addPackage("org.jbpm.task.wih") // work items org.jbpm.task.wih
                 .addPackage("org.jbpm.task.annotations")
                 .addPackage("org.jbpm.task.api")
-                .addPackage("org.jbpm.task.impl")
+//                .addPackage("org.jbpm.task.impl")
                 .addPackage("org.jbpm.task.events")
                 .addPackage("org.jbpm.task.exception")
-                .addPackage("org.jbpm.task.identity")
+//                .addPackage("org.jbpm.task.identity")
                 .addPackage("org.jbpm.task.factories")
                 .addPackage("org.jbpm.task.internals")
-                .addPackage("org.jbpm.task.internals.lifecycle")
+//                .addPackage("org.jbpm.task.internals.lifecycle")
                 .addPackage("org.jbpm.task.lifecycle.listeners")
                 .addPackage("org.jbpm.task.query")
                 .addPackage("org.jbpm.task.util")
-                .addPackage("org.jbpm.task.commands") // This should not be required here
+//                .addPackage("org.jbpm.task.commands") // This should not be required here
                 .addPackage("org.jbpm.task.deadlines") // deadlines
                 .addPackage("org.jbpm.task.deadlines.notifications.impl")
                 .addPackage("org.jbpm.task.subtask")
@@ -120,11 +121,11 @@ public class SingleRuntimeManagerTest {
     public void testSingleSingletonManager() {
         assertNotNull(singletonManager);
         
-        org.kie.internal.runtime.manager.Runtime runtime = singletonManager.getRuntime(EmptyContext.get());
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = singletonManager.getRuntimeEngine(EmptyContext.get());
         assertNotNull(runtime);
         testProcessStartOnManager(runtime);
         
-        singletonManager.disposeRuntime(runtime);     
+        singletonManager.disposeRuntimeEngine(runtime);     
         
         singletonManager.close();
     }
@@ -133,24 +134,24 @@ public class SingleRuntimeManagerTest {
     public void testSinglePerRequestManager() {
         assertNotNull(perRequestManager);
         
-        org.kie.internal.runtime.manager.Runtime runtime = perRequestManager.getRuntime(EmptyContext.get());
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = perRequestManager.getRuntimeEngine(EmptyContext.get());
         assertNotNull(runtime);
         testProcessStartOnManager(runtime);   
-        perRequestManager.disposeRuntime(runtime);
+        perRequestManager.disposeRuntimeEngine(runtime);
     }
     
     @Test
     public void testSinglePerProcessInstanceManager() {
         assertNotNull(perProcessInstanceManager);
         
-        org.kie.internal.runtime.manager.Runtime runtime = perProcessInstanceManager.getRuntime(ProcessInstanceIdContext.get());
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = perProcessInstanceManager.getRuntimeEngine(ProcessInstanceIdContext.get());
         assertNotNull(runtime);
         testProcessStartOnManager(runtime);  
-        perProcessInstanceManager.disposeRuntime(runtime);
+        perProcessInstanceManager.disposeRuntimeEngine(runtime);
     }
     
     
-    private void testProcessStartOnManager(org.kie.internal.runtime.manager.Runtime runtime) {
+    private void testProcessStartOnManager(org.kie.internal.runtime.manager.RuntimeEngine runtime) {
         
         
         KieSession ksession = runtime.getKieSession();

@@ -17,8 +17,7 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jbpm.runtime.manager.impl.DefaultRuntimeEnvironment;
-import org.jbpm.runtime.manager.impl.SimpleRuntimeEnvironment;
+import org.jbpm.runtime.manager.impl.RuntimeEnvironmentBuilder;
 import org.jbpm.runtime.manager.util.TestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -29,6 +28,7 @@ import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.runtime.manager.Context;
+import org.kie.internal.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.runtime.manager.RuntimeManager;
 import org.kie.internal.runtime.manager.RuntimeManagerFactory;
 import org.kie.internal.runtime.manager.context.EmptyContext;
@@ -44,21 +44,22 @@ public class MultipleRuntimeManagerTest {
     @Deployment()
     public static Archive<?> createDeployment() {
         return ShrinkWrap.create(JavaArchive.class, "jbpm-runtime-manager.jar")
+
                 .addPackage("org.jbpm.task")
                 .addPackage("org.jbpm.task.wih") // work items org.jbpm.task.wih
                 .addPackage("org.jbpm.task.annotations")
                 .addPackage("org.jbpm.task.api")
-                .addPackage("org.jbpm.task.impl")
+//                .addPackage("org.jbpm.task.impl")
                 .addPackage("org.jbpm.task.events")
                 .addPackage("org.jbpm.task.exception")
-                .addPackage("org.jbpm.task.identity")
+//                .addPackage("org.jbpm.task.identity")
                 .addPackage("org.jbpm.task.factories")
                 .addPackage("org.jbpm.task.internals")
-                .addPackage("org.jbpm.task.internals.lifecycle")
+//                .addPackage("org.jbpm.task.internals.lifecycle")
                 .addPackage("org.jbpm.task.lifecycle.listeners")
                 .addPackage("org.jbpm.task.query")
                 .addPackage("org.jbpm.task.util")
-                .addPackage("org.jbpm.task.commands") // This should not be required here
+//                .addPackage("org.jbpm.task.commands") // This should not be required here
                 .addPackage("org.jbpm.task.deadlines") // deadlines
                 .addPackage("org.jbpm.task.deadlines.notifications.impl")
                 .addPackage("org.jbpm.task.subtask")
@@ -110,25 +111,31 @@ public class MultipleRuntimeManagerTest {
     public void testAllManagersManager() {
         assertNotNull(managerFactory);
         
-        SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment(emf);
-        environment.addAsset(ResourceFactory.newClassPathResource("BPMN2-ScriptTask.bpmn2"), ResourceType.BPMN2);
-        environment.addAsset(ResourceFactory.newClassPathResource("BPMN2-UserTask.bpmn2"), ResourceType.BPMN2);
+        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+                .entityManagerFactory(emf)
+                .addAsset(ResourceFactory.newClassPathResource("BPMN2-ScriptTask.bpmn2"), ResourceType.BPMN2)
+                .addAsset(ResourceFactory.newClassPathResource("BPMN2-UserTask.bpmn2"), ResourceType.BPMN2)
+                .get();
         
         RuntimeManager manager = managerFactory.newSingletonRuntimeManager(environment);
         testProcessStartOnManager(manager, EmptyContext.get());
         manager.close();
         
-        environment = new DefaultRuntimeEnvironment(emf);
-        environment.addAsset(ResourceFactory.newClassPathResource("BPMN2-ScriptTask.bpmn2"), ResourceType.BPMN2);
-        environment.addAsset(ResourceFactory.newClassPathResource("BPMN2-UserTask.bpmn2"), ResourceType.BPMN2);
+        environment = RuntimeEnvironmentBuilder.getDefault()
+                .entityManagerFactory(emf)
+                .addAsset(ResourceFactory.newClassPathResource("BPMN2-ScriptTask.bpmn2"), ResourceType.BPMN2)
+                .addAsset(ResourceFactory.newClassPathResource("BPMN2-UserTask.bpmn2"), ResourceType.BPMN2)
+                .get();
         
         manager = managerFactory.newPerRequestRuntimeManager(environment);
         testProcessStartOnManager(manager, EmptyContext.get());
         manager.close();
         
-        environment = new DefaultRuntimeEnvironment(emf);
-        environment.addAsset(ResourceFactory.newClassPathResource("BPMN2-ScriptTask.bpmn2"), ResourceType.BPMN2);
-        environment.addAsset(ResourceFactory.newClassPathResource("BPMN2-UserTask.bpmn2"), ResourceType.BPMN2);
+        environment = RuntimeEnvironmentBuilder.getDefault()
+                .entityManagerFactory(emf)
+                .addAsset(ResourceFactory.newClassPathResource("BPMN2-ScriptTask.bpmn2"), ResourceType.BPMN2)
+                .addAsset(ResourceFactory.newClassPathResource("BPMN2-UserTask.bpmn2"), ResourceType.BPMN2)
+                .get();
         
         manager = managerFactory.newPerProcessInstanceRuntimeManager(environment);
         testProcessStartOnManager(manager, ProcessInstanceIdContext.get());
@@ -136,10 +143,10 @@ public class MultipleRuntimeManagerTest {
     }    
     
     
-    private void testProcessStartOnManager(RuntimeManager manager, Context context) {
+    private void testProcessStartOnManager(RuntimeManager manager, Context<?> context) {
         assertNotNull(manager);
         
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(context);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(context);
         assertNotNull(runtime);
         
         KieSession ksession = runtime.getKieSession();

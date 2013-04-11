@@ -15,7 +15,9 @@
  */
 package org.droolsjbpm.services.test.domain;
 
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,8 +26,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import javax.persistence.EntityManagerFactory;
+
 import org.droolsjbpm.services.api.DomainManagerService;
 import org.droolsjbpm.services.domain.entities.Domain;
 import org.droolsjbpm.services.domain.entities.Organization;
@@ -38,14 +43,15 @@ import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jbpm.runtime.manager.impl.DefaultRuntimeEnvironment;
+import org.jbpm.runtime.manager.impl.RuntimeEnvironmentBuilder;
 import org.jbpm.runtime.manager.impl.SimpleRuntimeEnvironment;
+import org.jbpm.runtime.manager.impl.cdi.InjectableRegisterableItemsFactory;
 import org.jbpm.runtime.manager.util.TestUtil;
+import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
 import org.jbpm.shared.services.api.FileException;
 import org.jbpm.shared.services.api.FileService;
 import org.junit.After;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,13 +61,17 @@ import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.commons.java.nio.file.Path;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.runtime.manager.Context;
+import org.kie.internal.runtime.manager.RuntimeEngine;
+import org.kie.internal.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.runtime.manager.RuntimeManager;
 import org.kie.internal.runtime.manager.RuntimeManagerFactory;
 import org.kie.internal.runtime.manager.context.EmptyContext;
+import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
+import org.kie.internal.task.api.TaskService;
 import org.kie.internal.task.api.model.Status;
 import org.kie.internal.task.api.model.TaskSummary;
-import org.kie.internal.runtime.manager.Runtime;
-import org.kie.internal.task.api.TaskService;
+
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 /**
  *
@@ -75,24 +85,24 @@ public class DomainServicesTest {
         return ShrinkWrap.create(JavaArchive.class, "domain-services.jar")
                 .addPackage("org.jboss.seam.persistence") //seam-persistence
                 .addPackage("org.jboss.seam.transaction") //seam-persistence
-                .addPackage("org.jbpm.task")
-                .addPackage("org.jbpm.task.wih") // work items org.jbpm.task.wih
-                .addPackage("org.jbpm.task.annotations")
-                .addPackage("org.jbpm.task.api")
-                .addPackage("org.jbpm.task.impl")
-                .addPackage("org.jbpm.task.events")
-                .addPackage("org.jbpm.task.exception")
-                .addPackage("org.jbpm.task.identity")
-                .addPackage("org.jbpm.task.factories")
-                .addPackage("org.jbpm.task.internals")
-                .addPackage("org.jbpm.task.internals.lifecycle")
-                .addPackage("org.jbpm.task.lifecycle.listeners")
-                .addPackage("org.jbpm.task.query")
-                .addPackage("org.jbpm.task.util")
-                .addPackage("org.jbpm.task.commands") // This should not be required here
-                .addPackage("org.jbpm.task.deadlines") // deadlines
-                .addPackage("org.jbpm.task.deadlines.notifications.impl")
-                .addPackage("org.jbpm.task.subtask")
+                .addPackage("org.jbpm.services.task")
+                .addPackage("org.jbpm.services.task.wih") // work items org.jbpm.services.task.wih
+                .addPackage("org.jbpm.services.task.annotations")
+                .addPackage("org.jbpm.services.task.api")
+                .addPackage("org.jbpm.services.task.impl")
+                .addPackage("org.jbpm.services.task.events")
+                .addPackage("org.jbpm.services.task.exception")
+                .addPackage("org.jbpm.services.task.identity")
+                .addPackage("org.jbpm.services.task.factories")
+                .addPackage("org.jbpm.services.task.internals")
+                .addPackage("org.jbpm.services.task.internals.lifecycle")
+                .addPackage("org.jbpm.services.task.lifecycle.listeners")
+                .addPackage("org.jbpm.services.task.query")
+                .addPackage("org.jbpm.services.task.util")
+                .addPackage("org.jbpm.services.task.commands") // This should not be required here
+                .addPackage("org.jbpm.services.task.deadlines") // deadlines
+                .addPackage("org.jbpm.services.task.deadlines.notifications.impl")
+                .addPackage("org.jbpm.services.task.subtask")
 
                 .addPackage("org.kie.internal.runtime")
                 .addPackage("org.kie.internal.runtime.manager")
@@ -100,6 +110,7 @@ public class DomainServicesTest {
                 
                 .addPackage("org.jbpm.runtime.manager")
                 .addPackage("org.jbpm.runtime.manager.impl")
+                .addPackage("org.jbpm.runtime.manager.impl.cdi")
                 .addPackage("org.jbpm.runtime.manager.impl.cdi.qualifier")
                 
                 .addPackage("org.jbpm.runtime.manager.impl.context")
@@ -167,12 +178,16 @@ public class DomainServicesTest {
     
     @Inject
     protected TaskService taskService;
+    @Inject
+    private BeanManager beanManager;
 
     @Test
     public void simpleExecutionTest() {
         assertNotNull(managerFactory);
         String path = "processes/support/";
-        SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment(emf);
+        RuntimeEnvironmentBuilder builder = RuntimeEnvironmentBuilder.getDefault()
+                .entityManagerFactory(emf)
+                .registerableItemsFactory(InjectableRegisterableItemsFactory.getFactory(beanManager, null));
         Iterable<Path> loadProcessFiles = null;
 
         try {
@@ -181,10 +196,10 @@ public class DomainServicesTest {
             Logger.getLogger(DomainServicesTest.class.getName()).log(Level.SEVERE, null, ex);
         }
         for (Path p : loadProcessFiles) {
-            environment.addAsset(ResourceFactory.newClassPathResource( fs.getRepositoryRoot() + "/" + path + p.getFileName().toString()), ResourceType.BPMN2);
+            builder.addAsset(ResourceFactory.newClassPathResource( fs.getRepositoryRoot() + "/" + path + p.getFileName().toString()), ResourceType.BPMN2);
         }
 
-        RuntimeManager manager = managerFactory.newSingletonRuntimeManager(environment);
+        RuntimeManager manager = managerFactory.newSingletonRuntimeManager(builder.get());
         testProcessStartOnManager(manager, EmptyContext.get());
 
         manager.close();
@@ -194,7 +209,7 @@ public class DomainServicesTest {
     @Test
     public void runtimeInDomainTest() {
 
-        Map<String, List<Runtime>> domainsMap = new HashMap<String, List<Runtime>>();
+        Map<String, List<RuntimeEngine>> domainsMap = new HashMap<String, List<RuntimeEngine>>();
 
         Organization organization = new Organization();
         organization.setName("JBoss");
@@ -218,7 +233,8 @@ public class DomainServicesTest {
             for (RuntimeId r : d.getRuntimes()) {
                 String reference = r.getReference();
                 // Create Runtime Manager Based on the Reference
-                SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment(emf);
+                RuntimeEnvironmentBuilder builder = RuntimeEnvironmentBuilder.getDefault()
+                        .entityManagerFactory(emf);
                 Iterable<Path> loadProcessFiles = null;
 
                 try {
@@ -227,15 +243,15 @@ public class DomainServicesTest {
                     Logger.getLogger(DomainServicesTest.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 for (Path p : loadProcessFiles) {
-                    environment.addAsset(ResourceFactory.newClassPathResource(fs.getRepositoryRoot() + "/" + reference + p.getFileName().toString()), ResourceType.BPMN2);
+                    builder.addAsset(ResourceFactory.newClassPathResource(fs.getRepositoryRoot() + "/" + reference + p.getFileName().toString()), ResourceType.BPMN2);
                 }
                 // Parse and get the Metadata for all the assets
 
-                RuntimeManager manager = managerFactory.newSingletonRuntimeManager(environment, d.getName());
-                org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(EmptyContext.get());
+                RuntimeManager manager = managerFactory.newSingletonRuntimeManager(builder.get(), d.getName());
+                org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
                 assertNotNull(runtime);
                 if (domainsMap.get(d.getName()) == null) {
-                    domainsMap.put(d.getName(), new ArrayList<Runtime>());
+                    domainsMap.put(d.getName(), new ArrayList<RuntimeEngine>());
                 }
                 domainsMap.get(d.getName()).add(runtime);
             }
@@ -243,8 +259,8 @@ public class DomainServicesTest {
         }
         Domain domainByName = domainService.getDomainByName("My First Domain");
 
-        List<Runtime> domainRuntimes = domainsMap.get(domainByName.getName());
-        Runtime runtime = domainRuntimes.get(0);
+        List<RuntimeEngine> domainRuntimes = domainsMap.get(domainByName.getName());
+        RuntimeEngine runtime = domainRuntimes.get(0);
         List<TaskSummary> salaboysTasks = runtime.getTaskService().getTasksAssignedAsPotentialOwner("salaboy", "en-UK");
         assertEquals(0, salaboysTasks.size());
 
@@ -276,8 +292,8 @@ public class DomainServicesTest {
         domainService.storeOrganization(organization);
         
         domainService.initDomain(domain.getId());
-        List<Runtime> runtimesByDomain = domainService.getRuntimesByDomain(domain.getName());
-        Runtime runtime = runtimesByDomain.get(0);
+        RuntimeManager runtimesByDomain = domainService.getRuntimesByDomain(domain.getName());
+        RuntimeEngine runtime = runtimesByDomain.getRuntimeEngine(ProcessInstanceIdContext.get());
         runtime.getKieSession().startProcess("support.process");
         
         List<TaskSummary> tasks = runtime.getTaskService().getTasksAssignedAsPotentialOwner("salaboy", "en-UK");
@@ -295,7 +311,7 @@ public class DomainServicesTest {
     private void testProcessStartOnManager(RuntimeManager manager, Context context) {
         assertNotNull(manager);
 
-        org.kie.internal.runtime.manager.Runtime runtime = manager.getRuntime(context);
+        org.kie.internal.runtime.manager.RuntimeEngine runtime = manager.getRuntimeEngine(context);
         assertNotNull(runtime);
 
         KieSession ksession = runtime.getKieSession();
