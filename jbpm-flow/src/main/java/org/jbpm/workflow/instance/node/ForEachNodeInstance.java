@@ -186,7 +186,9 @@ public class ForEachNodeInstance extends CompositeNodeInstance {
             if (collection.getClass().isArray() ) {
             	List<Object> list = new ArrayList<Object>();
             	for (Object o: (Object[]) collection) {
-            		list.add(o);
+            		if(!"".equals(o)) {
+            			list.add(o);
+            		}
             	}
                 return list;
             }
