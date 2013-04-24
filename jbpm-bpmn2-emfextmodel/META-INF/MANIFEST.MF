@@ -1,0 +1,39 @@
+Manifest-Version: 1.0
+Export-Package: org.jbpm.bpmn2.emfextmodel.util;uses:="org.eclipse.emf
+ .ecore,org.eclipse.emf.common.notify,org.jbpm.bpmn2.emfextmodel,org.e
+ clipse.emf.common.notify.impl,org.eclipse.emf.ecore.resource,org.ecli
+ pse.emf.ecore.xmi,org.eclipse.emf.common.util,org.eclipse.emf.ecore.r
+ esource.impl,org.eclipse.emf.ecore.xmi.impl,org.eclipse.emf.ecore.uti
+ l,org.eclipse.emf.ecore.xml.type.util,org.eclipse.emf.ecore.xmi.util"
+ ;version="6.0.0.SNAPSHOT",org.jbpm.bpmn2.emfextmodel.impl;uses:="org.
+ eclipse.emf.ecore.util,org.eclipse.emf.ecore,org.eclipse.emf.common.u
+ til,org.eclipse.emf.common.notify,org.eclipse.emf.ecore.impl,org.jbpm
+ .bpmn2.emfextmodel,org.eclipse.emf.ecore.plugin,org.eclipse.emf.ecore
+ .xml.type,org.jbpm.bpmn2.emfextmodel.util,org.eclipse.emf.ecore.resou
+ rce";version="6.0.0.SNAPSHOT",org.jbpm.bpmn2.emfextmodel;uses:="org.e
+ clipse.emf.ecore.util,org.eclipse.emf.ecore,org.eclipse.emf.common.ut
+ il,org.jbpm.bpmn2.emfextmodel.impl";version="6.0.0.SNAPSHOT"
+Private-Package: model;version="6.0.0.SNAPSHOT",org.jboss.drools.util;
+ version="6.0.0.SNAPSHOT",org.jboss.drools.impl;version="6.0.0.SNAPSHO
+ T",org.jboss.drools;version="6.0.0.SNAPSHOT"
+Tool: Bnd-0.0.357
+Bundle-Name: jBPM :: BPMN2 EMF Extension Model
+Created-By: 1.6.0_26 (Apple Inc.)
+Require-Bundle: org.jbpm.flow.builder;bundle-version="6.0.0.SNAPSHOT"
+Bundle-Vendor: JBoss by Red Hat
+DynamicImport-Package: *
+Bundle-Version: 6.0.0.SNAPSHOT
+Bnd-LastModified: 1350414286637
+Bundle-ManifestVersion: 2
+Bundle-Description: jBPM BPMN2 EMF Extension Model
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Import-Package: org.eclipse.emf.common.notify,org.eclipse.emf.common.n
+ otify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.ecli
+ pse.emf.ecore.impl,org.eclipse.emf.ecore.plugin,org.eclipse.emf.ecore
+ .resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.emf.ecore.u
+ til,org.eclipse.emf.ecore.xmi,org.eclipse.emf.ecore.xmi.impl,org.ecli
+ pse.emf.ecore.xmi.util,org.eclipse.emf.ecore.xml.type,org.eclipse.emf
+ .ecore.xml.type.util
+Bundle-SymbolicName: org.jbpm.bpmn2.emfextmodel;singleton:=true
+Bundle-DocURL: http://www.jboss.org/
+
