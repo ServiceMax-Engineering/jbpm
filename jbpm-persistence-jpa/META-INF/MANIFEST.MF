@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1365115159824
+Bnd-LastModified: 1365640691149
 Build-Jdk: 1.7.0_07
-Build-Timestamp: Thu, 4 Apr 2013 15:38:28 -0700
+Build-Timestamp: Wed, 10 Apr 2013 17:37:57 -0700
 Built-By: anurag
 Bundle-Description: jBPM JPA Persistence
 Bundle-DocURL: http://www.jboss.org/
@@ -10,30 +10,55 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: JPA Persistence
 Bundle-SymbolicName: org.jbpm.flow-persistence-jpa;singleton:=true
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20130404-1538
+Bundle-Version: 6.0.0.20130410-1737
 Created-By: Apache Maven Bundle Plugin
-Export-Package: org.jbpm.persistence.timer;version="6.0.0.20130404-1538"
- ,org.jbpm.persistence.processinstance;version="6.0.0.20130404-1538",org
- .jbpm.persistence.jta;version="6.0.0.20130404-1538",org.jbpm.persistenc
- e;version="6.0.0.20130404-1538",org.jbpm.persistence.correlation;versio
- n="6.0.0.20130404-1538"
+Export-Package: org.jbpm.persistence.timer;version="6.0.0.20130410-1737"
+ ,org.jbpm.persistence.processinstance;version="6.0.0.20130410-1737",org
+ .jbpm.persistence.jta;version="6.0.0.20130410-1737",org.jbpm.persistenc
+ e;version="6.0.0.20130410-1737",org.jbpm.persistence.correlation;versio
+ n="6.0.0.20130410-1737"
 Implementation-Title: jBPM :: JPA Persistence
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-persistence-jpa/
 Implementation-Vendor: JBoss by Red Hat
 Implementation-Vendor-Id: org.jbpm
 Implementation-Version: 6.0.0-SNAPSHOT
-Import-Package: com.google.protobuf,javax.naming,javax.persistence,javax
- .transaction;resolution:=optional,org.drools.core,org.drools.core.comma
- nd,org.drools.core.common,org.drools.core.impl,org.drools.core.marshall
- ing.impl,org.drools.core.runtime.process,org.drools.core.time,org.drool
- s.core.time.impl,org.drools.persistence,org.drools.persistence.jpa,org.
- drools.persistence.map,org.jbpm.marshalling.impl,org.jbpm.process.core.
- timer,org.jbpm.process.core.timer.impl,org.jbpm.process.instance,org.jb
- pm.process.instance.event,org.jbpm.process.instance.impl,org.jbpm.proce
- ss.instance.timer,org.jbpm.workflow.instance.impl,org.jbpm.workflow.ins
- tance.node,org.kie.api,org.kie.api.command,org.kie.api.definition.proce
- ss,org.kie.api.marshalling,org.kie.api.runtime,org.kie.api.runtime.proc
- ess,org.kie.internal.process,org.slf4j
+Import-Package: com.google.protobuf,
+ javax.naming,
+ javax.persistence,
+ javax.transaction;resolution:=optional,
+ org.drools.core,
+ org.drools.core.command,
+ org.drools.core.common,
+ org.drools.core.event;version="6.0.0.20130415-1114",
+ org.drools.core.impl,
+ org.drools.core.marshalling.impl,
+ org.drools.core.runtime.process,
+ org.drools.core.time,
+ org.drools.core.time.impl,
+ org.drools.persistence,
+ org.drools.persistence.jpa,
+ org.drools.persistence.jta;version="6.0.0.20130415-1114",
+ org.drools.persistence.map,
+ org.jbpm.marshalling.impl,
+ org.jbpm.process.core.timer,
+ org.jbpm.process.core.timer.impl,
+ org.jbpm.process.instance,
+ org.jbpm.process.instance.context.variable;version="6.0.0.20130410-1737",
+ org.jbpm.process.instance.event,
+ org.jbpm.process.instance.impl,
+ org.jbpm.process.instance.timer,
+ org.jbpm.workflow.instance.impl,
+ org.jbpm.workflow.instance.node,
+ org.kie.api,
+ org.kie.api.command,
+ org.kie.api.definition.process,
+ org.kie.api.marshalling,
+ org.kie.api.runtime,
+ org.kie.api.runtime.process,
+ org.kie.internal.process,
+ org.kie.internal.runtime.manager,
+ org.kie.internal.runtime.manager.context,
+ org.slf4j
 Include-Resource: META-INF/JBPMorm.xml=src/main/resources/META-INF/JBPMo
  rm.xml
 Java-Vendor: Oracle Corporation
@@ -46,9 +71,10 @@ Private-Package: org.jbpm.persistence;org.jbpm.persistence.correlation;o
  ersistence.timer;-split-package:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-persiste
  nce-jpa
-Scm-Revision: 5bcb7e390c44849f3ae2f6a071b0225f53360f4d
+Scm-Revision: cb83229b8ddb499555e7530882b69055f8849d06
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-persistence-jpa
 Specification-Title: jBPM :: JPA Persistence
 Specification-Vendor: JBoss by Red Hat
 Specification-Version: 6.0.0-SNAPSHOT
 Tool: Bnd-1.50.0
+DynamicImport-Package: *
