@@ -1,64 +1,43 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1365640691149
+Bnd-LastModified: 1366881981779
 Build-Jdk: 1.7.0_07
-Build-Timestamp: Wed, 10 Apr 2013 17:37:57 -0700
+Build-Timestamp: Thu, 25 Apr 2013 14:55:38 +0530
 Built-By: anurag
 Bundle-Description: jBPM JPA Persistence
 Bundle-DocURL: http://www.jboss.org/
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
 Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: JPA Persistence
-Bundle-SymbolicName: org.jbpm.flow-persistence-jpa;singleton:=true
+Bundle-SymbolicName: org.jbpm.persistence.jpa;singleton:=true
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20130410-1737
+Bundle-Version: 6.0.0.20130425-1455
 Created-By: Apache Maven Bundle Plugin
-Export-Package: org.jbpm.persistence.timer;version="6.0.0.20130410-1737"
- ,org.jbpm.persistence.processinstance;version="6.0.0.20130410-1737",org
- .jbpm.persistence.jta;version="6.0.0.20130410-1737",org.jbpm.persistenc
- e;version="6.0.0.20130410-1737",org.jbpm.persistence.correlation;versio
- n="6.0.0.20130410-1737"
+DynamicImport-Package: *
+Export-Package: org.jbpm.persistence.timer;version="6.0.0.20130425-1455"
+ ,org.jbpm.persistence.processinstance;version="6.0.0.20130425-1455",org
+ .jbpm.persistence.jta;version="6.0.0.20130425-1455",org.jbpm.persistenc
+ e;version="6.0.0.20130425-1455",org.jbpm.persistence.correlation;versio
+ n="6.0.0.20130425-1455"
 Implementation-Title: jBPM :: JPA Persistence
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-persistence-jpa/
 Implementation-Vendor: JBoss by Red Hat
 Implementation-Vendor-Id: org.jbpm
 Implementation-Version: 6.0.0-SNAPSHOT
-Import-Package: com.google.protobuf,
- javax.naming,
- javax.persistence,
- javax.transaction;resolution:=optional,
- org.drools.core,
- org.drools.core.command,
- org.drools.core.common,
- org.drools.core.event;version="6.0.0.20130415-1114",
- org.drools.core.impl,
- org.drools.core.marshalling.impl,
- org.drools.core.runtime.process,
- org.drools.core.time,
- org.drools.core.time.impl,
- org.drools.persistence,
- org.drools.persistence.jpa,
- org.drools.persistence.jta;version="6.0.0.20130415-1114",
- org.drools.persistence.map,
- org.jbpm.marshalling.impl,
- org.jbpm.process.core.timer,
- org.jbpm.process.core.timer.impl,
- org.jbpm.process.instance,
- org.jbpm.process.instance.context.variable;version="6.0.0.20130410-1737",
- org.jbpm.process.instance.event,
- org.jbpm.process.instance.impl,
- org.jbpm.process.instance.timer,
- org.jbpm.workflow.instance.impl,
- org.jbpm.workflow.instance.node,
- org.kie.api,
- org.kie.api.command,
- org.kie.api.definition.process,
- org.kie.api.marshalling,
- org.kie.api.runtime,
- org.kie.api.runtime.process,
- org.kie.internal.process,
- org.kie.internal.runtime.manager,
- org.kie.internal.runtime.manager.context,
- org.slf4j
+Import-Package: com.google.protobuf,javax.naming,javax.persistence,javax
+ .transaction;resolution:=optional,org.drools.core,org.drools.core.comma
+ nd,org.drools.core.common,org.drools.core.event,org.drools.core.impl,or
+ g.drools.core.marshalling.impl,org.drools.core.runtime.process,org.droo
+ ls.core.time,org.drools.core.time.impl,org.drools.persistence,org.drool
+ s.persistence.jpa,org.drools.persistence.jta,org.drools.persistence.map
+ ,org.jbpm.marshalling.impl,org.jbpm.process.core.timer,org.jbpm.process
+ .core.timer.impl,org.jbpm.process.instance,org.jbpm.process.instance.co
+ ntext.variable,org.jbpm.process.instance.event,org.jbpm.process.instanc
+ e.impl,org.jbpm.process.instance.timer,org.jbpm.workflow.instance.impl,
+ org.jbpm.workflow.instance.node,org.kie.api,org.kie.api.command,org.kie
+ .api.definition.process,org.kie.api.marshalling,org.kie.api.runtime,org
+ .kie.api.runtime.manager,org.kie.api.runtime.process,org.kie.internal.p
+ rocess,org.kie.internal.runtime.manager,org.kie.internal.runtime.manage
+ r.context,org.slf4j
 Include-Resource: META-INF/JBPMorm.xml=src/main/resources/META-INF/JBPMo
  rm.xml
 Java-Vendor: Oracle Corporation
@@ -71,10 +50,9 @@ Private-Package: org.jbpm.persistence;org.jbpm.persistence.correlation;o
  ersistence.timer;-split-package:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-persiste
  nce-jpa
-Scm-Revision: cb83229b8ddb499555e7530882b69055f8849d06
+Scm-Revision: 70389811a2599c0622f3a44df9a125bfb7c4f6c8
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-persistence-jpa
 Specification-Title: jBPM :: JPA Persistence
 Specification-Vendor: JBoss by Red Hat
 Specification-Version: 6.0.0-SNAPSHOT
 Tool: Bnd-1.50.0
-DynamicImport-Package: *

@@ -130,11 +130,15 @@
             <Bundle-SymbolicName>org.jbpm.persistence.jpa;singleton:=true</Bundle-SymbolicName>
             <Import-Package>
               javax.transaction.*;resolution:=optional,
+              org.drools.persistence.jta,
+              org.drools.core.event,
+              org.jbpm.process.instance.context.variable,
               *
             </Import-Package>
             <Export-Package>
               org.jbpm.persistence.*
             </Export-Package>
+            <DynamicImport-Package>*</DynamicImport-Package>
           </instructions>
         </configuration>
       </plugin>

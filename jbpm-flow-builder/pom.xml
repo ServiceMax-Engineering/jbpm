@@ -24,8 +24,13 @@
         <configuration>
 <manifestLocation>META-INF</manifestLocation>
           <instructions>
+            <Import-Package>
+                org.kie.api,
+                *
+            </Import-Package>
             <Bundle-SymbolicName>org.jbpm.flow.builder;singleton:=true</Bundle-SymbolicName>
             <Bundle-Activator>org.jbpm.osgi.flow.compiler.Activator</Bundle-Activator>
+            <DynamicImport-Package>*</DynamicImport-Package>
           </instructions>
         </configuration>
       </plugin>

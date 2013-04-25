@@ -133,8 +133,13 @@
         <configuration>
 <manifestLocation>META-INF</manifestLocation>
           <instructions>
+            <Import-Package>
+                org.drools.compiler.rule.builder.dialect.java,
+                *
+            </Import-Package>
             <Bundle-SymbolicName>org.jbpm.bpmn2</Bundle-SymbolicName>
             <Bundle-Activator>org.jbpm.osgi.bpmn2.Activator</Bundle-Activator>
+            <DynamicImport-Package>*</DynamicImport-Package>
           </instructions>
         </configuration>
       </plugin>

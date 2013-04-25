@@ -27,6 +27,9 @@
             <Bundle-SymbolicName>org.jbpm.flow.core;singleton:=true</Bundle-SymbolicName>
             <Import-Package>
                 javax.swing.*;resolution:=optional,
+                org.quartz.utils,
+                org.kie.api.event,
+                org.joda.time.base,
                 *
             </Import-Package>
             <Private-Package></Private-Package>
@@ -37,6 +40,7 @@
             	org.jbpm.workflow.*,
             	org.jbpm.osgi.flow.core.*
             </Export-Package>
+            <DynamicImport-Package>*</DynamicImport-Package>
             <Bundle-Activator>org.jbpm.osgi.flow.core.Activator</Bundle-Activator>
           </instructions>
         </configuration>
