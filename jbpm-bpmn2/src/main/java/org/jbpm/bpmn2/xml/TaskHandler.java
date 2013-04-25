@@ -54,6 +54,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
 
 public class TaskHandler extends AbstractNodeHandler {
     
