@@ -21,7 +21,6 @@ import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.Reception;
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 
 import org.jboss.seam.transaction.Transactional;
@@ -35,11 +34,10 @@ import org.jbpm.services.task.events.AfterTaskStartedEvent;
 import org.jbpm.services.task.events.AfterTaskStoppedEvent;
 import org.jbpm.services.task.impl.model.BAMTaskSummaryImpl;
 import org.jbpm.shared.services.api.JbpmServicesPersistenceManager;
-import org.kie.internal.task.api.model.Task;
+import org.kie.api.task.model.Task;
 
 @ApplicationScoped
 @Transactional
-@Alternative
 public class BAMTaskEventListener implements TaskLifeCycleEventListener {
 
     @Inject
@@ -49,7 +47,7 @@ public class BAMTaskEventListener implements TaskLifeCycleEventListener {
     }
 
     public void afterTaskStartedEvent(@Observes(notifyObserver = Reception.ALWAYS) @AfterTaskStartedEvent Task ti) {
-        List<BAMTaskSummaryImpl> taskSummaries = (List<BAMTaskSummaryImpl>) pm.queryStringWithParametersInTransaction("select bts from BAMTaskSummary bts where bts.taskId=:taskId", 
+        List<BAMTaskSummaryImpl> taskSummaries = (List<BAMTaskSummaryImpl>) pm.queryStringWithParametersInTransaction("select bts from BAMTaskSummaryImpl bts where bts.taskId=:taskId", 
                 pm.addParametersToMap("taskId", ti.getId()));
         if (taskSummaries.isEmpty()) {
             String actualOwner = "";
@@ -81,7 +79,7 @@ public class BAMTaskEventListener implements TaskLifeCycleEventListener {
 
     public void afterTaskClaimedEvent(@Observes(notifyObserver = Reception.ALWAYS) @AfterTaskClaimedEvent Task ti) {
         
-        List<BAMTaskSummaryImpl> taskSummaries = (List<BAMTaskSummaryImpl>) pm.queryStringWithParametersInTransaction("select bts from BAMTaskSummary bts where bts.taskId=:taskId",
+        List<BAMTaskSummaryImpl> taskSummaries = (List<BAMTaskSummaryImpl>) pm.queryStringWithParametersInTransaction("select bts from BAMTaskSummaryImpl bts where bts.taskId=:taskId",
                 pm.addParametersToMap("taskId", ti.getId()));
         if (taskSummaries.isEmpty()) {
             
@@ -114,7 +112,7 @@ public class BAMTaskEventListener implements TaskLifeCycleEventListener {
 
     public void afterTaskCompletedEvent(@Observes(notifyObserver = Reception.ALWAYS) @AfterTaskCompletedEvent Task ti) {
 
-        List<BAMTaskSummaryImpl> summaries = (List<BAMTaskSummaryImpl>) pm.queryStringWithParametersInTransaction("select bts from BAMTaskSummary bts where bts.taskId=:taskId",
+        List<BAMTaskSummaryImpl> summaries = (List<BAMTaskSummaryImpl>) pm.queryStringWithParametersInTransaction("select bts from BAMTaskSummaryImpl bts where bts.taskId=:taskId",
                 pm.addParametersToMap("taskId", ti.getId()));
         
         if(summaries.size() == 1){

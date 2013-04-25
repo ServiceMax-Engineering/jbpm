@@ -1,22 +1,25 @@
 package org.droolsjbpm.services.impl;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.droolsjbpm.services.api.WorkItemHandlerProducer;
+import org.droolsjbpm.services.api.DeployedUnit;
+import org.droolsjbpm.services.api.DeploymentService;
+import org.jbpm.runtime.manager.api.WorkItemHandlerProducer;
 import org.jbpm.shared.services.api.FileException;
 import org.jbpm.shared.services.api.FileService;
-import org.kie.commons.java.nio.file.Path;
 import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.commons.java.nio.file.Path;
 import org.mvel2.MVEL;
 
 public class MVELWorkItemHandlerProducer implements WorkItemHandlerProducer {
 
     @Inject
     private FileService fs;
+    @Inject
+    private DeploymentService deploymentService;
 
     public MVELWorkItemHandlerProducer() {
     }
@@ -27,13 +30,18 @@ public class MVELWorkItemHandlerProducer implements WorkItemHandlerProducer {
     
     @SuppressWarnings("unchecked")
     @Override
-    public Map<String, WorkItemHandler> getWorkItemHandlers(String location, Map<String, Object> params) {
+    public Map<String, WorkItemHandler> getWorkItemHandlers(String identifier, Map<String, Object> params) {
         Map<String, WorkItemHandler> handlers = new HashMap<String, WorkItemHandler>();
-        if (location == null) {
-            return handlers;
-        }
         try {
-            Iterable<Path> widFiles = fs.loadFilesByType(location, "conf");
+            DeployedUnit deployedUnit = deploymentService.getDeployedUnit(identifier);
+            VFSDeploymentUnit vfsUnit = (VFSDeploymentUnit) deployedUnit.getDeploymentUnit();
+            Path assetFolder = fs.getPath(vfsUnit.getRepository() + vfsUnit.getRepositoryFolder());
+            if (identifier == null || !fs.exists(assetFolder)) {
+                return handlers;
+            }
+            params.put("fs", fs);
+        
+            Iterable<Path> widFiles = fs.loadFilesByType(assetFolder, "conf");
             
             for (Path widPath : widFiles) {
                 String content = new String(fs.loadFile(widPath), "UTF-8");
@@ -42,7 +50,7 @@ public class MVELWorkItemHandlerProducer implements WorkItemHandlerProducer {
             }
         } catch (FileException e) {
             e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         

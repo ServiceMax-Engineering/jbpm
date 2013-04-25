@@ -7,10 +7,10 @@ import javax.decorator.Decorator;
 import javax.decorator.Delegate;
 import javax.inject.Inject;
 
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.task.api.TaskQueryService;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.TaskSummary;
 
 @Decorator
 public class UserGroupTaskQueryServiceDecorator extends
@@ -127,16 +127,16 @@ public class UserGroupTaskQueryServiceDecorator extends
     }
 
     @Override
-    public List<TaskSummary> getTasksOwned(String userId) {
+    public List<TaskSummary> getTasksOwned(String userId, String language) {
 
-        return delegate.getTasksOwned(userId);
+        return delegate.getTasksOwned(userId, language);
     }
 
     @Override
-    public List<TaskSummary> getTasksOwned(String userId, List<Status> status,
+    public List<TaskSummary> getTasksOwnedByStatus(String userId, List<Status> status,
             String language) {
 
-        return delegate.getTasksOwned(userId, status, language);
+        return delegate.getTasksOwnedByStatus(userId, status, language);
     }
 
     @Override
@@ -151,6 +151,12 @@ public class UserGroupTaskQueryServiceDecorator extends
             String userId, List<Status> status, Date expirationDate) {
 
         return delegate.getTasksOwnedByExpirationDateOptional(userId, status, expirationDate);
+    }
+
+    @Override
+    public List<TaskSummary> getTasksOwnedByExpirationDateBeforeSpecifiedDate(
+            String userId, java.util.List<Status> status, Date date) {
+        return delegate.getTasksOwnedByExpirationDateBeforeSpecifiedDate(userId, status, date);
     }
 
     @Override
@@ -185,16 +191,16 @@ public class UserGroupTaskQueryServiceDecorator extends
     }
 
     @Override
-    public List<TaskSummary> getTasksByStatusByProcessId(
+    public List<TaskSummary> getTasksByStatusByProcessInstanceId(
             long processInstanceId, List<Status> status, String language) {
 
-        return delegate.getTasksByStatusByProcessId(processInstanceId, status, language);
+        return delegate.getTasksByStatusByProcessInstanceId(processInstanceId, status, language);
     }
 
     @Override
-    public List<TaskSummary> getTasksByStatusByProcessIdByTaskName(
+    public List<TaskSummary> getTasksByStatusByProcessInstanceIdByTaskName(
             long processInstanceId, List<Status> status, String taskName, String language) {
-        return delegate.getTasksByStatusByProcessIdByTaskName(processInstanceId, status, taskName, language);
+        return delegate.getTasksByStatusByProcessInstanceIdByTaskName(processInstanceId, status, taskName, language);
     }
 
     @Override

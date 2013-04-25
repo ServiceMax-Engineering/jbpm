@@ -287,7 +287,8 @@ public abstract class NodeInstanceImpl implements
                 }
                 if ( !found ) {
                     throw new IllegalArgumentException( "Uncontrolled flow node could not find at least one valid outgoing connection " + getNode().getName() );
-                }     
+                }   
+                return;
         	} else {
         		connections = node.getOutgoingConnections(type);
         	}

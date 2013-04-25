@@ -21,10 +21,11 @@ import org.jboss.seam.transaction.Transactional;
 import org.jbpm.services.task.events.AfterTaskExitedEvent;
 import org.jbpm.services.task.events.BeforeTaskExitedEvent;
 import org.jbpm.services.task.exception.PermissionDeniedException;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.User;
 import org.kie.internal.command.Context;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.User;
+import org.kie.internal.task.api.model.InternalTaskData;
 
 /**
  * Operation.Exit
@@ -35,7 +36,7 @@ import org.kie.internal.task.api.model.User;
             } ]
  */
 @Transactional
-public class ExitTaskCommand<Void> extends TaskCommand {
+public class ExitTaskCommand extends TaskCommand<Void> {
 
 
     public ExitTaskCommand(long taskId, String userId) {
@@ -64,7 +65,7 @@ public class ExitTaskCommand<Void> extends TaskCommand {
                     task.getTaskData().getStatus().equals(Status.InProgress) ||
                     task.getTaskData().getStatus().equals(Status.Suspended)) {
                 
-                task.getTaskData().setStatus(Status.Exited);
+            	((InternalTaskData) task.getTaskData()).setStatus(Status.Exited);
 
             }
        

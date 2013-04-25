@@ -55,9 +55,10 @@ public class ProcessInstanceLog implements Serializable, AuditEvent {
     private Long parentProcessInstanceId;
     @Column(nullable=true)
     private String outcome;    
-    private Long duration;    
+    private Long duration;
+    @Column(name="user_identity")
     private String identity;    
-    private String domainId;
+    private String externalId;
     private String processVersion;
     private String processName;
     
@@ -129,7 +130,7 @@ public class ProcessInstanceLog implements Serializable, AuditEvent {
 		result = prime * result + ((outcome == null) ? 0 : outcome.hashCode());
 		result = prime * result + ((duration == null) ? 0 : duration.hashCode());
 		result = prime * result + ((identity == null) ? 0 : identity.hashCode());
-		result = prime * result + ((domainId == null) ? 0 : domainId.hashCode());
+		result = prime * result + ((externalId == null) ? 0 : externalId.hashCode());
 		result = prime * result + ((processVersion == null) ? 0 : processVersion.hashCode());
 		result = prime * result + ((processName == null) ? 0 : processName.hashCode());
 		return result;
@@ -194,10 +195,10 @@ public class ProcessInstanceLog implements Serializable, AuditEvent {
         } else if (!identity.equals(other.identity))
             return false;  
         
-        if (domainId == null) {
-            if (other.domainId != null)
+        if (externalId == null) {
+            if (other.externalId != null)
                 return false;
-        } else if (!domainId.equals(other.domainId))
+        } else if (!externalId.equals(other.externalId))
             return false;
         
         if (processVersion == null) {
@@ -254,12 +255,12 @@ public class ProcessInstanceLog implements Serializable, AuditEvent {
         this.identity = identity;
     }
 
-    public String getDomainId() {
-        return domainId;
+    public String getExternalId() {
+        return externalId;
     }
 
-    public void setDomainId(String domainId) {
-        this.domainId = domainId;
+    public void setExternalId(String domainId) {
+        this.externalId = domainId;
     }
 
     public String getProcessVersion() {

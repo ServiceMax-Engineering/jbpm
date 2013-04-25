@@ -26,10 +26,11 @@ import org.jbpm.services.task.exception.PermissionDeniedException;
 import org.jbpm.services.task.impl.model.GroupImpl;
 import org.jbpm.services.task.impl.model.OrganizationalEntityImpl;
 import org.jbpm.services.task.impl.model.UserImpl;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.User;
 import org.kie.internal.command.Context;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.User;
+import org.kie.internal.task.api.model.InternalTaskData;
 
 /**
  * Operation.Resume : [ new OperationCommand().{ previousStatus = [ Status.Ready
@@ -39,7 +40,7 @@ import org.kie.internal.task.api.model.User;
  * Allowed.BusinessAdministrator ], setToPreviousStatus = true } ],
  */
 @Transactional
-public class ResumeTaskCommand extends TaskCommand {
+public class ResumeTaskCommand extends TaskCommand<Void> {
 
     private long taskId;
     private String userId;
@@ -67,7 +68,7 @@ public class ResumeTaskCommand extends TaskCommand {
         if (potOwnerAllowed || adminAllowed) {
             if (task.getTaskData().getPreviousStatus().equals(Status.Ready)) {
 
-                task.getTaskData().setStatus(task.getTaskData().getPreviousStatus());
+            	((InternalTaskData) task.getTaskData()).setStatus(task.getTaskData().getPreviousStatus());
                 
             }
         }
@@ -76,7 +77,7 @@ public class ResumeTaskCommand extends TaskCommand {
             if (task.getTaskData().getPreviousStatus().equals(Status.Reserved) || 
                     task.getTaskData().getPreviousStatus().equals(Status.InProgress)) {
 
-                task.getTaskData().setStatus(task.getTaskData().getPreviousStatus());
+            	((InternalTaskData) task.getTaskData()).setStatus(task.getTaskData().getPreviousStatus());
                 
             }
         }

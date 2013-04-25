@@ -259,6 +259,48 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		nodeContainer.addNode(node);
 		return node;
 	}
+    
+    @SuppressWarnings("unchecked")
+	protected void handleCompositeContextNode(final Node node, final Element element, final String uri, 
+            final String localName, final ExtensibleXmlParser parser) throws SAXException {
+    	super.handleNode(node, element, uri, localName, parser);
+    	CompositeContextNode compositeNode = (CompositeContextNode) node;
+    	List<SequenceFlow> connections = (List<SequenceFlow>)
+			compositeNode.getMetaData(ProcessHandler.CONNECTIONS);
+    	ProcessHandler.linkConnections(compositeNode, connections);
+    	
+    	List<IntermediateLink> throwLinks = (List<IntermediateLink>) compositeNode
+		.getMetaData(ProcessHandler.LINKS);
+    	ProcessHandler.linkIntermediateLinks(compositeNode, throwLinks);	
+    	
+    	ProcessHandler.linkBoundaryEvents(compositeNode);
+    }
+    
+    @SuppressWarnings("unchecked")
+	protected void handleForEachNode(final Node node, final Element element, final String uri, 
+            final String localName, final ExtensibleXmlParser parser) throws SAXException {
+    	super.handleNode(node, element, uri, localName, parser);
+    	ForEachNode forEachNode = (ForEachNode) node;
+    	org.w3c.dom.Node xmlNode = element.getFirstChild();
+        while (xmlNode != null) {
+            String nodeName = xmlNode.getNodeName();
+            if ("ioSpecification".equals(nodeName)) {
+                readIoSpecification(xmlNode, dataInputs, dataOutputs);
+            } else if ("dataInputAssociation".equals(nodeName)) {
+                readDataInputAssociation(xmlNode, inputAssociation);
+            } else if ("dataOutputAssociation".equals(nodeName)) {
+                readDataOutputAssociation(xmlNode, outputAssociation);
+            } else if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
+            	readMultiInstanceLoopCharacteristics(xmlNode, forEachNode, parser);
+            }
+            xmlNode = xmlNode.getNextSibling();
+        }
+    	List<SequenceFlow> connections = (List<SequenceFlow>)
+			forEachNode.getMetaData(ProcessHandler.CONNECTIONS);
+    	ProcessHandler.linkConnections(forEachNode, connections);
+    	ProcessHandler.linkBoundaryEvents(forEachNode);
+    }    
+
 
 	@SuppressWarnings("unchecked")
 	protected void handleCompositeContextNode(final Node node,

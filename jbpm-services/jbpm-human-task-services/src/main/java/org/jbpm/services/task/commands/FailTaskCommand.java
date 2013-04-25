@@ -26,17 +26,18 @@ import org.jbpm.services.task.exception.PermissionDeniedException;
 import org.jbpm.services.task.impl.model.ContentImpl;
 import org.jbpm.services.task.impl.model.FaultDataImpl;
 import org.jbpm.services.task.utils.ContentMarshallerHelper;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.User;
 import org.kie.internal.command.Context;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.User;
+import org.kie.internal.task.api.model.InternalTaskData;
 
 /**
  * Operation.Fail : [ new OperationCommand().{ status = [ Status.InProgress ],
  * allowed = [ Allowed.Owner ], newStatus = Status.Failed } ],
  */
 @Transactional
-public class FailTaskCommand<Void> extends TaskCommand {
+public class FailTaskCommand extends TaskCommand<Void> {
 
     private Map<String, Object> data;
 
@@ -60,7 +61,7 @@ public class FailTaskCommand<Void> extends TaskCommand {
         }
 
         if (task.getTaskData().getStatus().equals(Status.InProgress)) {
-            task.getTaskData().setStatus(Status.Failed);
+        	((InternalTaskData) task.getTaskData()).setStatus(Status.Failed);
         }
 
         if (data != null) {
@@ -69,7 +70,7 @@ public class FailTaskCommand<Void> extends TaskCommand {
             ContentImpl content = new ContentImpl();
             content.setContent(faultData.getContent());
             context.getPm().persist(content);
-            task.getTaskData().setFault(content.getId(), faultData);
+            ((InternalTaskData) task.getTaskData()).setFault(content.getId(), faultData);
 
         }
         context.getTaskEvents().select(new AnnotationLiteral<AfterTaskFailedEvent>() {

@@ -65,6 +65,10 @@
     </dependency>
     <dependency>
       <groupId>org.kie.commons</groupId>
+      <artifactId>kie-commons-cdi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.commons</groupId>
       <artifactId>kie-nio2-model</artifactId>
     </dependency>    
 
@@ -122,6 +126,11 @@
       <artifactId>freemarker</artifactId>
       <version>2.3.8</version>
       <type>jar</type>
+    </dependency>
+    
+    <dependency>
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
     </dependency>
 
     <!-- test -->

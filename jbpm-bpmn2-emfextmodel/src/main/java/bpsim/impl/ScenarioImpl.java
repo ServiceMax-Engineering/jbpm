@@ -4,8 +4,10 @@ package bpsim.impl;
 
 import bpsim.BpsimPackage;
 import bpsim.Calendar;
+import bpsim.ElementParameters;
 import bpsim.ElementParametersType;
 import bpsim.Scenario;
+import bpsim.ScenarioParameters;
 import bpsim.ScenarioParametersType;
 import bpsim.VendorExtension;
 
@@ -60,7 +62,7 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	 * @generated
 	 * @ordered
 	 */
-	protected ScenarioParametersType scenarioParameters;
+	protected ScenarioParameters scenarioParameters;
 
 	/**
 	 * The cached value of the '{@link #getElementParameters() <em>Element Parameters</em>}' containment reference list.
@@ -70,7 +72,7 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	 * @generated
 	 * @ordered
 	 */
-	protected EList<ElementParametersType> elementParameters;
+	protected EList<ElementParameters> elementParameters;
 
 	/**
 	 * The cached value of the '{@link #getCalendar() <em>Calendar</em>}' containment reference list.
@@ -316,7 +318,7 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public ScenarioParametersType getScenarioParameters() {
+	public ScenarioParameters getScenarioParameters() {
 		return scenarioParameters;
 	}
 
@@ -325,8 +327,8 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public NotificationChain basicSetScenarioParameters(ScenarioParametersType newScenarioParameters, NotificationChain msgs) {
-		ScenarioParametersType oldScenarioParameters = scenarioParameters;
+	public NotificationChain basicSetScenarioParameters(ScenarioParameters newScenarioParameters, NotificationChain msgs) {
+		ScenarioParameters oldScenarioParameters = scenarioParameters;
 		scenarioParameters = newScenarioParameters;
 		if (eNotificationRequired()) {
 			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET, BpsimPackage.SCENARIO__SCENARIO_PARAMETERS, oldScenarioParameters, newScenarioParameters);
@@ -340,7 +342,7 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public void setScenarioParameters(ScenarioParametersType newScenarioParameters) {
+	public void setScenarioParameters(ScenarioParameters newScenarioParameters) {
 		if (newScenarioParameters != scenarioParameters) {
 			NotificationChain msgs = null;
 			if (scenarioParameters != null)
@@ -359,9 +361,9 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public EList<ElementParametersType> getElementParameters() {
+	public EList<ElementParameters> getElementParameters() {
 		if (elementParameters == null) {
-			elementParameters = new EObjectContainmentEList<ElementParametersType>(ElementParametersType.class, this, BpsimPackage.SCENARIO__ELEMENT_PARAMETERS);
+			elementParameters = new EObjectContainmentEList<ElementParameters>(ElementParameters.class, this, BpsimPackage.SCENARIO__ELEMENT_PARAMETERS);
 		}
 		return elementParameters;
 	}
@@ -670,11 +672,11 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
 			case BpsimPackage.SCENARIO__SCENARIO_PARAMETERS:
-				setScenarioParameters((ScenarioParametersType)newValue);
+				setScenarioParameters((ScenarioParameters)newValue);
 				return;
 			case BpsimPackage.SCENARIO__ELEMENT_PARAMETERS:
 				getElementParameters().clear();
-				getElementParameters().addAll((Collection<? extends ElementParametersType>)newValue);
+				getElementParameters().addAll((Collection<? extends ElementParameters>)newValue);
 				return;
 			case BpsimPackage.SCENARIO__CALENDAR:
 				getCalendar().clear();
@@ -727,7 +729,7 @@ public class ScenarioImpl extends EObjectImpl implements Scenario {
 	public void eUnset(int featureID) {
 		switch (featureID) {
 			case BpsimPackage.SCENARIO__SCENARIO_PARAMETERS:
-				setScenarioParameters((ScenarioParametersType)null);
+				setScenarioParameters((ScenarioParameters)null);
 				return;
 			case BpsimPackage.SCENARIO__ELEMENT_PARAMETERS:
 				getElementParameters().clear();

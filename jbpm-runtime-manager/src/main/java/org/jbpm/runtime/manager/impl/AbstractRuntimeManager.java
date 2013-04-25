@@ -10,15 +10,15 @@ import org.jbpm.runtime.manager.impl.tx.DisposeSessionTransactionSynchronization
 import org.kie.api.event.process.ProcessEventListener;
 import org.kie.api.event.rule.AgendaEventListener;
 import org.kie.api.event.rule.WorkingMemoryEventListener;
+import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.internal.runtime.manager.InternalRuntimeManager;
 import org.kie.internal.runtime.manager.RegisterableItemsFactory;
-import org.kie.internal.runtime.manager.RuntimeEngine;
 import org.kie.internal.runtime.manager.RuntimeEnvironment;
-import org.kie.internal.runtime.manager.RuntimeManager;
 
-public abstract class AbstractRuntimeManager implements RuntimeManager {
+public abstract class AbstractRuntimeManager implements InternalRuntimeManager {
 
-    protected static List<String> activeSingletons = new CopyOnWriteArrayList<String>();
+    protected volatile static List<String> activeManagers = new CopyOnWriteArrayList<String>();
     protected RuntimeEnvironment environment;
     
     protected String identifier;
@@ -26,10 +26,10 @@ public abstract class AbstractRuntimeManager implements RuntimeManager {
     public AbstractRuntimeManager(RuntimeEnvironment environment, String identifier) {
         this.environment = environment;
         this.identifier = identifier;
-        if (activeSingletons.contains(identifier)) {
+        if (activeManagers.contains(identifier)) {
             throw new IllegalStateException("RuntimeManager with id " + identifier + " is already active");
         }
-        activeSingletons.add(identifier);
+        
     }
     
     protected void registerItems(RuntimeEngine runtime) {
@@ -75,7 +75,7 @@ public abstract class AbstractRuntimeManager implements RuntimeManager {
     @Override
     public void close() {
         environment.close();
-        activeSingletons.remove(identifier);
+        activeManagers.remove(identifier);
     }
 
     public RuntimeEnvironment getEnvironment() {

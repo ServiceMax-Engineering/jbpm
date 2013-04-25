@@ -32,12 +32,14 @@ import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.process.WorkItemHandler;
 import org.kie.api.runtime.process.WorkItemManager;
+import org.kie.api.task.model.I18NText;
+import org.kie.api.task.model.OrganizationalEntity;
+import org.kie.api.task.model.PeopleAssignments;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
 import org.kie.internal.task.api.model.ContentData;
-import org.kie.internal.task.api.model.I18NText;
-import org.kie.internal.task.api.model.OrganizationalEntity;
-import org.kie.internal.task.api.model.PeopleAssignments;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.TaskData;
+import org.kie.internal.task.api.model.InternalTask;
+import org.kie.internal.task.api.model.InternalTaskData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +66,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
     }
 
     protected Task createTaskBasedOnWorkItemParams(KieSession session, WorkItem workItem) {
-        Task task = new TaskImpl();
+        InternalTask task = new TaskImpl();
         String taskName = (String) workItem.getParameter("NodeName");
         if (taskName != null) {
             List<I18NText> names = new ArrayList<I18NText>();
@@ -91,7 +93,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
             }
         }
         task.setPriority(priority);
-        TaskData taskData = new TaskDataImpl();
+        InternalTaskData taskData = new TaskDataImpl();
         taskData.setWorkItemId(workItem.getId());
         taskData.setProcessInstanceId(workItem.getProcessInstanceId());
         if (session != null && session.getProcessInstance(workItem.getProcessInstanceId()) != null) {
@@ -139,7 +141,7 @@ public abstract class AbstractHTWorkItemHandler implements WorkItemHandler {
     
     protected boolean isAutoClaim(WorkItem workItem, Task task) {
         String swimlaneUser = (String) workItem.getParameter("SwimlaneActorId");
-        if (swimlaneUser != null  && !"".equals(swimlaneUser)) {
+        if (swimlaneUser != null  && !"".equals(swimlaneUser) && task.getTaskData().getStatus() == Status.Ready) {
             return true;
         }
         

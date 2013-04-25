@@ -21,11 +21,12 @@ import org.jboss.seam.transaction.Transactional;
 import org.jbpm.services.task.events.AfterTaskDelegatedEvent;
 import org.jbpm.services.task.events.BeforeTaskDelegatedEvent;
 import org.jbpm.services.task.exception.PermissionDeniedException;
+import org.kie.api.task.model.OrganizationalEntity;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.User;
 import org.kie.internal.command.Context;
-import org.kie.internal.task.api.model.OrganizationalEntity;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.User;
+import org.kie.internal.task.api.model.InternalTaskData;
 
 /**
 *Operation.Delegate 
@@ -45,7 +46,7 @@ import org.kie.internal.task.api.model.User;
             } ],
  */
 @Transactional
-public class DelegateTaskCommand extends TaskCommand {
+public class DelegateTaskCommand extends TaskCommand<Void> {
 
    
 
@@ -75,7 +76,7 @@ public class DelegateTaskCommand extends TaskCommand {
         if (potOwnerAllowed || adminAllowed ) {
             if (task.getTaskData().getStatus().equals(Status.Ready)) {
 
-                task.getTaskData().setStatus(Status.Ready);
+            	((InternalTaskData) task.getTaskData()).setStatus(Status.Ready);
                 if ( !task.getPeopleAssignments().getPotentialOwners().contains(targetEntity)) {
                     task.getPeopleAssignments().getPotentialOwners().add(targetEntity);
                 }
@@ -85,7 +86,7 @@ public class DelegateTaskCommand extends TaskCommand {
         if (ownerAllowed || adminAllowed) {
             if (task.getTaskData().getStatus().equals(Status.Reserved)
                     || task.getTaskData().getStatus().equals(Status.InProgress)) {
-                task.getTaskData().setStatus(Status.Ready);
+            	((InternalTaskData) task.getTaskData()).setStatus(Status.Ready);
                 if ( !task.getPeopleAssignments().getPotentialOwners().contains(targetEntity)) {
                     task.getPeopleAssignments().getPotentialOwners().add(targetEntity);
                 }

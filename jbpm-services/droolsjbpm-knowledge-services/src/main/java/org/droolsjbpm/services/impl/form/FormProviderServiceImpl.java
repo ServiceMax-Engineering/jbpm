@@ -29,6 +29,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.droolsjbpm.services.api.FormProviderService;
+import org.droolsjbpm.services.api.RuntimeDataService;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
 import org.droolsjbpm.services.impl.model.ProcessDesc;
 import org.jbpm.form.builder.services.model.InputData;
@@ -36,17 +37,16 @@ import org.jbpm.form.builder.services.model.OutputData;
 import org.jbpm.services.task.utils.ContentMarshallerHelper;
 import org.jbpm.shared.services.api.FileException;
 import org.jbpm.shared.services.api.FileService;
+import org.kie.api.task.model.Content;
+import org.kie.api.task.model.I18NText;
+import org.kie.api.task.model.Task;
 import org.kie.commons.java.nio.file.Path;
 import org.kie.internal.task.api.TaskContentService;
 import org.kie.internal.task.api.TaskInstanceService;
 import org.kie.internal.task.api.TaskQueryService;
-import org.kie.internal.task.api.model.Content;
-import org.kie.internal.task.api.model.I18NText;
-import org.kie.internal.task.api.model.Task;
 
 import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
-import org.droolsjbpm.services.api.RuntimeDataService;
 
 @ApplicationScoped
 public class FormProviderServiceImpl implements FormProviderService {
@@ -78,9 +78,12 @@ public class FormProviderServiceImpl implements FormProviderService {
     public String getFormDisplayProcess(String processId) {
         String processAssetPath = dataService.getProcessById(processId).getOriginalPath();
         Iterable<Path> availableForms = null;
+        Path processPath = fileService.getPath(processAssetPath);
+        Path formsPath = fileService.getPath(processPath.getParent().toUri().toString() + "/forms/");
         try {
-            if(fileService.exists(processAssetPath.substring(1, processAssetPath.lastIndexOf('/'))+"/forms/")){
-                availableForms = fileService.loadFilesByType(processAssetPath.substring(1, processAssetPath.lastIndexOf('/'))+"/forms/", "ftl");
+           
+            if(fileService.exists(formsPath)){
+                availableForms = fileService.loadFilesByType(formsPath, "ftl");
             }
         } catch (FileException ex) {
             Logger.getLogger(FormProviderServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
@@ -96,11 +99,21 @@ public class FormProviderServiceImpl implements FormProviderService {
         InputStream template = null;
         try {
             if (selectedForm == null) {
-
-                template = new ByteArrayInputStream(fileService.loadFile("globals/forms/DefaultProcess.ftl"));
+                String rootPath = processPath.getRoot().toUri().toString();
+                if (!rootPath.endsWith(processPath.getFileSystem().getSeparator())) {
+                    rootPath +=processPath.getFileSystem().getSeparator();
+                }
+                
+                Path defaultFormPath = fileService.getPath(rootPath +"globals/forms/DefaultProcess.ftl"); 
+                if (fileService.exists(defaultFormPath)) {
+                    template = new ByteArrayInputStream(fileService.loadFile(defaultFormPath));
+                } else {
+                    // load from classpath
+                    template = this.getClass().getResourceAsStream("/forms/DefaultProcess.ftl");
+                }
 
             } else {
-
+                
                 template = new ByteArrayInputStream(fileService.loadFile(selectedForm));
 
             }
@@ -110,7 +123,7 @@ public class FormProviderServiceImpl implements FormProviderService {
         
         String processString = "";
         try{
-            processString = new String(fileService.loadFile(processAssetPath));
+            processString = new String(fileService.loadFile(processPath));
         }catch(Exception e){
         
         }
@@ -132,6 +145,7 @@ public class FormProviderServiceImpl implements FormProviderService {
         Task task = queryService.getTaskInstanceById(taskId);
         Map<String, Object> renderContext = new HashMap<String, Object>();
         String processAssetPath = "";
+        Path processPath = null;
         if(task.getTaskData().getProcessId() != null && !task.getTaskData().getProcessId().equals("") ){
             processAssetPath = dataService.getProcessById(task.getTaskData().getProcessId()).getOriginalPath();
         }
@@ -167,8 +181,10 @@ public class FormProviderServiceImpl implements FormProviderService {
         Iterable<Path> availableForms = null;
         try {
             if(processAssetPath != null && !processAssetPath.equals("")){
-                if(fileService.exists(processAssetPath.substring(1, processAssetPath.lastIndexOf('/'))+"/forms/")){
-                    availableForms = fileService.loadFilesByType(processAssetPath.substring(1, processAssetPath.lastIndexOf('/'))+"/forms/", "ftl");
+                processPath = fileService.getPath(processAssetPath);
+                Path formsPath = fileService.getPath(processPath.getParent().toUri().toString() + "/forms/");
+                if(fileService.exists(formsPath)){
+                    availableForms = fileService.loadFilesByType(formsPath, "ftl");
                 }
             }
         } catch (FileException ex) {
@@ -185,9 +201,19 @@ public class FormProviderServiceImpl implements FormProviderService {
         InputStream template = null;
         try {
             if (selectedForm == null) {
+                String rootPath = processPath.getRoot().toUri().toString();
+                if (!rootPath.endsWith(processPath.getFileSystem().getSeparator())) {
+                    rootPath +=processPath.getFileSystem().getSeparator();
+                }
                 // since we use default task that lists all inputs there needs to be complete map available
                 renderContext.put("inputs", input);
-                template = new ByteArrayInputStream(fileService.loadFile("globals/forms/DefaultTask.ftl"));
+                Path defaultFormPath = fileService.getPath(rootPath +"globals/forms/DefaultTask.ftl");
+                if (fileService.exists(defaultFormPath)) {
+                    template = new ByteArrayInputStream(fileService.loadFile(defaultFormPath));
+                } else {
+                    // load from classpath
+                    template = this.getClass().getResourceAsStream("/forms/DefaultTask.ftl");
+                }
 
             } else {
 

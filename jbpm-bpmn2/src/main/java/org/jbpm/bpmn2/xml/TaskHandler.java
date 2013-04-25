@@ -29,7 +29,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.drools.core.process.core.Work;
 import org.drools.core.process.core.datatype.DataType;
-import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.core.process.core.impl.WorkImpl;
 import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.ItemDefinition;
@@ -300,14 +299,18 @@ public class TaskHandler extends AbstractNodeHandler {
 		nodeContainer.addNode(node);
 		return node;
 	}
-
 	protected void handleForEachNode(final Node node, final Element element, final String uri, 
             final String localName, final ExtensibleXmlParser parser) throws SAXException {
     	ForEachNode forEachNode = (ForEachNode) node;
     	org.w3c.dom.Node xmlNode = element.getFirstChild();
+    	
         while (xmlNode != null) {
             String nodeName = xmlNode.getNodeName();
-            if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
+            if ("dataInputAssociation".equals(nodeName)) {
+                readDataInputAssociation(xmlNode, inputAssociation);
+            } else if ("dataOutputAssociation".equals(nodeName)) {
+                readDataOutputAssociation(xmlNode, outputAssociation);
+            } else if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
             	readMultiInstanceLoopCharacteristics(xmlNode, forEachNode, parser);
             }
             xmlNode = xmlNode.getNextSibling();

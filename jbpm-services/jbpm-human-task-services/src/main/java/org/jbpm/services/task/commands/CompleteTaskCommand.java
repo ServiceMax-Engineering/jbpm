@@ -23,10 +23,11 @@ import org.jboss.seam.transaction.Transactional;
 import org.jbpm.services.task.events.AfterTaskCompletedEvent;
 import org.jbpm.services.task.events.BeforeTaskCompletedEvent;
 import org.jbpm.services.task.exception.PermissionDeniedException;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.User;
 import org.kie.internal.command.Context;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.User;
+import org.kie.internal.task.api.model.InternalTaskData;
 
 
 /**
@@ -37,7 +38,7 @@ import org.kie.internal.task.api.model.User;
  */
 
 @Transactional
-public class CompleteTaskCommand<Void> extends TaskCommand {
+public class CompleteTaskCommand extends TaskCommand<Void> {
 
     private Map<String, Object> data;
 
@@ -60,7 +61,7 @@ public class CompleteTaskCommand<Void> extends TaskCommand {
         }
         if (task.getTaskData().getStatus().equals(Status.InProgress)) {
             // CHeck for potential Owner allowed (decorator?)
-            task.getTaskData().setStatus(Status.Completed);
+            ((InternalTaskData) task.getTaskData()).setStatus(Status.Completed);
         }
 
         if (data != null) {

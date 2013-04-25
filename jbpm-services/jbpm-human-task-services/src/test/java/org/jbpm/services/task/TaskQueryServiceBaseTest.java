@@ -16,12 +16,12 @@
 
 package org.jbpm.services.task;
 
-
-
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -30,9 +30,9 @@ import org.jbpm.services.task.impl.factories.TaskFactory;
 import org.jbpm.services.task.impl.model.TaskImpl;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.kie.internal.task.api.model.Status;
-import org.kie.internal.task.api.model.Task;
-import org.kie.internal.task.api.model.TaskSummary;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.TaskSummary;
 
 public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest {
     
@@ -450,7 +450,7 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
     
     @Test
     public void testGetTasksOwnedWithUserNoTask() {
-        List<TaskSummary> tasks = taskService.getTasksOwned("Bobba Fet");
+        List<TaskSummary> tasks = taskService.getTasksOwned("Bobba Fet", "en-UK");
         assertEquals(0, tasks.size());
     }
     
@@ -462,7 +462,7 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
         str += "names = [ new I18NText( 'en-UK', 'This is my task name')] })";
         TaskImpl task = TaskFactory.evalTask(new StringReader(str));
         taskService.addTask(task, new HashMap<String, Object>());
-        List<TaskSummary> tasks = taskService.getTasksOwned("Bobba Fet");
+        List<TaskSummary> tasks = taskService.getTasksOwned("Bobba Fet", "en-UK");
         assertEquals(1, tasks.size());
         assertEquals("Bobba Fet", tasks.get(0).getActualOwner().getId());
     }
@@ -475,7 +475,7 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Created);
         statuses.add(Status.Ready);
-        List<TaskSummary> tasks = taskService.getTasksOwned("Darth Vader", statuses, "en-UK");
+        List<TaskSummary> tasks = taskService.getTasksOwnedByStatus("Darth Vader", statuses, "en-UK");
         assertEquals(0, tasks.size());
     }
     
@@ -489,7 +489,7 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
         taskService.addTask(task, new HashMap<String, Object>());
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Reserved);
-        List<TaskSummary> tasks = taskService.getTasksOwned("Bobba Fet", statuses, "en-UK");
+        List<TaskSummary> tasks = taskService.getTasksOwnedByStatus("Bobba Fet", statuses, "en-UK");
         assertEquals(1, tasks.size());
         assertEquals("Bobba Fet", tasks.get(0).getActualOwner().getId());
     }
@@ -504,7 +504,7 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
         taskService.addTask(task, new HashMap<String, Object>());
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Completed);
-        List<TaskSummary> tasks = taskService.getTasksOwned("Bobba Fet", statuses, "en-UK");
+        List<TaskSummary> tasks = taskService.getTasksOwnedByStatus("Bobba Fet", statuses, "en-UK");
         assertEquals(0, tasks.size());
     }
     
@@ -679,7 +679,7 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
         
         List<Status> statuses = new ArrayList<Status>();      
         statuses.add(Status.Reserved);
-        List<TaskSummary> tasks = taskService.getTasksByStatusByProcessId(99L, statuses, "en-UK");
+        List<TaskSummary> tasks = taskService.getTasksByStatusByProcessInstanceId(99L, statuses, "en-UK");
         assertEquals(1, tasks.size());
     }
     
@@ -700,7 +700,69 @@ public abstract class TaskQueryServiceBaseTest extends HumanTaskServicesBaseTest
         
         List<Status> statuses = new ArrayList<Status>();      
         statuses.add(Status.Reserved);
-        List<TaskSummary> tasks = taskService.getTasksByStatusByProcessIdByTaskName(99L, statuses, "This is my task name", "en-UK");
+        List<TaskSummary> tasks = taskService.getTasksByStatusByProcessInstanceIdByTaskName(99L, statuses, "This is my task name", "en-UK");
         assertEquals(1, tasks.size());
+    }
+    
+    @Test
+    public void testGetTasksOwnedByExpirationDateBeforeSpecifiedDateNoTask() {
+        List<Status> statuses = new ArrayList<Status>();   
+        statuses.addAll(Arrays.asList(new Status[] {Status.Created, Status.Ready, Status.Reserved, Status.InProgress}));
+        List<TaskSummary> tasks = taskService.getTasksOwnedByExpirationDateBeforeSpecifiedDate("Bobba Fet", statuses, new Date(100000005));
+        assertEquals("Expecting empty list when no task available!", 0, tasks.size());
+    }
+    
+    @Test
+    public void testGetTasksOwnedByExpirationDateBeforeSpecifiedDate() {
+        // should be included in result
+        String str = "(with (new Task()) { priority = 55, taskData = (with( new TaskData()) {" ;
+        str += "expirationTime = new java.text.SimpleDateFormat(\"yyyy-MM-dd\").parse(\"2011-10-15\") } ), ";
+        str += "peopleAssignments = (with ( new PeopleAssignments() ) { potentialOwners = [new User('Bobba Fet')], }),";
+        str += "names = [ new I18NText( 'en-UK', 'This is my task name')] })";
+        TaskImpl task = TaskFactory.evalTask(new StringReader(str));
+        taskService.addTask(task, new HashMap<String, Object>());
+        
+        // should be included in result
+        str = "(with (new Task()) { priority = 55, taskData = (with( new TaskData()) {";
+        str += "expirationTime = new java.text.SimpleDateFormat(\"yyyy-MM-dd\").parse(\"2013-04-15\") } ), ";
+        str += "peopleAssignments = (with ( new PeopleAssignments() ) { potentialOwners = [new User('Bobba Fet')], }),";
+        str += "names = [ new I18NText( 'en-UK', 'This is my task name')] })";
+        task = TaskFactory.evalTask(new StringReader(str));
+        taskService.addTask(task, new HashMap<String, Object>());
+        
+        // should not be included in result -> date is not before, it equals
+        str = "(with (new Task()) { priority = 55, taskData = (with( new TaskData()) {";
+        str += "expirationTime = new java.text.SimpleDateFormat(\"yyyy-MM-dd\").parse(\"2013-04-16\") } ), ";
+        str += "peopleAssignments = (with ( new PeopleAssignments() ) { potentialOwners = [new User('Bobba Fet')], }),";
+        str += "names = [ new I18NText( 'en-UK', 'This is my task name')] })";
+        task = TaskFactory.evalTask(new StringReader(str));
+        taskService.addTask(task, new HashMap<String, Object>());
+        
+        // should not be included in result -> date is after not before
+        str = "(with (new Task()) { priority = 55, taskData = (with( new TaskData()) {";
+        str += "expirationTime = new java.text.SimpleDateFormat(\"yyyy-MM-dd\").parse(\"2013-08-16\") } ), ";
+        str += "peopleAssignments = (with ( new PeopleAssignments() ) { potentialOwners = [new User('Bobba Fet')], }),";
+        str += "names = [ new I18NText( 'en-UK', 'This is my task name')] })";
+        task = TaskFactory.evalTask(new StringReader(str));
+        taskService.addTask(task, new HashMap<String, Object>());
+        
+        // should not be included in result -> userId is different
+        str = "(with (new Task()) { priority = 55, taskData = (with( new TaskData()) {";
+        str += "expirationTime = new java.text.SimpleDateFormat(\"yyyy-MM-dd\").parse(\"2013-01-15\") } ), ";
+        str += "peopleAssignments = (with ( new PeopleAssignments() ) { potentialOwners = [new User('Darth Vader')], }),";
+        str += "names = [ new I18NText( 'en-UK', 'This is my task name')] })";
+        task = TaskFactory.evalTask(new StringReader(str));
+        taskService.addTask(task, new HashMap<String, Object>());
+        
+        Date dateSpecified = createDate("2013-04-16");
+        List<Status> statuses = new ArrayList<Status>();
+        statuses.addAll(Arrays.asList(new Status[] {Status.Created, Status.Ready, Status.Reserved, Status.InProgress}));
+        List<TaskSummary> tasks = taskService.getTasksOwnedByExpirationDateBeforeSpecifiedDate("Bobba Fet", statuses, dateSpecified);
+        assertEquals(2, tasks.size());
+        for(TaskSummary taskSummary : tasks) {
+            assertTrue("Expected user 'Bobba Fet'!", taskSummary.getActualOwner().toString().contains("Bobba Fet"));
+            // the expiration date should be before the specified date
+            assertTrue("Expiration date needs to be before the specified date!", taskSummary.getExpirationTime().compareTo(dateSpecified) < 0);
+        }
     }
 }
