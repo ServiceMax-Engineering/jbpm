@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1366881981779
-Build-Jdk: 1.7.0_07
-Build-Timestamp: Thu, 25 Apr 2013 14:55:38 +0530
-Built-By: anurag
+Bnd-LastModified: 1382711143151
+Build-Jdk: 1.7.0_25
+Build-Timestamp: Fri, 25 Oct 2013 10:25:13 -0400
+Built-By: dcarver
 Bundle-Description: jBPM JPA Persistence
 Bundle-DocURL: http://www.jboss.org/
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
@@ -10,14 +10,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: JPA Persistence
 Bundle-SymbolicName: org.jbpm.persistence.jpa;singleton:=true
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20130425-1455
+Bundle-Version: 6.0.0.20131025-1025
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.persistence.timer;version="6.0.0.20130425-1455"
- ,org.jbpm.persistence.processinstance;version="6.0.0.20130425-1455",org
- .jbpm.persistence.jta;version="6.0.0.20130425-1455",org.jbpm.persistenc
- e;version="6.0.0.20130425-1455",org.jbpm.persistence.correlation;versio
- n="6.0.0.20130425-1455"
+Export-Package: org.jbpm.persistence.timer;version="6.0.0.20131025-1025"
+ ,org.jbpm.persistence.processinstance;version="6.0.0.20131025-1025",org
+ .jbpm.persistence.jta;version="6.0.0.20131025-1025",org.jbpm.persistenc
+ e;version="6.0.0.20131025-1025",org.jbpm.persistence.correlation;versio
+ n="6.0.0.20131025-1025"
 Implementation-Title: jBPM :: JPA Persistence
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-persistence-jpa/
 Implementation-Vendor: JBoss by Red Hat
@@ -41,16 +41,16 @@ Import-Package: com.google.protobuf,javax.naming,javax.persistence,javax
 Include-Resource: META-INF/JBPMorm.xml=src/main/resources/META-INF/JBPMo
  rm.xml
 Java-Vendor: Oracle Corporation
-Java-Version: 1.7.0_07
-Os-Arch: x86_64
-Os-Name: Mac OS X
-Os-Version: 10.6.8
+Java-Version: 1.7.0_25
+Os-Arch: i386
+Os-Name: Linux
+Os-Version: 3.5.0-17-generic
 Private-Package: org.jbpm.persistence;org.jbpm.persistence.correlation;o
  rg.jbpm.persistence.jta;org.jbpm.persistence.processinstance;org.jbpm.p
  ersistence.timer;-split-package:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-persiste
  nce-jpa
-Scm-Revision: 70389811a2599c0622f3a44df9a125bfb7c4f6c8
+Scm-Revision: 1bdfc0cfb019f96c30644c27afd40c1c7a61ddc8
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-persistence-jpa
 Specification-Title: jBPM :: JPA Persistence
 Specification-Vendor: JBoss by Red Hat

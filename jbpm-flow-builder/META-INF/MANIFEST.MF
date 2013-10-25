@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1366881971369
-Build-Jdk: 1.7.0_07
-Build-Timestamp: Thu, 25 Apr 2013 14:55:38 +0530
-Built-By: anurag
+Bnd-LastModified: 1382711127383
+Build-Jdk: 1.7.0_25
+Build-Timestamp: Fri, 25 Oct 2013 10:25:13 -0400
+Built-By: dcarver
 Bundle-Activator: org.jbpm.osgi.flow.compiler.Activator
 Bundle-Description: jBPM Flow Builder
 Bundle-DocURL: http://www.jboss.org/
@@ -11,17 +11,17 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: Flow Builder
 Bundle-SymbolicName: org.jbpm.flow.builder;singleton:=true
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20130425-1455
+Bundle-Version: 6.0.0.20131025-1025
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.compiler;version="6.0.0.20130425-1455",org.jbpm
- .compiler.xml;version="6.0.0.20130425-1455",org.jbpm.compiler.xml.proce
- sses;version="6.0.0.20130425-1455",org.jbpm.osgi.flow.compiler;version=
- "6.0.0.20130425-1455",org.jbpm.process.builder;version="6.0.0.20130425-
- 1455",org.jbpm.process.builder.dialect;version="6.0.0.20130425-1455",or
- g.jbpm.process.builder.dialect.java;version="6.0.0.20130425-1455",org.j
- bpm.process.builder.dialect.mvel;version="6.0.0.20130425-1455",org.jbpm
- .process.workitem;version="6.0.0.20130425-1455"
+Export-Package: org.jbpm.compiler;version="6.0.0.20131025-1025",org.jbpm
+ .compiler.xml;version="6.0.0.20131025-1025",org.jbpm.compiler.xml.proce
+ sses;version="6.0.0.20131025-1025",org.jbpm.osgi.flow.compiler;version=
+ "6.0.0.20131025-1025",org.jbpm.process.builder;version="6.0.0.20131025-
+ 1025",org.jbpm.process.builder.dialect;version="6.0.0.20131025-1025",or
+ g.jbpm.process.builder.dialect.java;version="6.0.0.20131025-1025",org.j
+ bpm.process.builder.dialect.mvel;version="6.0.0.20131025-1025",org.jbpm
+ .process.workitem;version="6.0.0.20131025-1025"
 Implementation-Title: jBPM :: Flow Builder
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-flow-builder/
 Implementation-Vendor: JBoss by Red Hat
@@ -51,10 +51,10 @@ Include-Resource: org/jbpm/process/builder/dialect/java/javaInvokers.mve
  .mvel,org/jbpm/process/builder/dialect/java/javaRule.mvel=src/main/reso
  urces/org/jbpm/process/builder/dialect/java/javaRule.mvel
 Java-Vendor: Oracle Corporation
-Java-Version: 1.7.0_07
-Os-Arch: x86_64
-Os-Name: Mac OS X
-Os-Version: 10.6.8
+Java-Version: 1.7.0_25
+Os-Arch: i386
+Os-Name: Linux
+Os-Version: 3.5.0-17-generic
 Private-Package: org.jbpm.compiler;org.jbpm.compiler.xml;org.jbpm.compil
  er.xml.processes;org.jbpm.osgi.flow.compiler;org.jbpm.process.builder;o
  rg.jbpm.process.builder.dialect;org.jbpm.process.builder.dialect.java;o
@@ -62,7 +62,7 @@ Private-Package: org.jbpm.compiler;org.jbpm.compiler.xml;org.jbpm.compil
  ackage:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-flow-bui
  lder
-Scm-Revision: 70389811a2599c0622f3a44df9a125bfb7c4f6c8
+Scm-Revision: 1bdfc0cfb019f96c30644c27afd40c1c7a61ddc8
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-flow-builder
 Specification-Title: jBPM :: Flow Builder
 Specification-Vendor: JBoss by Red Hat

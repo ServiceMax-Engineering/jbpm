@@ -63,6 +63,20 @@
         <updatePolicy>daily</updatePolicy>
       </snapshots>
     </repository>
+    <repository>
+       <id>intalio.org</id>
+       <name>Intalio.org Maven2 repository</name>
+       <url>http://www.intalio.org/public/maven2/</url>
+       <layout>default</layout>
+       <releases>
+         <enabled>true</enabled>
+         <updatePolicy>always</updatePolicy>
+       </releases>
+       <snapshots>
+         <enabled>true</enabled>
+         <updatePolicy>always</updatePolicy>
+       </snapshots>
+    </repository>
   </repositories>
 
   <scm>
@@ -96,6 +110,11 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.9</version>
+      </dependency>
+      <dependency>
+         <groupId>jdom</groupId>
+         <artifactId>jdom</artifactId>
+         <version>1.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

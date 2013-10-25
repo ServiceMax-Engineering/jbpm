@@ -109,6 +109,7 @@
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-core</artifactId>
+      <version>2.2.10.Final</version>
       <scope>test</scope>
     </dependency>
     <dependency>
