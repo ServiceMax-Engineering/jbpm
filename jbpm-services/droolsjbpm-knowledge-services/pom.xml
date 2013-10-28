@@ -27,15 +27,18 @@
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-bam</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-human-task-services</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-shared-services</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
@@ -44,10 +47,12 @@
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-human-task-workitems</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>form-services</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- kie -->

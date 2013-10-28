@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1366881996839
-Build-Jdk: 1.7.0_07
-Build-Timestamp: Thu, 25 Apr 2013 14:55:38 +0530
-Built-By: anurag
+Bnd-LastModified: 1382711153728
+Build-Jdk: 1.7.0_25
+Build-Timestamp: Fri, 25 Oct 2013 10:25:13 -0400
+Built-By: dcarver
 Bundle-Activator: org.jbpm.osgi.bpmn2.Activator
 Bundle-Description: jBPM BPMN2
 Bundle-DocURL: http://www.jboss.org/
@@ -11,15 +11,15 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: BPMN2
 Bundle-SymbolicName: org.jbpm.bpmn2
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20130425-1455
+Bundle-Version: 6.0.0.20131025-1025
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.bpmn2;version="6.0.0.20130425-1455",org.jbpm.bp
- mn2.core;version="6.0.0.20130425-1455",org.jbpm.bpmn2.handler;version="
- 6.0.0.20130425-1455",org.jbpm.bpmn2.xml;version="6.0.0.20130425-1455",o
- rg.jbpm.bpmn2.xml.di;version="6.0.0.20130425-1455",org.jbpm.bpmn2.xpath
- ;version="6.0.0.20130425-1455",org.jbpm.osgi.bpmn2;version="6.0.0.20130
- 425-1455"
+Export-Package: org.jbpm.bpmn2;version="6.0.0.20131025-1025",org.jbpm.bp
+ mn2.core;version="6.0.0.20131025-1025",org.jbpm.bpmn2.handler;version="
+ 6.0.0.20131025-1025",org.jbpm.bpmn2.xml;version="6.0.0.20131025-1025",o
+ rg.jbpm.bpmn2.xml.di;version="6.0.0.20131025-1025",org.jbpm.bpmn2.xpath
+ ;version="6.0.0.20131025-1025",org.jbpm.osgi.bpmn2;version="6.0.0.20131
+ 025-1025"
 Implementation-Title: jBPM :: BPMN2
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-bpmn2/
 Implementation-Vendor: JBoss by Red Hat
@@ -42,27 +42,27 @@ Import-Package: javax.xml.namespace,javax.xml.parsers,javax.xml.transfor
  api,org.kie.api.definition.process,org.kie.api.runtime,org.kie.api.runt
  ime.process,org.mvel2,org.osgi.framework,org.slf4j,org.w3c.dom,org.xml.
  sax
-Include-Resource: META-INF/BPMN20.xsd=src/main/resources/META-INF/BPMN20
- .xsd,META-INF/BPMN2SemanticModule.conf=src/main/resources/META-INF/BPMN
- 2SemanticModule.conf,META-INF/BPMNDI.xsd=src/main/resources/META-INF/BP
- MNDI.xsd,META-INF/BPMNWorkDefinitions.conf=src/main/resources/META-INF/
- BPMNWorkDefinitions.conf,META-INF/bpsim.xsd=src/main/resources/META-INF
- /bpsim.xsd,META-INF/DC.xsd=src/main/resources/META-INF/DC.xsd,META-INF/
- DI.xsd=src/main/resources/META-INF/DI.xsd,META-INF/DiagramDefinition.xs
- d=src/main/resources/META-INF/DiagramDefinition.xsd,META-INF/DiagramInt
- erchange.xsd=src/main/resources/META-INF/DiagramInterchange.xsd,META-IN
- F/drools.xsd=src/main/resources/META-INF/drools.xsd,META-INF/Semantic.x
- sd=src/main/resources/META-INF/Semantic.xsd
+Include-Resource: META-INF/bpsim.xsd=src/main/resources/META-INF/bpsim.x
+ sd,META-INF/DI.xsd=src/main/resources/META-INF/DI.xsd,META-INF/Semantic
+ .xsd=src/main/resources/META-INF/Semantic.xsd,META-INF/drools.xsd=src/m
+ ain/resources/META-INF/drools.xsd,META-INF/BPMNWorkDefinitions.conf=src
+ /main/resources/META-INF/BPMNWorkDefinitions.conf,META-INF/DiagramInter
+ change.xsd=src/main/resources/META-INF/DiagramInterchange.xsd,META-INF/
+ BPMN2SemanticModule.conf=src/main/resources/META-INF/BPMN2SemanticModul
+ e.conf,META-INF/BPMN20.xsd=src/main/resources/META-INF/BPMN20.xsd,META-
+ INF/BPMNDI.xsd=src/main/resources/META-INF/BPMNDI.xsd,META-INF/DC.xsd=s
+ rc/main/resources/META-INF/DC.xsd,META-INF/DiagramDefinition.xsd=src/ma
+ in/resources/META-INF/DiagramDefinition.xsd
 Java-Vendor: Oracle Corporation
-Java-Version: 1.7.0_07
-Os-Arch: x86_64
-Os-Name: Mac OS X
-Os-Version: 10.6.8
+Java-Version: 1.7.0_25
+Os-Arch: i386
+Os-Name: Linux
+Os-Version: 3.5.0-17-generic
 Private-Package: org.jbpm.bpmn2;org.jbpm.bpmn2.core;org.jbpm.bpmn2.handl
  er;org.jbpm.bpmn2.xml;org.jbpm.bpmn2.xml.di;org.jbpm.bpmn2.xpath;org.jb
  pm.osgi.bpmn2;-split-package:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-bpmn2
-Scm-Revision: 70389811a2599c0622f3a44df9a125bfb7c4f6c8
+Scm-Revision: 1bdfc0cfb019f96c30644c27afd40c1c7a61ddc8
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-bpmn2
 Specification-Title: jBPM :: BPMN2
 Specification-Vendor: JBoss by Red Hat

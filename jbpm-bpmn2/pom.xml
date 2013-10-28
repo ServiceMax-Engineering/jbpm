@@ -65,6 +65,7 @@
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-bam</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1366881959036
-Build-Jdk: 1.7.0_07
-Build-Timestamp: Thu, 25 Apr 2013 14:55:38 +0530
-Built-By: anurag
+Bnd-LastModified: 1382711118073
+Build-Jdk: 1.7.0_25
+Build-Timestamp: Fri, 25 Oct 2013 10:25:13 -0400
+Built-By: dcarver
 Bundle-Activator: org.jbpm.osgi.flow.core.Activator
 Bundle-Description: jBPM Flow
 Bundle-DocURL: http://www.jboss.org/
@@ -11,46 +11,46 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: Flow
 Bundle-SymbolicName: org.jbpm.flow.core;singleton:=true
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20130425-1455
+Bundle-Version: 6.0.0.20131025-1025
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.marshalling.impl;version="6.0.0.20130425-1455",
- org.jbpm.marshalling;version="6.0.0.20130425-1455",org.jbpm.process.ins
- tance.event;version="6.0.0.20130425-1455",org.jbpm.process.core;version
- ="6.0.0.20130425-1455",org.jbpm.process.instance.impl.demo;version="6.0
- .0.20130425-1455",org.jbpm.process.instance;version="6.0.0.20130425-145
- 5",org.jbpm.process.core.event;version="6.0.0.20130425-1455",org.jbpm.p
- rocess.core.timer.impl;version="6.0.0.20130425-1455",org.jbpm.process.i
- nstance.context.variable;version="6.0.0.20130425-1455",org.jbpm.process
- .instance.context.exclusive;version="6.0.0.20130425-1455",org.jbpm.proc
- ess.core.context.exception;version="6.0.0.20130425-1455",org.jbpm.proce
- ss;version="6.0.0.20130425-1455",org.jbpm.process.core.context.exclusiv
- e;version="6.0.0.20130425-1455",org.jbpm.process.instance.impl.humantas
- k;version="6.0.0.20130425-1455",org.jbpm.process.instance.event.listene
- rs;version="6.0.0.20130425-1455",org.jbpm.process.instance.context;vers
- ion="6.0.0.20130425-1455",org.jbpm.process.core.validation;version="6.0
- .0.20130425-1455",org.jbpm.process.core.validation.impl;version="6.0.0.
- 20130425-1455",org.jbpm.process.instance.context.exception;version="6.0
- .0.20130425-1455",org.jbpm.process.core.context.variable;version="6.0.0
- .20130425-1455",org.jbpm.process.instance.impl.factory;version="6.0.0.2
- 0130425-1455",org.jbpm.process.core.context.swimlane;version="6.0.0.201
- 30425-1455",org.jbpm.process.core.context;version="6.0.0.20130425-1455"
- ,org.jbpm.process.instance.impl;version="6.0.0.20130425-1455",org.jbpm.
- process.instance.context.swimlane;version="6.0.0.20130425-1455",org.jbp
- m.process.core.timer;version="6.0.0.20130425-1455",org.jbpm.process.ins
- tance.timer;version="6.0.0.20130425-1455",org.jbpm.process.core.impl;ve
- rsion="6.0.0.20130425-1455",org.jbpm.ruleflow.core.validation;version="
- 6.0.0.20130425-1455",org.jbpm.ruleflow.instance;version="6.0.0.20130425
- -1455",org.jbpm.ruleflow.core;version="6.0.0.20130425-1455",org.jbpm.ru
- leflow.core.factory;version="6.0.0.20130425-1455",org.jbpm.workflow.ins
- tance.impl;version="6.0.0.20130425-1455",org.jbpm.workflow.core.impl;ve
- rsion="6.0.0.20130425-1455",org.jbpm.workflow.instance.impl.factory;ver
- sion="6.0.0.20130425-1455",org.jbpm.workflow.core.node;version="6.0.0.2
- 0130425-1455",org.jbpm.workflow.instance;version="6.0.0.20130425-1455",
- org.jbpm.workflow.instance.node;version="6.0.0.20130425-1455",org.jbpm.
- workflow.core;version="6.0.0.20130425-1455",org.jbpm.workflow.instance.
- context;version="6.0.0.20130425-1455",org.jbpm.osgi.flow.core;version="
- 6.0.0.20130425-1455"
+Export-Package: org.jbpm.marshalling.impl;version="6.0.0.20131025-1025",
+ org.jbpm.marshalling;version="6.0.0.20131025-1025",org.jbpm.process.ins
+ tance.event;version="6.0.0.20131025-1025",org.jbpm.process.core;version
+ ="6.0.0.20131025-1025",org.jbpm.process.instance.impl.demo;version="6.0
+ .0.20131025-1025",org.jbpm.process.instance;version="6.0.0.20131025-102
+ 5",org.jbpm.process.core.event;version="6.0.0.20131025-1025",org.jbpm.p
+ rocess.core.timer.impl;version="6.0.0.20131025-1025",org.jbpm.process.i
+ nstance.context.variable;version="6.0.0.20131025-1025",org.jbpm.process
+ .instance.context.exclusive;version="6.0.0.20131025-1025",org.jbpm.proc
+ ess.core.context.exception;version="6.0.0.20131025-1025",org.jbpm.proce
+ ss;version="6.0.0.20131025-1025",org.jbpm.process.core.context.exclusiv
+ e;version="6.0.0.20131025-1025",org.jbpm.process.instance.impl.humantas
+ k;version="6.0.0.20131025-1025",org.jbpm.process.instance.event.listene
+ rs;version="6.0.0.20131025-1025",org.jbpm.process.instance.context;vers
+ ion="6.0.0.20131025-1025",org.jbpm.process.core.validation;version="6.0
+ .0.20131025-1025",org.jbpm.process.core.validation.impl;version="6.0.0.
+ 20131025-1025",org.jbpm.process.instance.context.exception;version="6.0
+ .0.20131025-1025",org.jbpm.process.core.context.variable;version="6.0.0
+ .20131025-1025",org.jbpm.process.instance.impl.factory;version="6.0.0.2
+ 0131025-1025",org.jbpm.process.core.context.swimlane;version="6.0.0.201
+ 31025-1025",org.jbpm.process.core.context;version="6.0.0.20131025-1025"
+ ,org.jbpm.process.instance.impl;version="6.0.0.20131025-1025",org.jbpm.
+ process.instance.context.swimlane;version="6.0.0.20131025-1025",org.jbp
+ m.process.core.timer;version="6.0.0.20131025-1025",org.jbpm.process.ins
+ tance.timer;version="6.0.0.20131025-1025",org.jbpm.process.core.impl;ve
+ rsion="6.0.0.20131025-1025",org.jbpm.ruleflow.core.validation;version="
+ 6.0.0.20131025-1025",org.jbpm.ruleflow.instance;version="6.0.0.20131025
+ -1025",org.jbpm.ruleflow.core;version="6.0.0.20131025-1025",org.jbpm.ru
+ leflow.core.factory;version="6.0.0.20131025-1025",org.jbpm.workflow.ins
+ tance.impl;version="6.0.0.20131025-1025",org.jbpm.workflow.core.impl;ve
+ rsion="6.0.0.20131025-1025",org.jbpm.workflow.instance.impl.factory;ver
+ sion="6.0.0.20131025-1025",org.jbpm.workflow.core.node;version="6.0.0.2
+ 0131025-1025",org.jbpm.workflow.instance;version="6.0.0.20131025-1025",
+ org.jbpm.workflow.instance.node;version="6.0.0.20131025-1025",org.jbpm.
+ workflow.core;version="6.0.0.20131025-1025",org.jbpm.workflow.instance.
+ context;version="6.0.0.20131025-1025",org.jbpm.osgi.flow.core;version="
+ 6.0.0.20131025-1025"
 Implementation-Title: jBPM :: Flow
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-flow/
 Implementation-Vendor: JBoss by Red Hat
@@ -85,12 +85,12 @@ Import-Package: com.google.protobuf,javax.swing;resolution:=optional,jav
 Include-Resource: org/jbpm/marshalling/jbpmmessages.proto=src/main/resou
  rces/org/jbpm/marshalling/jbpmmessages.proto
 Java-Vendor: Oracle Corporation
-Java-Version: 1.7.0_07
-Os-Arch: x86_64
-Os-Name: Mac OS X
-Os-Version: 10.6.8
+Java-Version: 1.7.0_25
+Os-Arch: i386
+Os-Name: Linux
+Os-Version: 3.5.0-17-generic
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-flow
-Scm-Revision: 70389811a2599c0622f3a44df9a125bfb7c4f6c8
+Scm-Revision: 1bdfc0cfb019f96c30644c27afd40c1c7a61ddc8
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-flow
 Specification-Title: jBPM :: Flow
 Specification-Vendor: JBoss by Red Hat
