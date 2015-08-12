@@ -17,7 +17,7 @@ package org.jbpm.persistence.timer;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,9 +35,9 @@ import org.jbpm.process.instance.timer.TimerManager.ProcessJobContext;
 
 public class GlobalJPATimerJobFactoryManager implements TimerJobFactoryManager {
 
-    
+    private Map<Long, TimerJobInstance> emptyStore = new HashMap<Long,TimerJobInstance>();
     private CommandService commandService;
-    private Map<Integer, Map<Long, TimerJobInstance>> timerInstances;
+    private Map<Long, Map<Long, TimerJobInstance>> timerInstances;
     private Map<Long, TimerJobInstance> singleTimerInstances;
     
     public void setCommandService(CommandService commandService) {
@@ -45,7 +45,7 @@ public class GlobalJPATimerJobFactoryManager implements TimerJobFactoryManager {
     }
     
     public GlobalJPATimerJobFactoryManager() {
-        timerInstances = new ConcurrentHashMap<Integer, Map<Long, TimerJobInstance>>();
+        timerInstances = new ConcurrentHashMap<Long, Map<Long, TimerJobInstance>>();
         singleTimerInstances = new ConcurrentHashMap<Long, TimerJobInstance>();
         
     }
@@ -55,22 +55,19 @@ public class GlobalJPATimerJobFactoryManager implements TimerJobFactoryManager {
                                                    Trigger trigger,
                                                    JobHandle handle,
                                                    InternalSchedulerService scheduler) {
-        Map<Long, TimerJobInstance> local = null;
-        if (ctx instanceof ProcessJobContext) {
-            int sessionId = ((ProcessJobContext) ctx).getSessionId();
+    	long sessionId = -1;
+    	if (ctx instanceof ProcessJobContext) {
+            sessionId = ((ProcessJobContext) ctx).getSessionId();
             Map<Long, TimerJobInstance> instances = timerInstances.get(sessionId);
             if (instances == null) {
                 instances = new ConcurrentHashMap<Long, TimerJobInstance>();
                 timerInstances.put(sessionId, instances);
             }
-            local = timerInstances.get(sessionId);
-        } else {
-            local = singleTimerInstances;
-        }
+        }        
         ctx.setJobHandle( handle );
         GlobalJpaTimerJobInstance jobInstance = new GlobalJpaTimerJobInstance( new SelfRemovalJob( job ),
                                                                    new SelfRemovalJobContext( ctx,
-                                                                                              local ),
+                                                                		   emptyStore ),
                                                                    trigger,
                                                                    handle,
                                                                    scheduler);
@@ -86,7 +83,7 @@ public class GlobalJPATimerJobFactoryManager implements TimerJobFactoryManager {
         }
         Map<Long, TimerJobInstance> instances = null;
         if (ctx instanceof ProcessJobContext) {
-            int sessionId = ((ProcessJobContext)ctx).getSessionId();
+            long sessionId = ((ProcessJobContext)ctx).getSessionId();
             instances = timerInstances.get(sessionId);
             if (instances == null) {
                 instances = new ConcurrentHashMap<Long, TimerJobInstance>();
@@ -100,14 +97,13 @@ public class GlobalJPATimerJobFactoryManager implements TimerJobFactoryManager {
     }
     
     public void removeTimerJobInstance(TimerJobInstance instance) {
-    
         JobContext ctx = instance.getJobContext();
         if (ctx instanceof SelfRemovalJobContext) {
             ctx = ((SelfRemovalJobContext) ctx).getJobContext();
         }
         Map<Long, TimerJobInstance> instances = null;
         if (ctx instanceof ProcessJobContext) {
-            int sessionId = ((ProcessJobContext)ctx).getSessionId();
+            long sessionId = ((ProcessJobContext)ctx).getSessionId();
             instances = timerInstances.get(sessionId);
             if (instances == null) {
                 instances = new ConcurrentHashMap<Long, TimerJobInstance>();

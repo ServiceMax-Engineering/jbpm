@@ -23,13 +23,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.kie.internal.KnowledgeBase;
-import org.kie.api.definition.process.Process;
 import org.jbpm.process.core.impl.ProcessImpl;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.Test;
+import org.kie.api.definition.process.Process;
+import org.kie.internal.KnowledgeBase;
+import org.slf4j.LoggerFactory;
 
-public class StartProcessHelperTest {
+public class StartProcessHelperTest extends AbstractBaseTest {
 
+    public void addLogger() { 
+        logger = LoggerFactory.getLogger(this.getClass());
+    }
+    
     @Test
     public void testFindLatestProcessByNameNoInput() {
         

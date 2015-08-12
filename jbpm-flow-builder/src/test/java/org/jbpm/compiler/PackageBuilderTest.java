@@ -15,34 +15,36 @@
  */
 package org.jbpm.compiler;
 
+import static org.junit.Assert.*;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
-import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.core.util.DroolsStreamUtils;
+import org.drools.compiler.builder.impl.KnowledgeBuilderImpl;
 import org.drools.compiler.lang.descr.PackageDescr;
-import org.drools.core.rule.Package;
+import org.drools.core.definitions.InternalKnowledgePackage;
+import org.drools.core.definitions.impl.KnowledgePackageImpl;
+import org.drools.core.util.DroolsStreamUtils;
 import org.jbpm.process.core.Context;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.core.impl.WorkflowProcessImpl;
+import org.junit.Test;
 import org.kie.api.definition.process.Process;
 import org.kie.api.io.Resource;
 
-public class PackageBuilderTest extends TestCase {
+public class PackageBuilderTest extends AbstractBaseTest {
 
+    @Test
     public void testRuleFlow() throws Exception {
-        PackageBuilder builder = new PackageBuilder();
-
         InputStream in = this.getClass().getResourceAsStream( "/org/jbpm/integrationtests/ruleflow.rfm" );
         assertNotNull( in );
 
         builder.addPackage( new PackageDescr( "com.sample" ) );
 
         builder.addRuleFlow( new InputStreamReader( in ) );
-        Package pkg = builder.getPackage();
+        InternalKnowledgePackage pkg = builder.getPackage();
         assertNotNull( pkg );
 
         Map<String, Process> flows = pkg.getRuleFlows();
@@ -56,7 +58,7 @@ public class PackageBuilderTest extends TestCase {
         assertTrue( p instanceof WorkflowProcessImpl );
 
         //now serialization
-        Package pkg2 = (Package) DroolsStreamUtils.streamIn( DroolsStreamUtils.streamOut( pkg ) );
+        InternalKnowledgePackage pkg2 = (InternalKnowledgePackage) DroolsStreamUtils.streamIn( DroolsStreamUtils.streamOut( pkg ) );
         assertNotNull( pkg2 );
 
         flows = pkg2.getRuleFlows();
@@ -68,8 +70,8 @@ public class PackageBuilderTest extends TestCase {
         assertTrue( p instanceof WorkflowProcessImpl );
     }
 
+    @Test
     public void testRuleFlowUpgrade() throws Exception {
-        PackageBuilder builder = new PackageBuilder();
         // Set the system property so that automatic conversion can happen
         System.setProperty( "drools.ruleflow.port",
                             "true" );
@@ -80,7 +82,7 @@ public class PackageBuilderTest extends TestCase {
         builder.addPackage( new PackageDescr( "com.sample" ) );
 
         builder.addRuleFlow( new InputStreamReader( in ) );
-        Package pkg = builder.getPackage();
+        InternalKnowledgePackage pkg = builder.getPackage();
         assertNotNull( pkg );
 
         Map<String, Process> flows = pkg.getRuleFlows();
@@ -94,7 +96,7 @@ public class PackageBuilderTest extends TestCase {
         assertTrue( p instanceof WorkflowProcessImpl );
 
         //now serialization
-        Package pkg2 = (Package) DroolsStreamUtils.streamIn( DroolsStreamUtils.streamOut( pkg ) );
+        InternalKnowledgePackage pkg2 = (InternalKnowledgePackage) DroolsStreamUtils.streamIn( DroolsStreamUtils.streamOut( pkg ) );
         assertNotNull( pkg2 );
 
         flows = pkg2.getRuleFlows();
@@ -109,8 +111,9 @@ public class PackageBuilderTest extends TestCase {
                             "false" );
     }
 
+    @Test
     public void testPackageRuleFlows() throws Exception {
-        Package pkg = new Package( "boo" );
+        InternalKnowledgePackage pkg = new KnowledgePackageImpl( "boo" );
         Process rf = new MockRuleFlow( "1" );
         pkg.addProcess( rf );
         assertTrue( pkg.getRuleFlows().containsKey( "1" ) );
@@ -236,13 +239,10 @@ public class PackageBuilderTest extends TestCase {
         }
 
         public List<String> getFunctionImports() {
-            // TODO Auto-generated method stub
             return null;
         }
 
         public void setFunctionImports(List<String> functionImports) {
-            // TODO Auto-generated method stub
-
         }
 
         public KnowledgeType getKnowledgeType() {

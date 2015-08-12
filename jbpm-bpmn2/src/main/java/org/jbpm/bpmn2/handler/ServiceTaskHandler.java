@@ -21,11 +21,15 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.kie.api.runtime.process.*;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServiceTaskHandler implements WorkItemHandler {
 
-    private boolean logThrownException = true;
+    private static final Logger logger = LoggerFactory.getLogger(ServiceTaskHandler.class);
     
     public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
         String service = (String) workItem.getParameter("Interface");
@@ -66,34 +70,27 @@ public class ServiceTaskHandler implements WorkItemHandler {
     }
 
     private void handleException(Throwable cause, String service, String operation, String paramType, Object param) { 
-        if( this.logThrownException ) {
-            String message = this.getClass().getSimpleName() + " failed when calling " + service + "." + operation;
-            System.err.println(message);
-            cause.printStackTrace(System.err);
+        logger.debug("Handling exception {} inside service {} and operation {} with param type {} and value {}",
+                cause.getMessage(), service, operation, paramType, param);
+        WorkItemHandlerRuntimeException wihRe;
+        if( cause instanceof InvocationTargetException ) { 
+            Throwable realCause = cause.getCause();
+            wihRe = new WorkItemHandlerRuntimeException(realCause);
+            wihRe.setStackTrace(realCause.getStackTrace());
         } else { 
-            WorkItemHandlerRuntimeException wihRe;
-            if( cause instanceof InvocationTargetException ) { 
-                Throwable realCause = cause.getCause();
-                wihRe = new WorkItemHandlerRuntimeException(realCause);
-                wihRe.setStackTrace(realCause.getStackTrace());
-            } else { 
-                wihRe = new WorkItemHandlerRuntimeException(cause);
-                wihRe.setStackTrace(cause.getStackTrace());
-            }
-            wihRe.setInformation("Interface", service);
-            wihRe.setInformation("Operation", operation);
-            wihRe.setInformation("ParameterType", paramType);
-            wihRe.setInformation("Parameter", param);
-            wihRe.setInformation(WorkItemHandlerRuntimeException.WORKITEMHANDLERTYPE, this.getClass().getSimpleName());
-            throw wihRe;
+            wihRe = new WorkItemHandlerRuntimeException(cause);
+            wihRe.setStackTrace(cause.getStackTrace());
         }
+        wihRe.setInformation("Interface", service);
+        wihRe.setInformation("Operation", operation);
+        wihRe.setInformation("ParameterType", paramType);
+        wihRe.setInformation("Parameter", param);
+        wihRe.setInformation(WorkItemHandlerRuntimeException.WORKITEMHANDLERTYPE, this.getClass().getSimpleName());
+        throw wihRe;
+        
     }
     
     public void abortWorkItem(WorkItem workItem, WorkItemManager manager) {
         // Do nothing, cannot be aborted
-    }
-
-    public void setLogThrownException(boolean logException) { 
-        this.logThrownException = logException;
     }
 }

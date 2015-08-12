@@ -31,7 +31,7 @@ public class ReuseNodeFactory implements NodeInstanceFactory {
         this.cls = cls;
     }
 
-	public NodeInstance getNodeInstance(Node node, WorkflowProcessInstance processInstance, NodeInstanceContainer nodeInstanceContainer) {    	
+	public NodeInstance getNodeInstance(Node node, WorkflowProcessInstance processInstance, NodeInstanceContainer nodeInstanceContainer) {   
         NodeInstance result = ((org.jbpm.workflow.instance.NodeInstanceContainer)
     		nodeInstanceContainer).getFirstNodeInstance( node.getId() );
         if (result != null) {
@@ -42,6 +42,14 @@ public class ReuseNodeFactory implements NodeInstanceFactory {
             nodeInstance.setNodeId(node.getId());
             nodeInstance.setNodeInstanceContainer(nodeInstanceContainer);
             nodeInstance.setProcessInstance(processInstance);
+            String uniqueId = (String) node.getMetaData().get("UniqueId");
+            assert uniqueId != null : node.getName() + " does not have a unique id.";
+            if (uniqueId == null) {
+                uniqueId = node.getId()+"";
+            }
+            nodeInstance.setMetaData("UniqueId", uniqueId);
+            int level = ((org.jbpm.workflow.instance.NodeInstanceContainer)nodeInstanceContainer).getLevelForNode(uniqueId);
+            nodeInstance.setLevel(level);
             return nodeInstance;
         } catch (Exception e) {
             throw new RuntimeException("Unable to instantiate node '"

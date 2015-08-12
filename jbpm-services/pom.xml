@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jbpm</groupId>
         <artifactId>jbpm</artifactId>
-        <version>6.0.0-SNAPSHOT</version>
+        <version>6.2.0.006</version>
     </parent>
 
     <artifactId>jbpm-services</artifactId>
@@ -14,12 +14,12 @@
 
     <modules>
         <module>jbpm-shared-services</module>
-        <module>jbpm-human-task-services</module>
-        <module>jbpm-human-task-workitems</module>
-        <module>droolsjbpm-knowledge-services</module>
-        <module>form-services</module>
-        <module>executor-services</module>
-  </modules>
+        <module>jbpm-kie-services</module>
+        <module>jbpm-services-api</module>
+        <module>jbpm-services-cdi</module>
+        <module>jbpm-services-ejb</module>
+        <module>jbpm-executor</module>
+    </modules>
 
     <properties>
         <maven.btm.maxPoolSize>16</maven.btm.maxPoolSize>

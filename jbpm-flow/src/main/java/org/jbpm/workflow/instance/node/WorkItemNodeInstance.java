@@ -30,11 +30,13 @@ import org.drools.core.process.instance.WorkItem;
 import org.drools.core.process.instance.WorkItemManager;
 import org.drools.core.process.instance.impl.WorkItemImpl;
 import org.drools.core.spi.ProcessContext;
+import org.drools.core.util.MVELSafeHelper;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.core.context.exception.ExceptionScope;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.context.variable.VariableScope;
+import org.jbpm.process.core.impl.DataTransformerRegistry;
 import org.jbpm.process.instance.ContextInstance;
 import org.jbpm.process.instance.ContextInstanceContainer;
 import org.jbpm.process.instance.ProcessInstance;
@@ -45,15 +47,18 @@ import org.jbpm.process.instance.impl.ContextInstanceFactory;
 import org.jbpm.process.instance.impl.ContextInstanceFactoryRegistry;
 import org.jbpm.workflow.core.node.Assignment;
 import org.jbpm.workflow.core.node.DataAssociation;
+import org.jbpm.workflow.core.node.Transformation;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.jbpm.workflow.instance.WorkflowRuntimeException;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
 import org.jbpm.workflow.instance.impl.WorkItemResolverFactory;
 import org.kie.api.definition.process.Node;
+import org.kie.api.runtime.process.DataTransformer;
 import org.kie.api.runtime.process.EventListener;
 import org.kie.api.runtime.process.NodeInstance;
 import org.kie.internal.runtime.KnowledgeRuntime;
-import org.mvel2.MVEL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Runtime counterpart of a work item node.
@@ -63,6 +68,7 @@ import org.mvel2.MVEL;
 public class WorkItemNodeInstance extends StateBasedNodeInstance implements EventListener, ContextInstanceContainer {
     
     private static final long serialVersionUID = 510l;
+    private static final Logger logger = LoggerFactory.getLogger(WorkItemNodeInstance.class);
     // NOTE: ContetxInstances are not persisted as current functionality (exception scope) does not require it
     private Map<String, ContextInstance> contextInstances = new HashMap<String, ContextInstance>();
     private Map<String, List<ContextInstance>> subContextInstances = new HashMap<String, List<ContextInstance>>();
@@ -95,12 +101,16 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
     }
     
     public boolean isInversionOfControl() {
-        // TODO
+        // TODO WorkItemNodeInstance.isInversionOfControl
         return false;
     }
 
     public void internalTrigger(final NodeInstance from, String type) {
         super.internalTrigger(from, type);
+        // if node instance was cancelled, abort
+		if (getNodeInstanceContainer().getNodeInstance(getId()) == null) {
+			return;
+		}
         // TODO this should be included for ruleflow only, not for BPEL
 //        if (!Node.CONNECTION_DEFAULT_TYPE.equals(type)) {
 //            throw new IllegalArgumentException(
@@ -114,6 +124,10 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
         if (workItemNode.isWaitForCompletion()) {
             addWorkItemListener();
         }
+        String deploymentId = (String) getProcessInstance().getKnowledgeRuntime().getEnvironment().get("deploymentId");
+        ((WorkItem) workItem).setDeploymentId(deploymentId);
+        ((WorkItem) workItem).setNodeInstanceId(this.getId());
+        ((WorkItem) workItem).setNodeId(getNodeId());
         if (isInversionOfControl()) {
             ((ProcessInstance) getProcessInstance()).getKnowledgeRuntime()
                 .update(((ProcessInstance) getProcessInstance()).getKnowledgeRuntime().getFactHandle(this), this);
@@ -133,7 +147,7 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
                 ExceptionScopeInstance exceptionScopeInstance = (ExceptionScopeInstance)
                     resolveContextInstance(ExceptionScope.EXCEPTION_SCOPE, exceptionName);
                 if (exceptionScopeInstance == null) {
-                    throw new WorkflowRuntimeException(this, "Unable to execute Action: " + e.getMessage(), e);
+                    throw new WorkflowRuntimeException(this, getProcessInstance(), "Unable to execute Action: " + e.getMessage(), e);
                 }
                 // workItemId must be set otherwise cancel activity will not find the right work item
                 this.workItemId = workItem.getId();
@@ -150,10 +164,19 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
         workItem = new WorkItemImpl();
         ((WorkItem) workItem).setName(work.getName());
         ((WorkItem) workItem).setProcessInstanceId(getProcessInstance().getId());
-        ((WorkItem) workItem).setParameters(new HashMap<String, Object>(work.getParameters()));
+        ((WorkItem) workItem).setParameters(new HashMap<String, Object>(work.getParameters()));        
         for (Iterator<DataAssociation> iterator = workItemNode.getInAssociations().iterator(); iterator.hasNext(); ) {
             DataAssociation association = iterator.next();
-            if (association.getAssignments() == null || association.getAssignments().isEmpty()) {
+            if (association.getTransformation() != null) {
+            	Transformation transformation = association.getTransformation();
+            	DataTransformer transformer = DataTransformerRegistry.get().find(transformation.getLanguage());
+            	if (transformer != null) {
+            		Object parameterValue = transformer.transform(transformation.getCompiledExpression(), getSourceParameters(association));
+            		if (parameterValue != null) {
+                        ((WorkItem) workItem).setParameter(association.getTarget(), parameterValue);
+                    }
+            	}
+            } else if (association.getAssignments() == null || association.getAssignments().isEmpty()) {
                 Object parameterValue = null;
                 VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
                 resolveContextInstance(VariableScope.VARIABLE_SCOPE, association.getSources().get(0));
@@ -161,11 +184,11 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
                     parameterValue = variableScopeInstance.getVariable(association.getSources().get(0));
                 } else {
                     try {
-                        parameterValue = MVEL.eval(association.getSources().get(0), new NodeInstanceResolverFactory(this));
+                        parameterValue = MVELSafeHelper.getEvaluator().eval(association.getSources().get(0), new NodeInstanceResolverFactory(this));
                     } catch (Throwable t) {
-                        System.err.println("Could not find variable scope for variable " + association.getSources().get(0));
-                        System.err.println("when trying to execute Work Item " + work.getName());
-                        System.err.println("Continuing without setting parameter.");
+                        logger.error("Could not find variable scope for variable {}", association.getSources().get(0));
+                        logger.error("when trying to execute Work Item {}", work.getName());
+                        logger.error("Continuing without setting parameter.");
                     }
                 }
                 if (parameterValue != null) {
@@ -194,13 +217,13 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
                             replacements.put(paramName, variableValueString);
                         } else {
                             try {
-                                Object variableValue = MVEL.eval(paramName, new NodeInstanceResolverFactory(this));
+                                Object variableValue = MVELSafeHelper.getEvaluator().eval(paramName, new NodeInstanceResolverFactory(this));
                                 String variableValueString = variableValue == null ? "" : variableValue.toString();
                                 replacements.put(paramName, variableValueString);
                             } catch (Throwable t) {
-                                System.err.println("Could not find variable scope for variable " + paramName);
-                                System.err.println("when trying to replace variable in string for Work Item " + work.getName());
-                                System.err.println("Continuing without setting parameter.");
+                                logger.error("Could not find variable scope for variable {}", paramName);
+                                logger.error("when trying to replace variable in string for Work Item {}", work.getName());
+                                logger.error("Continuing without setting parameter.");
                             }
                         }
                     }
@@ -233,14 +256,35 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
         if (workItemNode != null && workItem.getState() == WorkItem.COMPLETED) {
             for (Iterator<DataAssociation> iterator = getWorkItemNode().getOutAssociations().iterator(); iterator.hasNext(); ) {
                 DataAssociation association = iterator.next();
-                if (association.getAssignments() == null || association.getAssignments().isEmpty()) {
+                if (association.getTransformation() != null) {
+                	Transformation transformation = association.getTransformation();
+                	DataTransformer transformer = DataTransformerRegistry.get().find(transformation.getLanguage());
+                	if (transformer != null) {
+                		Object parameterValue = transformer.transform(transformation.getCompiledExpression(), workItem.getResults());
+                		VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
+                        resolveContextInstance(VariableScope.VARIABLE_SCOPE, association.getTarget());
+                        if (variableScopeInstance != null && parameterValue != null) {
+                              
+                    	 	variableScopeInstance.getVariableScope().validateVariable(getProcessInstance().getProcessName(), association.getTarget(), parameterValue);
+                             
+                            variableScopeInstance.setVariable(association.getTarget(), parameterValue);
+                        } else {
+                            logger.warn("Could not find variable scope for variable {}", association.getTarget());
+                            logger.warn("when trying to complete Work Item {}", workItem.getName());
+                            logger.warn("Continuing without setting variable.");
+                        }
+                		if (parameterValue != null) {
+                            ((WorkItem) workItem).setParameter(association.getTarget(), parameterValue);
+                        }
+                	}
+                } else if (association.getAssignments() == null || association.getAssignments().isEmpty()) {
                     VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
                     resolveContextInstance(VariableScope.VARIABLE_SCOPE, association.getTarget());
                     if (variableScopeInstance != null) {
                         Object value = workItem.getResult(association.getSources().get(0));
                         if (value == null) {
                             try {
-                                value = MVEL.eval(association.getSources().get(0), new WorkItemResolverFactory(workItem));
+                                value = MVELSafeHelper.getEvaluator().eval(association.getSources().get(0), new WorkItemResolverFactory(workItem));
                             } catch (Throwable t) {
                                 // do nothing
                             }
@@ -248,17 +292,20 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
                         Variable varDef = variableScopeInstance.getVariableScope().findVariable(association.getTarget());
                         DataType dataType = varDef.getType();
                         // exclude java.lang.Object as it is considered unknown type
-                        if (!dataType.getStringType().endsWith("java.lang.Object") && value instanceof String) {
+                        if (!dataType.getStringType().endsWith("java.lang.Object") && 
+                                !dataType.getStringType().endsWith("Object") && value instanceof String) {
                             value = dataType.readValue((String) value);
+                        } else {
+                        	variableScopeInstance.getVariableScope().validateVariable(getProcessInstance().getProcessName(), association.getTarget(), value);
                         }
                         variableScopeInstance.setVariable(association.getTarget(), value);
                     } else {
-                        System.out.println("Could not find variable scope for variable " + association.getTarget());
-                        System.out.println("when trying to complete Work Item " + workItem.getName());
-                        System.out.println("Continuing without setting variable.");
+                        logger.warn("Could not find variable scope for variable {}", association.getTarget());
+                        logger.warn("when trying to complete Work Item {}", workItem.getName());
+                        logger.warn("Continuing without setting variable.");
                     }
 
-                } else {
+                } else  {
                     try {
                         for (Iterator<Assignment> it = association.getAssignments().iterator(); it.hasNext(); ) {
                             handleAssignment(it.next());
@@ -405,6 +452,29 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
     @Override
     public ContextContainer getContextContainer() {
         return getWorkItemNode();
+    }
+    
+    protected Map<String, Object> getSourceParameters(DataAssociation association) {
+    	Map<String, Object> parameters = new HashMap<String, Object>();
+    	for (String sourceParam : association.getSources()) {
+	    	Object parameterValue = null;
+	        VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
+	        resolveContextInstance(VariableScope.VARIABLE_SCOPE, sourceParam);
+	        if (variableScopeInstance != null) {
+	            parameterValue = variableScopeInstance.getVariable(sourceParam);
+	        } else {
+	            try {
+	                parameterValue = MVELSafeHelper.getEvaluator().eval(sourceParam, new NodeInstanceResolverFactory(this));
+	            } catch (Throwable t) {
+	                logger.warn("Could not find variable scope for variable {}", sourceParam);
+	            }
+	        }
+	        if (parameterValue != null) {
+	        	parameters.put(association.getTarget(), parameterValue);
+	        }
+    	}
+    	
+    	return parameters;
     }
     
 }

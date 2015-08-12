@@ -27,11 +27,12 @@ public class MapBasedProcessPersistenceContext extends MapBasedPersistenceContex
         this.processInstancesByBusinessKey = new HashMap<CorrelationKeyInfo, ProcessInstanceInfo>();
     }
 
-    public void persist(ProcessInstanceInfo processInstanceInfo) {
+    public ProcessInstanceInfo persist(ProcessInstanceInfo processInstanceInfo) {
         if( processInstanceInfo.getId() == null ) {
             processInstanceInfo.setId( storage.getNextProcessInstanceId() );
         }
         processes.put( processInstanceInfo.getId(), processInstanceInfo );
+        return processInstanceInfo;
     }
 
     public ProcessInstanceInfo findProcessInstanceInfo(Long processId) {
@@ -66,11 +67,12 @@ public class MapBasedProcessPersistenceContext extends MapBasedPersistenceContex
     }
 
     @Override
-    public void persist(CorrelationKeyInfo correlationKeyInfo) {
+    public CorrelationKeyInfo persist(CorrelationKeyInfo correlationKeyInfo) {
         ProcessInstanceInfo piInfo = this.processes.get(correlationKeyInfo.getProcessInstanceId());
         if (piInfo != null) {
             this.processInstancesByBusinessKey.put(correlationKeyInfo, piInfo);
         }
+        return correlationKeyInfo;
     }
 
     @Override

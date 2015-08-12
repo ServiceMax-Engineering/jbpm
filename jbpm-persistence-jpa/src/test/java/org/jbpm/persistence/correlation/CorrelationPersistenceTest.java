@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -17,20 +18,35 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.transaction.UserTransaction;
 
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.kie.internal.KieInternalServices;
 import org.kie.internal.process.CorrelationKeyFactory;
 import org.kie.api.runtime.EnvironmentName;
 
-public class CorrelationPersistenceTest {
+@RunWith(Parameterized.class)
+public class CorrelationPersistenceTest extends AbstractBaseTest {
     
     private HashMap<String, Object> context;
     
+    public CorrelationPersistenceTest(boolean locking) { 
+        this.useLocking = locking; 
+     }
+     
+     @Parameters
+     public static Collection<Object[]> persistence() {
+         Object[][] data = new Object[][] { { false }, { true } };
+         return Arrays.asList(data);
+     };
+         
     @Before
     public void before() throws Exception {
-        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME, false);
+        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME);
         CorrelationKeyFactory factory = KieInternalServices.Factory.get().newCorrelationKeyFactory();
         // populate table with test data
         EntityManagerFactory emf = (EntityManagerFactory) context.get(EnvironmentName.ENTITY_MANAGER_FACTORY);
@@ -69,7 +85,6 @@ public class CorrelationPersistenceTest {
         EntityManagerFactory emf = (EntityManagerFactory) context.get(EnvironmentName.ENTITY_MANAGER_FACTORY);
         EntityManager em = emf.createEntityManager();
 
-        
         Query query = em.createNamedQuery("GetProcessInstanceIdByCorrelation");
         query.setParameter("properties", Arrays.asList(new String[] {"test123"}));
         query.setParameter("elem_count", new Long(1));

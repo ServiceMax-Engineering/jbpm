@@ -1,39 +1,43 @@
 package org.jbpm.integrationtests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
-import org.drools.core.RuleBase;
-import org.drools.core.RuleBaseFactory;
-import org.drools.core.WorkingMemory;
-import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.core.rule.Package;
+import org.drools.compiler.builder.impl.KnowledgeBuilderImpl;
 import org.jbpm.integrationtests.test.Person;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
+import org.jbpm.test.util.AbstractBaseTest;
+import org.junit.Test;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
-public class ProcessSubProcessTest extends TestCase {
+public class ProcessSubProcessTest extends AbstractBaseTest {
 
+    @Test
     public void testSubProcess() throws Exception {
-        RuleBase ruleBase = readRule(true);
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        StatefulKnowledgeSession workingMemory = createStatefulKnowledgeSessionFromRule(true);
         ProcessInstance processInstance = ( ProcessInstance )
     		workingMemory.startProcess("com.sample.ruleflow");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(2, workingMemory.getProcessInstances().size());
         workingMemory.insert(new Person());
+        workingMemory.fireAllRules();
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(0, workingMemory.getProcessInstances().size());
     }
 
+    @Test
     public void testSubProcessCancel() throws Exception {
-        RuleBase ruleBase = readRule(true);
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        StatefulKnowledgeSession workingMemory = createStatefulKnowledgeSessionFromRule(true);
         org.jbpm.process.instance.ProcessInstance processInstance = ( org.jbpm.process.instance.ProcessInstance )
     		workingMemory.startProcess("com.sample.ruleflow");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
@@ -42,9 +46,9 @@ public class ProcessSubProcessTest extends TestCase {
         assertEquals(1, workingMemory.getProcessInstances().size());
     }
 
+    @Test
     public void testIndependentSubProcessCancel() throws Exception {
-        RuleBase ruleBase = readRule(false);
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        StatefulKnowledgeSession workingMemory = createStatefulKnowledgeSessionFromRule(false);
         org.jbpm.process.instance.ProcessInstance processInstance = ( org.jbpm.process.instance.ProcessInstance )
     		workingMemory.startProcess("com.sample.ruleflow");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
@@ -53,9 +57,9 @@ public class ProcessSubProcessTest extends TestCase {
         assertEquals(0, workingMemory.getProcessInstances().size());
     }
 
+    @Test
     public void testVariableMapping() throws Exception {
-        RuleBase ruleBase = readRule(false);
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        StatefulKnowledgeSession workingMemory = createStatefulKnowledgeSessionFromRule(true);
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("x", "x-value");
         org.jbpm.process.instance.ProcessInstance processInstance = ( org.jbpm.process.instance.ProcessInstance )
@@ -75,6 +79,7 @@ public class ProcessSubProcessTest extends TestCase {
         	}
         }
         workingMemory.insert(new Person());
+        workingMemory.fireAllRules();
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
 			processInstance.getContextInstance(VariableScope.VARIABLE_SCOPE);
@@ -83,8 +88,13 @@ public class ProcessSubProcessTest extends TestCase {
         assertEquals(0, workingMemory.getProcessInstances().size());
     }
 
-	private static RuleBase readRule(boolean independent) throws Exception {
-		PackageBuilder builder = new PackageBuilder();
+    private static StatefulKnowledgeSession createStatefulKnowledgeSessionFromRule(boolean independentSubProcess) throws Exception { 
+        KnowledgeBase ruleBase = readRule(independentSubProcess);
+        return ruleBase.newStatefulKnowledgeSession();
+    }
+    
+	private static KnowledgeBase readRule(boolean independent) throws Exception {
+		KnowledgeBuilderImpl builder = new KnowledgeBuilderImpl();
 		Reader source = new StringReader(
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
 			"<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
@@ -168,15 +178,15 @@ public class ProcessSubProcessTest extends TestCase {
 			"\n" +
 			"</process>");
 		builder.addRuleFlow(source);
-		Package pkg = builder.getPackage();
-		RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-		ruleBase.addPackage( pkg );
-		return ruleBase;
+		KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
+		kbase.addKnowledgePackages((Collection) Arrays.asList(builder.getPackage()));
+		return kbase;
 	}
 	
+	@Test
     public void testDynamicSubProcess() throws Exception {
-        RuleBase ruleBase = readDynamicSubProcess();
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        KnowledgeBase kbase = readDynamicSubProcess();
+        StatefulKnowledgeSession workingMemory = kbase.newStatefulKnowledgeSession();
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("x", "subflow");
         ProcessInstance processInstance = ( ProcessInstance )
@@ -184,12 +194,13 @@ public class ProcessSubProcessTest extends TestCase {
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(2, workingMemory.getProcessInstances().size());
         workingMemory.insert(new Person());
+        workingMemory.fireAllRules();
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(0, workingMemory.getProcessInstances().size());
     }
 
-	private static RuleBase readDynamicSubProcess() throws Exception {
-		PackageBuilder builder = new PackageBuilder();
+	private static KnowledgeBase readDynamicSubProcess() throws Exception {
+		KnowledgeBuilderImpl builder = new KnowledgeBuilderImpl();
 		Reader source = new StringReader(
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
 			"<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
@@ -247,10 +258,9 @@ public class ProcessSubProcessTest extends TestCase {
 			"\n" +
 			"</process>");
 		builder.addRuleFlow(source);
-		Package pkg = builder.getPackage();
-		RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-		ruleBase.addPackage( pkg );
-		return ruleBase;
+		KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
+		kbase.addKnowledgePackages((Collection) Arrays.asList(builder.getPackage()));
+		return kbase;
 	}
 	
 }

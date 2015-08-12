@@ -23,13 +23,14 @@ import org.drools.core.audit.event.LogEvent;
 import org.drools.core.audit.event.RuleFlowNodeLogEvent;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
-import org.jbpm.process.audit.JPAProcessInstanceDbLog;
+import org.jbpm.process.audit.AuditLogService;
+import org.jbpm.process.audit.JPAAuditLogService;
 import org.jbpm.process.audit.NodeInstanceLog;
 import org.jbpm.process.instance.event.DefaultSignalManagerFactory;
 import org.jbpm.process.instance.impl.DefaultProcessInstanceManagerFactory;
-import org.jbpm.runtime.manager.impl.RuntimeEnvironmentBuilder;
 import org.jbpm.services.task.HumanTaskServiceFactory;
 import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
+import org.jbpm.services.task.identity.MvelUserGroupCallbackImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -38,7 +39,10 @@ import org.kie.api.definition.process.Node;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeEnvironment;
+import org.kie.api.runtime.manager.RuntimeEnvironmentBuilder;
 import org.kie.api.runtime.manager.RuntimeManager;
+import org.kie.api.runtime.manager.RuntimeManagerFactory;
 import org.kie.api.runtime.process.NodeInstance;
 import org.kie.api.runtime.process.NodeInstanceContainer;
 import org.kie.api.runtime.process.ProcessInstance;
@@ -52,9 +56,8 @@ import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.internal.runtime.manager.RuntimeEnvironment;
-import org.kie.internal.runtime.manager.RuntimeManagerFactory;
 import org.kie.internal.runtime.manager.context.EmptyContext;
+import org.kie.internal.task.api.InternalTaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +65,13 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 /**
- * Base test case for the jbpm-bpmn2 module.
- *
- * Please keep this test class in the org.jbpm.bpmn2 package or otherwise give
- * it a unique name.
- *
+ * This test case is deprecated. JbpmJUnitBaseTestCase shall be used instead.
+ * @see JbpmJUnitBaseTestCase
  */
-public abstract class JbpmJUnitTestCase extends Assert {
+@Deprecated
+public abstract class JbpmJUnitTestCase extends AbstractBaseTest {
+    
+    private static final Logger testLogger = LoggerFactory.getLogger(JbpmJUnitTestCase.class);
 
     protected final static String EOL = System.getProperty("line.separator");
     private boolean setupDataSource = false;
@@ -79,10 +82,10 @@ public abstract class JbpmJUnitTestCase extends Assert {
     private TaskService taskService;
     private TestWorkItemHandler workItemHandler = new TestWorkItemHandler();
     private WorkingMemoryInMemoryLogger logger;    
-    private Logger testLogger = null;
     
     private RuntimeManager manager;
     private RuntimeEnvironment environment;
+    private AuditLogService logService;
 
 //    @Rule
 //    public KnowledgeSessionCleanup ksessionCleanupRule = new KnowledgeSessionCleanup();	
@@ -125,9 +128,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
 
     @Before
     public void setUp() throws Exception {
-        if (testLogger == null) {
-            testLogger = LoggerFactory.getLogger(getClass());
-        }
+
         if (setupDataSource) {
             server.start();
             ds = setupPoolingDataSource();
@@ -183,13 +184,16 @@ public abstract class JbpmJUnitTestCase extends Assert {
     protected KieBase createKnowledgeBase(Map<String, ResourceType> resources) {
         RuntimeEnvironmentBuilder builder = null;
         if (!setupDataSource){
-            builder = RuntimeEnvironmentBuilder.getEmpty()
+            builder = RuntimeEnvironmentBuilder.Factory.get()
+        			.newEmptyBuilder()
             .addConfiguration("drools.processSignalManagerFactory", DefaultSignalManagerFactory.class.getName())
             .addConfiguration("drools.processInstanceManagerFactory", DefaultProcessInstanceManagerFactory.class.getName());
         } else if (sessionPersistence) {
-            builder = RuntimeEnvironmentBuilder.getDefault();
+            builder = RuntimeEnvironmentBuilder.Factory.get()
+        			.newDefaultBuilder();
         } else {
-            builder = RuntimeEnvironmentBuilder.getDefaultInMemory();       
+            builder = RuntimeEnvironmentBuilder.Factory.get()
+        			.newDefaultInMemoryBuilder();       
         }
         builder.userGroupCallback(new JBossUserGroupCallbackImpl("classpath:/usergroups.properties"));
         for (Map.Entry<String, ResourceType> entry : resources.entrySet()) {
@@ -248,14 +252,13 @@ public abstract class JbpmJUnitTestCase extends Assert {
     }
 
     protected KieSession createKnowledgeSession() {
-        
         manager = RuntimeManagerFactory.Factory.get().newSingletonRuntimeManager(environment);
         RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
                 
         KieSession result = runtime.getKieSession();
         if (sessionPersistence) {
             
-            JPAProcessInstanceDbLog.setEnvironment(result.getEnvironment());                
+            logService = new JPAAuditLogService(environment.getEnvironment());               
             
         } else {
             
@@ -346,7 +349,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
             names.add(nodeName);
         }
         if (sessionPersistence) {
-            List<NodeInstanceLog> logs = JPAProcessInstanceDbLog.findNodeInstances(processInstanceId);
+            List<NodeInstanceLog> logs = logService.findNodeInstances(processInstanceId);
             if (logs != null) {
                 for (NodeInstanceLog l : logs) {
                     String nodeName = l.getNodeName();
@@ -376,7 +379,7 @@ public abstract class JbpmJUnitTestCase extends Assert {
 
     protected void clearHistory() {
         if (sessionPersistence) {
-            JPAProcessInstanceDbLog.clear();
+            logService.clear();
         } else {
             logger.clear();
         }
@@ -517,7 +520,10 @@ public abstract class JbpmJUnitTestCase extends Assert {
     }
 
     public TaskService getService() {
-        return HumanTaskServiceFactory.newTaskService();
+        return (InternalTaskService) HumanTaskServiceFactory.newTaskServiceConfigurator()
+        		.userGroupCallback(new MvelUserGroupCallbackImpl(true))
+                .entityManagerFactory(emf)
+                .getTaskService();
     }
     private static class H2Server {
 
@@ -533,11 +539,6 @@ public abstract class JbpmJUnitTestCase extends Assert {
                     throw new RuntimeException("Cannot start h2 server database", e);
                 }
             }
-        }
-
-        public synchronized void finalize() throws Throwable {
-            stop();
-            super.finalize();
         }
 
         public void stop() {

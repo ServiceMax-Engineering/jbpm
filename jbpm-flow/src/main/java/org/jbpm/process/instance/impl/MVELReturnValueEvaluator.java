@@ -19,16 +19,17 @@ package org.jbpm.process.instance.impl;
 import org.drools.core.base.mvel.MVELCompilationUnit;
 import org.drools.core.base.mvel.MVELCompileable;
 import org.drools.core.common.InternalWorkingMemory;
-import org.drools.core.definitions.impl.KnowledgePackageImp;
+import org.drools.core.definitions.impl.KnowledgePackageImpl;
+import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.drools.core.impl.StatefulKnowledgeSessionImpl;
 import org.drools.core.impl.StatelessKnowledgeSessionImpl;
 import org.drools.core.rule.MVELDialectRuntimeData;
 import org.drools.core.spi.GlobalResolver;
+import org.drools.core.util.MVELSafeHelper;
 import org.kie.api.definition.KiePackage;
+import org.kie.api.runtime.process.ProcessContext;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.kie.internal.runtime.StatelessKnowledgeSession;
-import org.kie.api.runtime.process.ProcessContext;
-import org.mvel2.MVEL;
 import org.mvel2.integration.VariableResolverFactory;
 
 import java.io.Externalizable;
@@ -73,6 +74,10 @@ public class MVELReturnValueEvaluator
         expr = unit.getCompiledExpression( data );
     }
 
+    public void compile(MVELDialectRuntimeData data, RuleImpl rule) {
+        expr = unit.getCompiledExpression( data );
+    }
+
     public String getDialect() {
         return this.id;
     }
@@ -88,10 +93,10 @@ public class MVELReturnValueEvaluator
 
         InternalWorkingMemory internalWorkingMemory = null;
         if( context.getKieRuntime() instanceof StatefulKnowledgeSessionImpl ) {
-            internalWorkingMemory = ((StatefulKnowledgeSessionImpl) context.getKieRuntime()).session;
+            internalWorkingMemory = ((StatefulKnowledgeSessionImpl) context.getKieRuntime()).getInternalWorkingMemory();
         } else if( context.getKieRuntime() instanceof StatelessKnowledgeSession) {
             StatefulKnowledgeSession statefulKnowledgeSession = ((StatelessKnowledgeSessionImpl) context.getKieRuntime()).newWorkingMemory();
-            internalWorkingMemory = ((StatefulKnowledgeSessionImpl) statefulKnowledgeSession).session;
+            internalWorkingMemory = ((StatefulKnowledgeSessionImpl) statefulKnowledgeSession).getInternalWorkingMemory();
         }
         
         VariableResolverFactory factory 
@@ -106,12 +111,12 @@ public class MVELReturnValueEvaluator
 
         // do we have any functions for this namespace?
         KiePackage pkg = context.getKieRuntime().getKieBase().getKiePackage("MAIN");
-        if ( pkg != null && pkg instanceof KnowledgePackageImp) {
-            MVELDialectRuntimeData data = ( MVELDialectRuntimeData ) ((KnowledgePackageImp) pkg).pkg.getDialectRuntimeRegistry().getDialectData( id );
+        if ( pkg != null && pkg instanceof KnowledgePackageImpl) {
+            MVELDialectRuntimeData data = ( MVELDialectRuntimeData ) ((KnowledgePackageImpl) pkg).getDialectRuntimeRegistry().getDialectData( id );
             factory.setNextFactory( data.getFunctionFactory() );
         }
 
-        Object value = MVEL.executeExpression( this.expr,
+        Object value = MVELSafeHelper.getEvaluator().executeExpression( this.expr,
 	                                           null,
 	                                           factory );
 

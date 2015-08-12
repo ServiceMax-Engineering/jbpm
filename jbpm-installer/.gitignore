@@ -11,7 +11,8 @@
 
 eclipse/
 jboss-*/
-repository/
+wildfly-*/
+repositories/ 
 runtime/
 workspace/
 repository.xml

@@ -41,11 +41,14 @@ message ProcessInstance {
     optional int64 node_instance_counter = 5;
     optional string process_xml = 11;
     optional int64 parent_process_instance_id = 12;
+    optional string description = 15;
 
     repeated SwimlaneContextInstance swimlane_context = 6;
     repeated NodeInstance node_instance = 7;
     repeated Variable variable = 8;
     repeated ExclusiveGroupInstance exclusive_group = 10;
+    repeated string completedNodeIds = 13;
+    repeated IterationLevel iterationLevels = 14;
 
     message SwimlaneContextInstance {
         optional string swimlane = 1;
@@ -56,6 +59,7 @@ message ProcessInstance {
         optional int64 id = 1;
         optional int64 node_id = 2;
         optional NodeInstanceContent content = 4;
+        optional int32 level = 5;
     }
 
     message ExclusiveGroupInstance {
@@ -114,10 +118,12 @@ message ProcessInstance {
             repeated Variable variable = 3;
             repeated NodeInstance node_instance = 4;
             repeated ExclusiveGroupInstance exclusive_group = 5;
+            repeated IterationLevel iterationLevels = 6;
         }
         message ForEachNode {
             repeated NodeInstance node_instance = 1;
             repeated Variable variable = 2;
+            repeated IterationLevel iterationLevels = 3;
         }
     }
 
@@ -156,6 +162,10 @@ message WorkItem {
     optional int32 state = 4;
 
     repeated Variable variable = 5;
+
+    optional string deployment_id = 6;
+    optional int64 node_instance_id = 7;
+    optional int64 node_id = 8;
 }
 
 message ProcessTimer {
@@ -170,7 +180,17 @@ message ProcessTimer {
         optional int64 process_instance_id = 5;
         optional int64 activated_time = 6;
         optional int64 last_triggered = 7;
-        optional int32 sessionId = 8;
+        optional int32 DEPRECATED_sessionId = 8;
+        optional int64 sessionId = 9;
     }
+}
+
+message IterationLevel {
+    optional string id = 1;
+    optional int32 level = 2;
+}
+
+message VariableContainer {
+    repeated Variable variable = 1;
 }
 

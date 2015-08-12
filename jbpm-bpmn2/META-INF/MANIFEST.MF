@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1382711153728
-Build-Jdk: 1.7.0_25
-Build-Timestamp: Fri, 25 Oct 2013 10:25:13 -0400
-Built-By: dcarver
+Bnd-LastModified: 1442242424229
+Build-Jdk: 1.8.0_31
+Build-Timestamp: Mon, 14 Sep 2015 11:53:12 -0300
+Built-By: marianadabreu
 Bundle-Activator: org.jbpm.osgi.bpmn2.Activator
 Bundle-Description: jBPM BPMN2
 Bundle-DocURL: http://www.jboss.org/
@@ -11,60 +11,63 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: BPMN2
 Bundle-SymbolicName: org.jbpm.bpmn2
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20131025-1025
+Bundle-Version: 6.2.0.201509141453
 Created-By: Apache Maven Bundle Plugin
-DynamicImport-Package: *
-Export-Package: org.jbpm.bpmn2;version="6.0.0.20131025-1025",org.jbpm.bp
- mn2.core;version="6.0.0.20131025-1025",org.jbpm.bpmn2.handler;version="
- 6.0.0.20131025-1025",org.jbpm.bpmn2.xml;version="6.0.0.20131025-1025",o
- rg.jbpm.bpmn2.xml.di;version="6.0.0.20131025-1025",org.jbpm.bpmn2.xpath
- ;version="6.0.0.20131025-1025",org.jbpm.osgi.bpmn2;version="6.0.0.20131
- 025-1025"
+Export-Package: org.jbpm.bpmn2.core;version="6.2.0.201509141453",org.jbp
+ m.osgi.bpmn2;version="6.2.0.201509141453",org.jbpm.bpmn2;version="6.2.0
+ .201509141453",org.jbpm.bpmn2.handler;version="6.2.0.201509141453",org.
+ jbpm.bpmn2.xml;version="6.2.0.201509141453",org.jbpm.bpmn2.xml.di;versi
+ on="6.2.0.201509141453",org.jbpm.bpmn2.xpath;version="6.2.0.20150914145
+ 3"
 Implementation-Title: jBPM :: BPMN2
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-bpmn2/
 Implementation-Vendor: JBoss by Red Hat
 Implementation-Vendor-Id: org.jbpm
-Implementation-Version: 6.0.0-SNAPSHOT
+Implementation-Version: 6.2.0.006
 Import-Package: javax.xml.namespace,javax.xml.parsers,javax.xml.transfor
  m,javax.xml.xpath,net.sf.saxon,net.sf.saxon.expr,net.sf.saxon.om,net.sf
- .saxon.pattern,net.sf.saxon.xpath,org.drools.compiler.compiler,org.droo
- ls.compiler.compiler.xml,org.drools.compiler.lang.descr,org.drools.comp
- iler.rule.builder,org.drools.compiler.rule.builder.dialect.java,org.dro
- ols.core.process.core,org.drools.core.process.core.datatype,org.drools.
- core.process.core.datatype.impl.type,org.drools.core.process.core.impl,
- org.drools.core.process.instance,org.drools.core.xml,org.jbpm.compiler.
- xml,org.jbpm.process.builder,org.jbpm.process.builder.dialect,org.jbpm.
- process.core,org.jbpm.process.core.context.exception,org.jbpm.process.c
- ore.context.swimlane,org.jbpm.process.core.context.variable,org.jbpm.pr
- ocess.core.event,org.jbpm.process.core.impl,org.jbpm.process.core.timer
- ,org.jbpm.process.instance.impl,org.jbpm.ruleflow.core,org.jbpm.workflo
- w.core,org.jbpm.workflow.core.impl,org.jbpm.workflow.core.node,org.kie.
- api,org.kie.api.definition.process,org.kie.api.runtime,org.kie.api.runt
- ime.process,org.mvel2,org.osgi.framework,org.slf4j,org.w3c.dom,org.xml.
- sax
-Include-Resource: META-INF/bpsim.xsd=src/main/resources/META-INF/bpsim.x
- sd,META-INF/DI.xsd=src/main/resources/META-INF/DI.xsd,META-INF/Semantic
- .xsd=src/main/resources/META-INF/Semantic.xsd,META-INF/drools.xsd=src/m
- ain/resources/META-INF/drools.xsd,META-INF/BPMNWorkDefinitions.conf=src
- /main/resources/META-INF/BPMNWorkDefinitions.conf,META-INF/DiagramInter
- change.xsd=src/main/resources/META-INF/DiagramInterchange.xsd,META-INF/
- BPMN2SemanticModule.conf=src/main/resources/META-INF/BPMN2SemanticModul
- e.conf,META-INF/BPMN20.xsd=src/main/resources/META-INF/BPMN20.xsd,META-
- INF/BPMNDI.xsd=src/main/resources/META-INF/BPMNDI.xsd,META-INF/DC.xsd=s
- rc/main/resources/META-INF/DC.xsd,META-INF/DiagramDefinition.xsd=src/ma
- in/resources/META-INF/DiagramDefinition.xsd
+ .saxon.pattern,net.sf.saxon.s9api,net.sf.saxon.xpath,org.drools.compile
+ r.builder.impl,org.drools.compiler.compiler,org.drools.compiler.compile
+ r.xml,org.drools.compiler.lang.descr,org.drools.compiler.rule.builder,o
+ rg.drools.compiler.rule.builder.dialect.java,org.drools.core.process.co
+ re,org.drools.core.process.core.datatype,org.drools.core.process.core.d
+ atatype.impl.type,org.drools.core.process.core.impl,org.drools.core.pro
+ cess.instance,org.drools.core.xml,org.jbpm.compiler.xml,org.jbpm.proces
+ s.builder,org.jbpm.process.builder.dialect,org.jbpm.process.core,org.jb
+ pm.process.core.context.exception,org.jbpm.process.core.context.swimlan
+ e,org.jbpm.process.core.context.variable,org.jbpm.process.core.event,or
+ g.jbpm.process.core.impl,org.jbpm.process.core.timer,org.jbpm.process.i
+ nstance.impl,org.jbpm.ruleflow.core,org.jbpm.workflow.core,org.jbpm.wor
+ kflow.core.impl,org.jbpm.workflow.core.node,org.kie.api,org.kie.api.def
+ inition.process,org.kie.api.runtime,org.kie.api.runtime.process,org.kie
+ .internal.builder,org.mvel2,org.osgi.framework,org.slf4j,org.w3c.dom,or
+ g.xml.sax
+Include-Resource: META-INF/BPMN20.xsd=src/main/resources/META-INF/BPMN20
+ .xsd,META-INF/BPMN2SemanticModule.conf=src/main/resources/META-INF/BPMN
+ 2SemanticModule.conf,META-INF/BPMNDI.xsd=src/main/resources/META-INF/BP
+ MNDI.xsd,META-INF/BPMNWorkDefinitions.conf=src/main/resources/META-INF/
+ BPMNWorkDefinitions.conf,META-INF/bpsim.xsd=src/main/resources/META-INF
+ /bpsim.xsd,META-INF/DC.xsd=src/main/resources/META-INF/DC.xsd,META-INF/
+ DI.xsd=src/main/resources/META-INF/DI.xsd,META-INF/DiagramDefinition.xs
+ d=src/main/resources/META-INF/DiagramDefinition.xsd,META-INF/DiagramInt
+ erchange.xsd=src/main/resources/META-INF/DiagramInterchange.xsd,META-IN
+ F/drools.xsd=src/main/resources/META-INF/drools.xsd,META-INF/Semantic.x
+ sd=src/main/resources/META-INF/Semantic.xsd,BPMN20.xsd=src/main/xsd/BPM
+ N20.xsd,BPMNDI.xsd=src/main/xsd/BPMNDI.xsd,bpsim.xsd=src/main/xsd/bpsim
+ .xsd,DC.xsd=src/main/xsd/DC.xsd,DI.xsd=src/main/xsd/DI.xsd,DiagramDefin
+ ition.xsd=src/main/xsd/DiagramDefinition.xsd,DiagramInterchange.xsd=src
+ /main/xsd/DiagramInterchange.xsd,drools.xsd=src/main/xsd/drools.xsd,Sem
+ antic.xsd=src/main/xsd/Semantic.xsd
 Java-Vendor: Oracle Corporation
-Java-Version: 1.7.0_25
-Os-Arch: i386
-Os-Name: Linux
-Os-Version: 3.5.0-17-generic
-Private-Package: org.jbpm.bpmn2;org.jbpm.bpmn2.core;org.jbpm.bpmn2.handl
- er;org.jbpm.bpmn2.xml;org.jbpm.bpmn2.xml.di;org.jbpm.bpmn2.xpath;org.jb
- pm.osgi.bpmn2;-split-package:=merge-first
+Java-Version: 1.8.0_31
+Os-Arch: x86_64
+Os-Name: Mac OS X
+Os-Version: 10.10.5
+Private-Package: .
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-bpmn2
-Scm-Revision: 1bdfc0cfb019f96c30644c27afd40c1c7a61ddc8
+Scm-Revision: 40950b0288d6f5a6f81ef8a5cb14916612b97202
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-bpmn2
 Specification-Title: jBPM :: BPMN2
 Specification-Vendor: JBoss by Red Hat
-Specification-Version: 6.0.0-SNAPSHOT
+Specification-Version: 6.2.0.006
 Tool: Bnd-1.50.0

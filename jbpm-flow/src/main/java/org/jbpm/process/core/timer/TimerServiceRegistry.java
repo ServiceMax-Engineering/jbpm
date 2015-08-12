@@ -29,6 +29,7 @@ import org.jbpm.process.core.timer.impl.GlobalTimerService;
  */
 public class TimerServiceRegistry {
 
+    public static final String TIMER_SERVICE_SUFFIX = "-timerServiceId";
     private ConcurrentHashMap<String, TimerService> registeredServices = new ConcurrentHashMap<String, TimerService>();
     
     private static TimerServiceRegistry instance;
@@ -60,6 +61,18 @@ public class TimerServiceRegistry {
      * @return returns timer service instance or null of there was none registered with given id
      */
     public TimerService get(String id) {
+        if (id == null) {
+            return null;
+        }
         return this.registeredServices.get(id);
+    }
+    
+    /**
+     * Removes TimerService from the registry.
+     * @param id timer service identifier
+     * @return returns TimerService instance returned from the registry for cleanup tasks
+     */
+    public TimerService remove(String id) {
+        return this.registeredServices.remove(id);
     }
 }

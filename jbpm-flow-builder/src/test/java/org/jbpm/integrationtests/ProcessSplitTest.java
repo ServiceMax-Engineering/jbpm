@@ -1,5 +1,7 @@
 package org.jbpm.integrationtests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -8,17 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
-import org.drools.core.RuleBase;
-import org.drools.core.RuleBaseFactory;
-import org.drools.core.WorkingMemory;
-import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.core.rule.Package;
 import org.jbpm.integrationtests.test.Person;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
+import org.jbpm.test.util.AbstractBaseTest;
+import org.junit.Test;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.KnowledgeBaseFactory;
 import org.kie.internal.builder.KnowledgeBuilder;
@@ -26,14 +25,16 @@ import org.kie.internal.builder.KnowledgeBuilderError;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.definition.KnowledgePackage;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.runtime.process.ProcessInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ProcessSplitTest extends TestCase {
+public class ProcessSplitTest extends AbstractBaseTest {
     
+    private static final Logger logger = LoggerFactory.getLogger(ProcessSplitTest.class);
+    
+    @Test
     public void testSplitWithProcessInstanceConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -83,10 +84,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -117,6 +117,7 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(2, list.size());
     }
 
+    @Test
     public void testSplitWithProcessInstanceConstraint2() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -169,7 +170,7 @@ public class ProcessSplitTest extends TestCase {
             "</process>");
         kbuilder.add( ResourceFactory.newReaderResource( source ), ResourceType.DRF );
         for (KnowledgeBuilderError error: kbuilder.getErrors()) {
-        	System.out.println(error);
+            logger.error(error.toString());
         }
         
         Collection<KnowledgePackage> kpkgs = kbuilder.getKnowledgePackages();
@@ -206,8 +207,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(2, list.size());
     }
 
+    @Test
     public void testSplitWithMVELContextConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -256,10 +257,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -272,8 +272,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
     
+    @Test
     public void testSplitWithJavaContextConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -322,10 +322,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -338,8 +337,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
     
+    @Test
     public void testSplitWithMVELkContextConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -388,10 +387,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -404,8 +402,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
     
+    @Test
     public void testSplitWithJavakContextConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -454,10 +452,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -470,8 +467,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
     
+    @Test
     public void testSplitWithMVELVariableConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -520,10 +517,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -536,8 +532,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
     
+    @Test
     public void testSplitWithJavaVariableConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -586,10 +582,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -602,8 +597,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
 
+    @Test
     public void testSplitWithMVELGlobalConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -652,10 +647,9 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
@@ -668,8 +662,8 @@ public class ProcessSplitTest extends TestCase {
         assertEquals(1, list.size());
     }
     
+    @Test
     public void testSplitWithJavaGlobalConstraint() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<process xmlns=\"http://drools.org/drools-5.0/process\"" +
             "         xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -713,17 +707,14 @@ public class ProcessSplitTest extends TestCase {
             "" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+
+        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
 
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("name", "John Doe");
         ProcessInstance processInstance = ( ProcessInstance )
-            workingMemory.startProcess("org.jbpm.process-split", params);
+            workingMemory.startProcess("org.jbpm.process-split");
         
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(1, list.size());

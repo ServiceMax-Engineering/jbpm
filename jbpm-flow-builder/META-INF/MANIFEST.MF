@@ -1,60 +1,61 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1382711127383
-Build-Jdk: 1.7.0_25
-Build-Timestamp: Fri, 25 Oct 2013 10:25:13 -0400
-Built-By: dcarver
+Bnd-LastModified: 1442242406468
+Build-Jdk: 1.8.0_31
+Build-Timestamp: Mon, 14 Sep 2015 11:53:12 -0300
+Built-By: marianadabreu
 Bundle-Activator: org.jbpm.osgi.flow.compiler.Activator
 Bundle-Description: jBPM Flow Builder
 Bundle-DocURL: http://www.jboss.org/
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
 Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: Flow Builder
-Bundle-SymbolicName: org.jbpm.flow.builder;singleton:=true
+Bundle-SymbolicName: org.jbpm.flow.builder
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.0.0.20131025-1025
+Bundle-Version: 6.2.0.201509141453
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.compiler;version="6.0.0.20131025-1025",org.jbpm
- .compiler.xml;version="6.0.0.20131025-1025",org.jbpm.compiler.xml.proce
- sses;version="6.0.0.20131025-1025",org.jbpm.osgi.flow.compiler;version=
- "6.0.0.20131025-1025",org.jbpm.process.builder;version="6.0.0.20131025-
- 1025",org.jbpm.process.builder.dialect;version="6.0.0.20131025-1025",or
- g.jbpm.process.builder.dialect.java;version="6.0.0.20131025-1025",org.j
- bpm.process.builder.dialect.mvel;version="6.0.0.20131025-1025",org.jbpm
- .process.workitem;version="6.0.0.20131025-1025"
+Export-Package: org.jbpm.compiler;version="6.2.0.201509141453",org.jbpm.
+ compiler.xml;version="6.2.0.201509141453",org.jbpm.compiler.xml.process
+ es;version="6.2.0.201509141453",org.jbpm.osgi.flow.compiler;version="6.
+ 2.0.201509141453",org.jbpm.process.builder;version="6.2.0.201509141453"
+ ,org.jbpm.process.builder.dialect;version="6.2.0.201509141453",org.jbpm
+ .process.builder.dialect.java;version="6.2.0.201509141453",org.jbpm.pro
+ cess.builder.dialect.mvel;version="6.2.0.201509141453",org.jbpm.process
+ .workitem;version="6.2.0.201509141453"
 Implementation-Title: jBPM :: Flow Builder
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-flow-builder/
 Implementation-Vendor: JBoss by Red Hat
 Implementation-Vendor-Id: org.jbpm
-Implementation-Version: 6.0.0-SNAPSHOT
+Implementation-Version: 6.2.0.006
 Import-Package: javax.xml.parsers,javax.xml.transform,javax.xml.transfor
- m.stream,org.drools.compiler.commons.jci.problems,org.drools.compiler.c
- ommons.jci.readers,org.drools.compiler.compiler,org.drools.compiler.com
- piler.xml,org.drools.compiler.lang.descr,org.drools.compiler.rule.build
- er,org.drools.compiler.rule.builder.dialect.java,org.drools.compiler.ru
- le.builder.dialect.mvel,org.drools.core,org.drools.core.base,org.drools
- .core.base.mvel,org.drools.core.process.core,org.drools.core.process.co
- re.datatype,org.drools.core.process.core.datatype.impl.type,org.drools.
- core.process.core.impl,org.drools.core.rule,org.drools.core.spi,org.dro
- ols.core.util,org.drools.core.xml,org.jbpm.process.core,org.jbpm.proces
- s.core.context.exception,org.jbpm.process.core.context.swimlane,org.jbp
- m.process.core.context.variable,org.jbpm.process.core.event,org.jbpm.pr
- ocess.core.impl,org.jbpm.process.core.timer,org.jbpm.process.core.valid
- ation,org.jbpm.process.instance.impl,org.jbpm.ruleflow.core,org.jbpm.ru
- leflow.core.validation,org.jbpm.workflow.core,org.jbpm.workflow.core.im
- pl,org.jbpm.workflow.core.node,org.kie.api,org.kie.api.definition.proce
- ss,org.kie.api.io,org.kie.api.runtime.process,org.kie.internal.utils,or
- g.mvel2,org.mvel2.integration,org.mvel2.integration.impl,org.mvel2.temp
- lates,org.osgi.framework,org.w3c.dom,org.xml.sax
+ m.stream,org.drools.compiler.builder.impl,org.drools.compiler.builder.i
+ mpl.errors,org.drools.compiler.commons.jci.problems,org.drools.compiler
+ .commons.jci.readers,org.drools.compiler.compiler,org.drools.compiler.c
+ ompiler.xml,org.drools.compiler.lang.descr,org.drools.compiler.rule.bui
+ lder,org.drools.compiler.rule.builder.dialect.java,org.drools.compiler.
+ rule.builder.dialect.mvel,org.drools.core.base,org.drools.core.base.mve
+ l,org.drools.core.definitions,org.drools.core.process.core,org.drools.c
+ ore.process.core.datatype,org.drools.core.process.core.datatype.impl.ty
+ pe,org.drools.core.process.core.impl,org.drools.core.rule,org.drools.co
+ re.spi,org.drools.core.util,org.drools.core.xml,org.jbpm.process.core,o
+ rg.jbpm.process.core.context.exception,org.jbpm.process.core.context.sw
+ imlane,org.jbpm.process.core.context.variable,org.jbpm.process.core.eve
+ nt,org.jbpm.process.core.impl,org.jbpm.process.core.timer,org.jbpm.proc
+ ess.core.validation,org.jbpm.process.instance.impl,org.jbpm.ruleflow.co
+ re,org.jbpm.workflow.core,org.jbpm.workflow.core.impl,org.jbpm.workflow
+ .core.node,org.kie.api.definition.process,org.kie.api.io,org.kie.api.ru
+ ntime.process,org.kie.internal.builder,org.mvel2,org.mvel2.integration,
+ org.mvel2.integration.impl,org.mvel2.templates,org.osgi.framework,org.s
+ lf4j,org.w3c.dom,org.xml.sax
 Include-Resource: org/jbpm/process/builder/dialect/java/javaInvokers.mve
  l=src/main/resources/org/jbpm/process/builder/dialect/java/javaInvokers
  .mvel,org/jbpm/process/builder/dialect/java/javaRule.mvel=src/main/reso
  urces/org/jbpm/process/builder/dialect/java/javaRule.mvel
 Java-Vendor: Oracle Corporation
-Java-Version: 1.7.0_25
-Os-Arch: i386
-Os-Name: Linux
-Os-Version: 3.5.0-17-generic
+Java-Version: 1.8.0_31
+Os-Arch: x86_64
+Os-Name: Mac OS X
+Os-Version: 10.10.5
 Private-Package: org.jbpm.compiler;org.jbpm.compiler.xml;org.jbpm.compil
  er.xml.processes;org.jbpm.osgi.flow.compiler;org.jbpm.process.builder;o
  rg.jbpm.process.builder.dialect;org.jbpm.process.builder.dialect.java;o
@@ -62,9 +63,9 @@ Private-Package: org.jbpm.compiler;org.jbpm.compiler.xml;org.jbpm.compil
  ackage:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-flow-bui
  lder
-Scm-Revision: 1bdfc0cfb019f96c30644c27afd40c1c7a61ddc8
+Scm-Revision: 40950b0288d6f5a6f81ef8a5cb14916612b97202
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-flow-builder
 Specification-Title: jBPM :: Flow Builder
 Specification-Vendor: JBoss by Red Hat
-Specification-Version: 6.0.0-SNAPSHOT
+Specification-Version: 6.2.0.006
 Tool: Bnd-1.50.0

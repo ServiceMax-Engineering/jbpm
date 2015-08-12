@@ -72,7 +72,7 @@ public class BPMNPlaneHandler extends BaseAbstractHandler implements Handler {
         List<Process> processes = ((ProcessBuildData) parser.getData()).getProcesses();
         RuleFlowProcess process = null;
         for (Process p : processes) {
-            if (p.getId().equals(processInfo.getProcessRef())) {
+            if (p.getId() != null && p.getId().equals(processInfo.getProcessRef())) {
                 process = (RuleFlowProcess) p;
                 break;
             }
@@ -92,6 +92,9 @@ public class BPMNPlaneHandler extends BaseAbstractHandler implements Handler {
     }
     
     private boolean processNodeInfo(NodeInfo nodeInfo, Node[] nodes) {
+    	if (nodeInfo == null || nodeInfo.getNodeRef() == null) {
+    		return false;
+    	}
         for (Node node: nodes) {
             String id = (String) node.getMetaData().get("UniqueId");
             if (nodeInfo.getNodeRef().equals(id)) {

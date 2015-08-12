@@ -27,18 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.core.common.InternalRuleBase;
 import org.drools.core.common.InternalWorkingMemory;
-import org.drools.core.util.StringUtils;
-import org.kie.api.definition.process.Process;
-import org.kie.api.marshalling.ObjectMarshallingStrategy;
+import org.drools.core.impl.InternalKnowledgeBase;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.MarshallerWriteContext;
 import org.drools.core.marshalling.impl.PersisterEnums;
-import org.kie.api.runtime.process.NodeInstance;
-import org.kie.api.runtime.process.NodeInstanceContainer;
-import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.api.runtime.process.WorkflowProcessInstance;
+import org.drools.core.util.StringUtils;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.context.exclusive.ExclusiveGroup;
 import org.jbpm.process.core.context.swimlane.SwimlaneContext;
@@ -53,19 +47,13 @@ import org.jbpm.workflow.instance.impl.NodeInstanceFactoryRegistry;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.jbpm.workflow.instance.impl.factory.CreateNewNodeFactory;
-import org.jbpm.workflow.instance.node.CompositeContextNodeInstance;
-import org.jbpm.workflow.instance.node.DynamicNodeInstance;
-import org.jbpm.workflow.instance.node.EventNodeInstance;
-import org.jbpm.workflow.instance.node.ForEachNodeInstance;
-import org.jbpm.workflow.instance.node.HumanTaskNodeInstance;
-import org.jbpm.workflow.instance.node.JoinInstance;
-import org.jbpm.workflow.instance.node.MilestoneNodeInstance;
-import org.jbpm.workflow.instance.node.RuleSetNodeInstance;
-import org.jbpm.workflow.instance.node.StateBasedNodeInstance;
-import org.jbpm.workflow.instance.node.StateNodeInstance;
-import org.jbpm.workflow.instance.node.SubProcessNodeInstance;
-import org.jbpm.workflow.instance.node.TimerNodeInstance;
-import org.jbpm.workflow.instance.node.WorkItemNodeInstance;
+import org.jbpm.workflow.instance.node.*;
+import org.kie.api.definition.process.Process;
+import org.kie.api.marshalling.ObjectMarshallingStrategy;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.NodeInstanceContainer;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
 
 /**
  * Default implementation of a process instance marshaller.
@@ -387,15 +375,15 @@ public abstract class AbstractProcessInstanceMarshaller implements
     // Input methods
     public ProcessInstance readProcessInstance(MarshallerReaderContext context) throws IOException {
         ObjectInputStream stream = context.stream;
-        InternalRuleBase ruleBase = context.ruleBase;
+        InternalKnowledgeBase kBase = context.kBase;
         InternalWorkingMemory wm = context.wm;
 
         WorkflowProcessInstanceImpl processInstance = createProcessInstance();
         processInstance.setId(stream.readLong());
         String processId = stream.readUTF();
         processInstance.setProcessId(processId);
-        Process process = ruleBase.getProcess(processId);
-        if (ruleBase != null) {
+        Process process = kBase.getProcess(processId);
+        if (kBase != null) {
             processInstance.setProcess(process);
         }
         processInstance.setKnowledgeRuntime(wm.getKnowledgeRuntime());
@@ -570,13 +558,7 @@ public abstract class AbstractProcessInstanceMarshaller implements
                 }
                 break;
             case PersisterEnums.HUMAN_TASK_NODE_INSTANCE:
-//                nodeInstance = new HumanTaskNodeInstance();
-    			try {
-    				nodeInstance = (NodeInstanceImpl) ((CreateNewNodeFactory) NodeInstanceFactoryRegistry.INSTANCE.registry.get(HumanTaskNode.class)).cls.newInstance();
-    			} catch (Exception e) {
-    				// TODO Auto-generated catch block
-    				throw new RuntimeException(e);
-    			}
+                nodeInstance = new HumanTaskNodeInstance();
                 ((HumanTaskNodeInstance) nodeInstance).internalSetWorkItemId(stream.readLong());
                 nbTimerInstances = stream.readInt();
                 if (nbTimerInstances > 0) {
@@ -588,13 +570,7 @@ public abstract class AbstractProcessInstanceMarshaller implements
                 }
                 break;
             case PersisterEnums.WORK_ITEM_NODE_INSTANCE:
-//                nodeInstance = new WorkItemNodeInstance();
-			try {
-				nodeInstance = (NodeInstanceImpl) ((CreateNewNodeFactory) NodeInstanceFactoryRegistry.INSTANCE.registry.get(WorkItemNode.class)).cls.newInstance();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				throw new RuntimeException(e);
-			}
+                nodeInstance = new WorkItemNodeInstance();
                 ((WorkItemNodeInstance) nodeInstance).internalSetWorkItemId(stream.readLong());
                 nbTimerInstances = stream.readInt();
                 if (nbTimerInstances > 0) {
@@ -686,12 +662,12 @@ public abstract class AbstractProcessInstanceMarshaller implements
                 }
                 break;
             case 200:
-			try {
-				nodeInstance = (NodeInstanceImpl) ((CreateNewNodeFactory) NodeInstanceFactoryRegistry.INSTANCE.registry.get(Class.forName("com.intalio.bpm.engine.status.subprocess.StatusSubProcessNode"))).cls.newInstance();
-			} catch (Exception e) {
+			  try {
+				nodeInstance = (NodeInstanceImpl)Class.forName("com.intalio.bpm.engine.status.subprocess.StatusSubProcessNode").newInstance();
+			  } catch (Exception e) {
 				// TODO Auto-generated catch block
 				throw new RuntimeException(e);
-			}
+			  }
               nbTimerInstances = stream.readInt();
               if (nbTimerInstances > 0) {
                   List<Long> timerInstances = new ArrayList<Long>();

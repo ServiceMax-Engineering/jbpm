@@ -1,17 +1,14 @@
 package org.jbpm.persistence.session;
 
-import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
-import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
-import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
-import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.jbpm.persistence.util.PersistenceUtil.*;
+import static org.junit.Assert.*;
 import static org.kie.api.runtime.EnvironmentName.ENTITY_MANAGER_FACTORY;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,9 +19,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
 import org.drools.core.WorkItemHandlerNotFoundException;
-import org.drools.core.common.AbstractRuleBase;
 import org.drools.core.impl.InternalKnowledgeBase;
-import org.drools.persistence.jta.JtaTransactionManager;
+import org.drools.core.impl.KnowledgeBaseImpl;
 import org.drools.core.process.core.ParameterDefinition;
 import org.drools.core.process.core.Work;
 import org.drools.core.process.core.datatype.impl.type.IntegerDataType;
@@ -33,12 +29,14 @@ import org.drools.core.process.core.datatype.impl.type.StringDataType;
 import org.drools.core.process.core.impl.ParameterDefinitionImpl;
 import org.drools.core.process.core.impl.WorkImpl;
 import org.drools.core.runtime.process.ProcessRuntimeFactory;
+import org.drools.persistence.jta.JtaTransactionManager;
 import org.jbpm.persistence.processinstance.ProcessInstanceInfo;
 import org.jbpm.persistence.session.objects.Person;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.instance.ProcessRuntimeFactoryServiceImpl;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
 import org.jbpm.workflow.core.node.EndNode;
@@ -49,21 +47,27 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemManager;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.KnowledgeBaseFactory;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.persistence.jpa.JPAKnowledgeService;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.runtime.process.ProcessInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WorkItemPersistenceTest {
+@RunWith(Parameterized.class)
+public class WorkItemPersistenceTest extends AbstractBaseTest {
 
-    private static Logger logger = LoggerFactory.getLogger(WorkItemPersistenceTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(WorkItemPersistenceTest.class);
     
     private HashMap<String, Object> context;
     private EntityManagerFactory emf;
@@ -72,9 +76,19 @@ public class WorkItemPersistenceTest {
         ProcessRuntimeFactory.setProcessRuntimeFactoryService(new ProcessRuntimeFactoryServiceImpl());
     }
     
+    public WorkItemPersistenceTest(boolean locking) { 
+        this.useLocking = locking; 
+     }
+     
+     @Parameters
+     public static Collection<Object[]> persistence() {
+         Object[][] data = new Object[][] { { false }, { true } };
+         return Arrays.asList(data);
+     };
+     
     @Before
     public void setUp() throws Exception {
-        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME, false);
+        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME);
         emf = (EntityManagerFactory) context.get(ENTITY_MANAGER_FACTORY);
     }
     
@@ -94,7 +108,7 @@ public class WorkItemPersistenceTest {
         String workName = "Unnexistent Task";
         RuleFlowProcess process = getWorkItemProcess( processId, workName );
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess( process );
+        ((KnowledgeBaseImpl) kbase).addProcess( process );
         StatefulKnowledgeSession ksession = createSession(kbase);
 
         ksession.getWorkItemManager().registerWorkItemHandler( workName, new DoNothingWorkItemHandler() );
@@ -241,8 +255,16 @@ public class WorkItemPersistenceTest {
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
         kbase.addKnowledgePackages( kbuilder.getKnowledgePackages() );        
         StatefulKnowledgeSession ksession = createSession(kbase);
-        
-        DoNothingWorkItemHandler handler = new DoNothingWorkItemHandler();
+        final List<WorkItem> workItems = new ArrayList<WorkItem>();
+        DoNothingWorkItemHandler handler = new DoNothingWorkItemHandler() {
+
+            @Override
+            public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
+                super.executeWorkItem(workItem, manager);
+                workItems.add(workItem);
+            }
+            
+        };
         ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
         
         ProcessInstance processInstance = ksession.startProcess("org.drools.humantask");
@@ -267,7 +289,7 @@ public class WorkItemPersistenceTest {
             logger.debug("STATE_SUSPENDED");
             break;
         default: 
-            logger.debug("Unknown state: " + state );
+            logger.debug("Unknown state: {}", state );
         }
        
         procInstInfoList = retrieveProcessInstanceInfo(emf);
@@ -278,6 +300,11 @@ public class WorkItemPersistenceTest {
                 processInstanceInfoMadeInThisTest.getProcessInstanceByteArray());
         assertTrue("ByteArray of ProcessInstanceInfo from this test is not filled and empty!", 
                 processInstanceInfoMadeInThisTest.getProcessInstanceByteArray().length > 0);
+        assertEquals(1, workItems.size());
+        ksession.getWorkItemManager().completeWorkItem(workItems.get(0).getId(), null);
+        
+        ProcessInstance pi = ksession.getProcessInstance(processInstance.getId());
+        assertNull(pi);
     }
     
     @SuppressWarnings("unchecked")
@@ -293,7 +320,7 @@ public class WorkItemPersistenceTest {
         for( Object resultObject : mdList ) { 
             ProcessInstanceInfo procInstInfo = (ProcessInstanceInfo) resultObject;
             procInstInfoList.add(procInstInfo);
-            logger.trace("> " + procInstInfo);
+            logger.trace("> {}", procInstInfo);
         }
         
         txm.commit(txOwner);

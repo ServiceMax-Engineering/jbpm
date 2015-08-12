@@ -16,7 +16,10 @@
 
 package org.jbpm.workflow.instance.node;
 
+import org.drools.core.common.InternalAgenda;
 import org.drools.core.common.InternalKnowledgeRuntime;
+import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.kie.api.definition.rule.Rule;
 import org.kie.api.event.rule.MatchCancelledEvent;
 import org.kie.api.event.rule.MatchCreatedEvent;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
@@ -26,9 +29,7 @@ import org.kie.api.event.rule.AgendaGroupPushedEvent;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.RuleFlowGroupActivatedEvent;
 import org.kie.api.event.rule.RuleFlowGroupDeactivatedEvent;
-import org.drools.core.rule.Rule;
 import org.kie.api.runtime.process.NodeInstance;
-import org.drools.core.runtime.rule.impl.InternalAgenda;
 import org.drools.core.spi.Activation;
 import org.jbpm.workflow.core.node.MilestoneNode;
 
@@ -47,7 +48,11 @@ public class MilestoneNodeInstance extends StateBasedNodeInstance implements Age
 
     public void internalTrigger(final NodeInstance from, String type) {
     	super.internalTrigger(from, type);
-        if (!org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE.equals(type)) {
+    	// if node instance was cancelled, abort
+		if (getNodeInstanceContainer().getNodeInstance(getId()) == null) {
+			return;
+		}
+		if (!org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE.equals(type)) {
             throw new IllegalArgumentException(
                 "A MilestoneNode only accepts default incoming connections!");
         }
@@ -78,7 +83,7 @@ public class MilestoneNodeInstance extends StateBasedNodeInstance implements Age
 
     public void matchCreated(MatchCreatedEvent event) {
         // check whether this activation is from the DROOLS_SYSTEM agenda group
-        String ruleFlowGroup = ((Rule) event.getMatch().getRule()).getRuleFlowGroup();
+        String ruleFlowGroup = ((RuleImpl) event.getMatch().getRule()).getRuleFlowGroup();
         if ("DROOLS_SYSTEM".equals(ruleFlowGroup)) {
             // new activations of the rule associate with a milestone node
             // trigger node instances of that milestone node

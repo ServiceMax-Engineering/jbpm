@@ -29,6 +29,8 @@ import javax.mail.internet.MimeMessage.RecipientType;
 
 import org.drools.core.process.instance.impl.DefaultWorkItemManager;
 import org.drools.core.process.instance.impl.WorkItemImpl;
+import org.jbpm.bpmn2.handler.WorkItemHandlerRuntimeException;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +40,7 @@ import org.kie.api.runtime.process.WorkItemManager;
 import org.subethamail.wiser.Wiser;
 import org.subethamail.wiser.WiserMessage;
 
-public class EmailWorkItemHandlerTest {
+public class EmailWorkItemHandlerTest extends AbstractBaseTest {
     private Wiser wiser;    
     
     private String emailHost;
@@ -173,5 +175,21 @@ public class EmailWorkItemHandlerTest {
         assertEquals( workItem.getParameter( "Reply-To" ), ((InternetAddress)msg.getReplyTo()[0]).getAddress() );
         assertEquals( workItem.getParameter( "To" ), ((InternetAddress)msg.getRecipients( RecipientType.TO )[0]).getAddress() + "; " + ((InternetAddress)msg.getRecipients( RecipientType.TO )[1]).getAddress() );
         assertEquals( workItem.getParameter( "Cc" ),((InternetAddress)msg.getRecipients( RecipientType.CC )[0]).getAddress()  + "; " +  ((InternetAddress)msg.getRecipients( RecipientType.CC )[1]).getAddress() );       
-    }    
+    }  
+    
+    @Test(expected=WorkItemHandlerRuntimeException.class)
+    public void testFailedExecuteToHandleException() throws Exception {
+        EmailWorkItemHandler handler = new EmailWorkItemHandler();
+        handler.setConnection( emailHost, "123", null, null );   
+        
+        WorkItemImpl workItem = new WorkItemImpl();
+        workItem.setParameter( "To", "person1@domain.com" );
+        workItem.setParameter( "From", "person2@domain.com" );
+        workItem.setParameter( "Reply-To", "person3@domain.com" );
+        workItem.setParameter( "Subject", "Subject 1" );
+        workItem.setParameter( "Body", "Body 1" );
+        
+        WorkItemManager manager = new DefaultWorkItemManager(null);
+        handler.executeWorkItem( workItem, manager );
+    }
 }

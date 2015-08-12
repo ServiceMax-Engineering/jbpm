@@ -1,6 +1,5 @@
 package org.jbpm.bpmn2.persistence;
 
-import static junit.framework.Assert.assertTrue;
 import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
 import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
 import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
@@ -13,26 +12,27 @@ import java.util.Map;
 
 import org.jbpm.bpmn2.concurrency.MultipleProcessesPerThreadTest;
 import org.jbpm.persistence.util.PersistenceUtil;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.KnowledgeBaseFactory;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.persistence.jpa.JPAKnowledgeService;
-import org.kie.api.runtime.Environment;
-import org.kie.api.runtime.KieSessionConfiguration;
-import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UnmarshallingOverdueTimersTest {
+public class UnmarshallingOverdueTimersTest extends AbstractBaseTest {
 
-    private static Logger logger = LoggerFactory.getLogger(MultipleProcessesPerThreadTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(MultipleProcessesPerThreadTest.class);
 
     private HashMap<String, Object> context;
 
@@ -59,8 +59,8 @@ public class UnmarshallingOverdueTimersTest {
         return JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
     }
 
-    private static int knowledgeSessionDispose(StatefulKnowledgeSession ksession) {
-        int ksessionId = ksession.getId();
+    private static long knowledgeSessionDispose(StatefulKnowledgeSession ksession) {
+        long ksessionId = ksession.getIdentifier();
         logger.debug("disposing of ksesssion");
         ksession.dispose();
         return ksessionId;
@@ -69,7 +69,7 @@ public class UnmarshallingOverdueTimersTest {
     private StatefulKnowledgeSession reloadStatefulKnowledgeSession(String bpmn2FileName, int ksessionId) {
         KnowledgeBase kbase = loadKnowledgeBase(bpmn2FileName);
 
-        logger.debug(". reloading ksession " + ksessionId);
+        logger.debug("reloading ksession {}", ksessionId);
         Environment env = null;
         env = createEnvironment(context);
 
@@ -116,32 +116,32 @@ public class UnmarshallingOverdueTimersTest {
                 processPropVal = Long.toString(processId);
             }
             else { 
-                logger.info("export " + processPropName + "=" + processId );
+                logger.info("export {}={}", processPropName, processId );
             }
 
             // dispose of session 
             KieSessionConfiguration config = ksession.getSessionConfiguration();
-            int ksessionId = knowledgeSessionDispose(ksession);
+            long ksessionId = knowledgeSessionDispose(ksession);
             
             // print info for next test
             if( debug ) { 
-                sessionPropVal = Integer.toString(ksessionId);
+                sessionPropVal = Long.toString(ksessionId);
             }
             else { 
-                logger.info("export " + sessionPropName + "=" + ksessionId );
+                logger.info("export {}={}", sessionPropName, ksessionId );
                 
             }
             
             if( !debug ) { 
                 cal.add(Calendar.SECOND, (int) seconds);
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
-                logger.info("\nPlease wait at least " + seconds + timeUnit + " [" +  sdf.format(cal.getTime()) + "]\n" );
+                logger.info("Please wait at least {} [{}]", (seconds + timeUnit),  sdf.format(cal.getTime()));
             }
         } 
         
         if( debug ) { 
             long wait = (long) ((double) seconds * 1000d * 1.1);
-            logger.debug("sleeping " + wait + " seconds" );
+            logger.debug("sleeping {} seconds", wait);
             Thread.sleep(seconds * 1000 );
         }
         

@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
@@ -16,35 +18,42 @@ import javax.transaction.UserTransaction;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.persistence.SingleSessionCommandService;
 import org.hibernate.StaleObjectStateException;
-import org.jbpm.process.audit.JPAProcessInstanceDbLog;
-import org.jbpm.process.audit.ProcessInstanceLog;
-import org.jbpm.runtime.manager.impl.RuntimeEnvironmentBuilder;
 import org.jbpm.runtime.manager.util.TestUtil;
 import org.jbpm.services.task.exception.PermissionDeniedException;
 import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.instance.node.HumanTaskNodeInstance;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.EnvironmentName;
+import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeEnvironment;
+import org.kie.api.runtime.manager.RuntimeEnvironmentBuilder;
 import org.kie.api.runtime.manager.RuntimeManager;
+import org.kie.api.runtime.manager.RuntimeManagerFactory;
+import org.kie.api.runtime.manager.audit.AuditService;
+import org.kie.api.runtime.manager.audit.ProcessInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkflowProcessInstance;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.manager.RuntimeEnvironment;
-import org.kie.internal.runtime.manager.RuntimeManagerFactory;
 import org.kie.internal.runtime.manager.context.EmptyContext;
 import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
 import org.kie.internal.task.api.UserGroupCallback;
 
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
-public class SessionTest {
-    
+@RunWith(Parameterized.class)
+public class SessionTest extends AbstractBaseTest {
+
     private long maxWaitTime = 60*1000; // max wait to complete operation is set to 60 seconds to avoid build hangs
 	
 	private int nbThreadsProcess = 10;
@@ -57,7 +66,18 @@ public class SessionTest {
 	private UserGroupCallback userGroupCallback;  
 	
 	private RuntimeManager manager; 
+	private boolean useLocking;
 	
+    public SessionTest(boolean locking) { 
+        this.useLocking = locking; 
+     }
+
+     @Parameters
+     public static Collection<Object[]> persistence() {
+         Object[][] data = new Object[][] { { false } };
+         return Arrays.asList(data);
+     };
+     
     @Before
     public void setup() {
         TestUtil.cleanupSingletonSessionId();
@@ -66,29 +86,25 @@ public class SessionTest {
         properties.setProperty("john", "HR");
         userGroupCallback = new JBossUserGroupCallbackImpl(properties);
         
-        
         pds = TestUtil.setupPoolingDataSource();
     }
     
     @After
     public void teardown() {
+        pds.close();
         if (manager != null) {
             manager.close();
         }
-        pds.close();
+        
     }
-
-	@Test
-	public void testDummy() {
-	}
-	
 
 	
 	@Test
 	@Ignore
 	public void testSingletonSessionMemory() throws Exception {
 		for (int i = 0; i < 1000; i++) {
-		    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+		    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+	    			.newDefaultBuilder()
 	                .userGroupCallback(userGroupCallback)
 	                .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
 	                .get();
@@ -100,16 +116,20 @@ public class SessionTest {
 			System.gc();
 			Thread.sleep(100);
 			System.gc();
-			System.out.println(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+			logger.info("Used memory {}", Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 		}
 	}
 	
 	@Test
 	public void testSingletonSession() throws Exception {
-	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
                 .get();
+	    if( useLocking ) {
+	       environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+	    }
 	    
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
@@ -131,26 +151,32 @@ public class SessionTest {
 		}
 		Thread.sleep(1000);
 	      //make sure all process instance were completed
-        JPAProcessInstanceDbLog.setEnvironment(environment.getEnvironment());
+		RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
+		AuditService logService = runtime.getAuditService();       
         //active
-        List<ProcessInstanceLog> logs = JPAProcessInstanceDbLog.findActiveProcessInstances("com.sample.bpmn.hello");
+        List<? extends ProcessInstanceLog> logs = logService.findActiveProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(0, logs.size());
         
         // completed
-        logs = JPAProcessInstanceDbLog.findProcessInstances("com.sample.bpmn.hello");
+        logs = logService.findProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(nbThreadsProcess*nbInvocations, logs.size());
-		System.out.println("Done");
+        logger.debug("Done");
+        manager.disposeRuntimeEngine(runtime);
 	}
 	
 	@Test
 	public void testNewSession() throws Exception {
-	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
                 .get();
-
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
+        
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
         
@@ -170,25 +196,32 @@ public class SessionTest {
              }
 		}
 		//make sure all process instance were completed
-		JPAProcessInstanceDbLog.setEnvironment(environment.getEnvironment());
+		RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
+		AuditService logService = runtime.getAuditService();
+        
 		//active
-		List<ProcessInstanceLog> logs = JPAProcessInstanceDbLog.findActiveProcessInstances("com.sample.bpmn.hello");
+		List<? extends ProcessInstanceLog> logs = logService.findActiveProcessInstances("com.sample.bpmn.hello");
 		assertNotNull(logs);
 		assertEquals(0, logs.size());
 		
 		// completed
-		logs = JPAProcessInstanceDbLog.findProcessInstances("com.sample.bpmn.hello");
+		logs = logService.findProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(nbThreadsProcess*nbInvocations, logs.size());
-		System.out.println("Done");
+        logger.debug("Done");
+        manager.disposeRuntimeEngine(runtime);
 	}
 	
     @Test
     public void testSessionPerProcessInstance() throws Exception {
-        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
                 .get();
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
         
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
@@ -208,34 +241,42 @@ public class SessionTest {
                 fail("Failure, did not finish in time most likely hanging");
             }
         }
+        RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
         //make sure all process instance were completed
-        JPAProcessInstanceDbLog.setEnvironment(environment.getEnvironment());
+        AuditService logService = runtime.getAuditService();
+        
         //active
-        List<ProcessInstanceLog> logs = JPAProcessInstanceDbLog.findActiveProcessInstances("com.sample.bpmn.hello");
+        List<? extends ProcessInstanceLog> logs = logService.findActiveProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(0, logs.size());
         
         // completed
-        logs = JPAProcessInstanceDbLog.findProcessInstances("com.sample.bpmn.hello");
+        logs = logService.findProcessInstances("com.sample.bpmn.hello");
         assertNotNull(logs);
         assertEquals(nbThreadsProcess*nbInvocations, logs.size());        
-        System.out.println("Done");
+        logger.debug("Done");
+        manager.disposeRuntimeEngine(runtime);
     }
     
     @Test
     public void testNewSessionSuccess() throws Exception {
-        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
                 .get();
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
         
         manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
         RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
+        KieSession ksession = runtime.getKieSession();
         UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
         ut.begin();
         
-        ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
-        System.out.println("Started process instance " + processInstance.getId());
+        ProcessInstance processInstance = ksession.startProcess("com.sample.bpmn.hello", null);
+        logger.debug("Started process instance {}", processInstance.getId());
         long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
         long taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
         runtime.getTaskService().claim(taskId, "mary");
@@ -263,16 +304,17 @@ public class SessionTest {
         manager.disposeRuntimeEngine(runtime);
         
         runtime = manager.getRuntimeEngine(EmptyContext.get());
+        ksession = runtime.getKieSession();
         ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
         ut.begin();        
-        processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
+        processInstance = ksession.startProcess("com.sample.bpmn.hello", null);
         workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
         taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
         runtime.getTaskService().claim(taskId, "mary");
-        System.out.println("Started process instance " + processInstance.getId());
+        logger.debug("Started process instance {}", processInstance.getId());
         ut.commit();
 
-        assertNotNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
+        assertNotNull(ksession.getProcessInstance(processInstance.getId()));
         tasks = runtime.getTaskService().getTasksOwnedByStatus("mary", statusses, "en-UK");
         assertEquals(1, tasks.size());
 
@@ -284,7 +326,7 @@ public class SessionTest {
         runtime.getTaskService().complete(taskId, "mary", null);
         ut.commit();
         
-        assertNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
+        assertNull(ksession.getProcessInstance(processInstance.getId()));
         tasks = runtime.getTaskService().getTasksOwnedByStatus("mary", statusses, "en-UK");
         assertEquals(0, tasks.size());
         manager.disposeRuntimeEngine(runtime);
@@ -293,22 +335,27 @@ public class SessionTest {
 	
 	@Test
 	public void testNewSessionFail() throws Exception {
-	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sample.bpmn"), ResourceType.BPMN2)
                 .get();
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
         
         manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
         RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
+        KieSession ksession = runtime.getKieSession();
 		UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 		ut.begin();		
-		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
-		System.out.println("Started process instance " + processInstance.getId());
+		ProcessInstance processInstance = ksession.startProcess("com.sample.bpmn.hello", null);
+		logger.debug("Started process instance {}", processInstance.getId());
 		long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
 		long taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
 		runtime.getTaskService().claim(taskId, "mary");
 		ut.rollback();
-		System.out.println("Rolled back");
+		logger.debug("Rolled back");
 		// TODO: whenever transaction fails, do we need to dispose? can we?
 		// sessionManager.dispose();
 
@@ -326,7 +373,7 @@ public class SessionTest {
 		workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
 		taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
 		runtime.getTaskService().claim(taskId, "mary");
-		System.out.println("Started process instance " + processInstance.getId());
+		logger.debug("Started process instance {}", processInstance.getId());
 		ut.commit();
 
 		assertNotNull(runtime.getKieSession().getProcessInstance(processInstance.getId()));
@@ -362,10 +409,14 @@ public class SessionTest {
 	
 	@Test
 	public void testNewSessionFailBefore() throws Exception {
-	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sampleFailBefore.bpmn"), ResourceType.BPMN2)
                 .get();
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
         
         manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
         RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
@@ -392,15 +443,19 @@ public class SessionTest {
 	
 	@Test
 	public void testNewSessionFailAfter() throws Exception {
-	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sampleFailAfter.bpmn"), ResourceType.BPMN2)
                 .get();
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
         
         manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
         RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 
-		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
+		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello.fa", null);
 		long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
 		long taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
 		runtime.getTaskService().claim(taskId, "mary");
@@ -440,15 +495,19 @@ public class SessionTest {
 	
 	@Test
 	public void testNewSessionFailAfter2() throws Exception {
-	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+	    RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("sampleFailAfter.bpmn"), ResourceType.BPMN2)
                 .get();
+        if( useLocking ) {
+            environment.getEnvironment().set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true); 
+         }
         
         manager = RuntimeManagerFactory.Factory.get().newPerRequestRuntimeManager(environment);
         RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 
-		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
+		ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello.fa", null);
 		long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
 		long taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
 		runtime.getTaskService().claim(taskId, "mary");
@@ -485,12 +544,12 @@ public class SessionTest {
 		synchronized((SingleSessionCommandService) ((CommandBasedStatefulKnowledgeSession) runtime.getKieSession()).getCommandService()) {
 			UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 			ut.begin();
-			System.out.println("Starting process on ksession " + runtime.getKieSession().getId());
+			logger.debug("Starting process on ksession {}", runtime.getKieSession().getIdentifier());
 			ProcessInstance processInstance = runtime.getKieSession().startProcess("com.sample.bpmn.hello", null);
-			System.out.println("Started process instance " + processInstance.getId() + " on ksession " + runtime.getKieSession().getId());
+			logger.debug("Started process instance {} on ksession {}", processInstance.getId(), runtime.getKieSession().getIdentifier());
 			long workItemId = ((HumanTaskNodeInstance) ((WorkflowProcessInstance) processInstance).getNodeInstances().iterator().next()).getWorkItemId();
 			taskId = runtime.getTaskService().getTaskByWorkItemId(workItemId).getId();
-			System.out.println("Created task " + taskId);
+			logger.debug("Created task {}", taskId);
 			runtime.getTaskService().claim(taskId, "mary");
 			ut.commit();
 		}
@@ -500,7 +559,8 @@ public class SessionTest {
 	
 	public class StartProcessRunnable implements Runnable {
 		private RuntimeManager manager;
-		private int counter;
+		@SuppressWarnings("unused")
+        private int counter;
 		public StartProcessRunnable(RuntimeManager manager, int counter) {
 			this.manager = manager;
 			this.counter = counter;
@@ -509,17 +569,18 @@ public class SessionTest {
 			try {
 				for (int i=0; i<nbInvocations; i++) {
 				    RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
-//					System.out.println("Thread " + counter + " doing call " + i);
+					logger.trace("Thread {} doing call {}", counter, i);
 					testStartProcess(runtime);
 					manager.disposeRuntimeEngine(runtime);
 				}
-//				System.out.println("Process thread " + counter + " completed");
+				logger.trace("Process thread {} completed", counter);
 				completedStart++;
 			} catch (Throwable t) {
 				t.printStackTrace();
 			}
 		}
 	}
+	
 	private boolean testCompleteTask(RuntimeEngine runtime) throws InterruptedException, Exception {
 		boolean result = false;
 		List<Status> statusses = new ArrayList<Status>();
@@ -528,21 +589,21 @@ public class SessionTest {
 		List<TaskSummary> tasks = null;
 		tasks = runtime.getTaskService().getTasksOwnedByStatus("mary", statusses, "en-UK");
 		if (tasks.isEmpty()) {
-			System.out.println("Task thread found no tasks");
+		    logger.debug("Task thread found no tasks");
 			Thread.sleep(1000);
 		} else {
 			long taskId = tasks.get(0).getId();
-			System.out.println("Completing task " + taskId);
+			logger.debug("Completing task {}", taskId);
 			boolean success = false;
 			try {
 			    runtime.getTaskService().start(taskId, "mary");
 				success = true;
 			} catch (PermissionDeniedException e) {
 				// TODO can we avoid these by doing it all in one transaction?
-				System.out.println("Task thread was too late for starting task " + taskId);
+			    logger.debug("Task thread was too late for starting task {}", taskId);
 			} catch (RuntimeException e) {
-				if (e.getCause() instanceof OptimisticLockException || e.getCause() instanceof StaleObjectStateException) {
-					System.out.println("Task thread got in conflict when starting task " + taskId);
+				if (isCausedByOptimisticLockingFailure(e)) {
+				    logger.debug("Task thread got in conflict when starting task {}", taskId);
 				} else {
 					throw e;
 				}
@@ -550,11 +611,11 @@ public class SessionTest {
 			if (success) {
 			    try {
     			    runtime.getTaskService().complete(taskId, "mary", null);
-    				System.out.println("Completed task " + taskId);
+    			    logger.debug("Completed task {}", taskId);
     				result = true;
 			    } catch (RuntimeException e) {
-	                if (e.getCause() instanceof OptimisticLockException || e.getCause() instanceof StaleObjectStateException) {
-	                    System.out.println("Task thread got in conflict when completing task " + taskId);
+	                if (isCausedByOptimisticLockingFailure(e)) {
+	                    logger.debug("Task thread got in conflict when completing task {}", taskId);
 	                } else {
 	                    throw e;
 	                }
@@ -573,28 +634,28 @@ public class SessionTest {
         List<TaskSummary> tasks = null;
         tasks = runtime.getTaskService().getTasksByStatusByProcessInstanceId(piId, statusses, "en-UK");
         if (tasks.isEmpty()) {
-            System.out.println("Task thread found no tasks");
+            logger.debug("Task thread found no tasks");
             Thread.sleep(1000);
         } else {
             long taskId = tasks.get(0).getId();
-            System.out.println("Completing task " + taskId);
+            logger.debug("Completing task {}", taskId);
             boolean success = false;
             try {
                 runtime.getTaskService().start(taskId, "mary");
                 success = true;
             } catch (PermissionDeniedException e) {
                 // TODO can we avoid these by doing it all in one transaction?
-                System.out.println("Task thread was too late for starting task " + taskId);
+                logger.debug("Task thread was too late for starting task {}", taskId);
             } catch (RuntimeException e) {
-                if (e.getCause() instanceof OptimisticLockException || e.getCause() instanceof StaleObjectStateException) {
-                    System.out.println("Task thread got in conflict when starting task " + taskId);
+                if (isCausedByOptimisticLockingFailure(e)) {
+                    logger.debug("Task thread got in conflict when starting task {}", taskId);
                 } else {
                     throw e;
                 }
             }
             if (success) {
                 runtime.getTaskService().complete(taskId, "mary", null);
-                System.out.println("Completed task " + taskId);
+                logger.debug("Completed task {}", taskId);
                 result = true;
    
             }
@@ -605,7 +666,8 @@ public class SessionTest {
 
 	public class CompleteTaskRunnable implements Runnable {
 		private RuntimeManager manager;
-		private int counter;
+		@SuppressWarnings("unused")
+        private int counter;
 		public CompleteTaskRunnable(RuntimeManager manager, int counter) {
 			this.manager = manager;
 			this.counter = counter;
@@ -622,7 +684,7 @@ public class SessionTest {
 					}
 				}
 				completedTask++;
-//				System.out.println("Task thread " + counter + " completed");
+				logger.trace("Task thread {} completed", counter);
 			} catch (Throwable t) {
 				t.printStackTrace();
 			}
@@ -631,6 +693,7 @@ public class SessionTest {
 	
     public class StartProcessPerProcessInstanceRunnable implements Runnable {
         private RuntimeManager manager;
+        @SuppressWarnings("unused")
         private int counter;
         public StartProcessPerProcessInstanceRunnable(RuntimeManager manager, int counter) {
             this.manager = manager;
@@ -640,11 +703,11 @@ public class SessionTest {
             try {
                 for (int i=0; i<nbInvocations; i++) {
                     RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get());
-//                  System.out.println("Thread " + counter + " doing call " + i);
+                  logger.trace("Thread {} doing call {}", counter, i);
                     testStartProcess(runtime);
                     manager.disposeRuntimeEngine(runtime);
                 }
-//              System.out.println("Process thread " + counter + " completed");
+              logger.trace("Process thread {} completed", counter);
                 completedStart++;
             } catch (Throwable t) {
                 t.printStackTrace();
@@ -665,7 +728,7 @@ public class SessionTest {
                 while (i < nbInvocations) {
 
                     long processInstanceId = (nbInvocations *counter)+1 + i;
-//                    System.out.println("pi id " + processInstanceId + " counter " + counter);
+                    logger.trace("pi id {} counter {}", processInstanceId, counter);
                     RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get(processInstanceId));
                     boolean success = false;
                     
@@ -677,10 +740,25 @@ public class SessionTest {
                     }
                 }
                 completedTask++;
-//	              System.out.println("Task thread " + counter + " completed");
+	              logger.trace("Task thread {} completed", counter);
             } catch (Throwable t) {
                 t.printStackTrace();
             }
         }
     }
+   
+   protected boolean isCausedByOptimisticLockingFailure(Throwable throwable) {
+
+
+       while (throwable != null) {
+           if (OptimisticLockException.class.isAssignableFrom(throwable.getClass())
+        		   || StaleObjectStateException.class.isAssignableFrom(throwable.getClass())) {
+               return true;
+           } else {
+               throwable = throwable.getCause();
+           }
+       }
+
+       return false;
+   }
 }

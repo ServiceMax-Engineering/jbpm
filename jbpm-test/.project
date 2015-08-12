@@ -2,11 +2,13 @@
   <name>jbpm-test</name>
   <comment>jBPM Test. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
   <projects>
-    <project>jbpm-bam</project>
+    <project>jbpm-audit</project>
     <project>jbpm-bpmn2</project>
     <project>jbpm-flow</project>
     <project>jbpm-flow-builder</project>
-    <project>jbpm-human-task-services</project>
+    <project>jbpm-human-task-audit</project>
+    <project>jbpm-human-task-core</project>
+    <project>jbpm-human-task-jpa</project>
     <project>jbpm-human-task-workitems</project>
     <project>jbpm-persistence-jpa</project>
     <project>jbpm-runtime-manager</project>

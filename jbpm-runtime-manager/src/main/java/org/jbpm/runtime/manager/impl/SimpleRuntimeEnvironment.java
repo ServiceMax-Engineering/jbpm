@@ -1,32 +1,75 @@
+/*
+ * Copyright 2013 JBoss Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jbpm.runtime.manager.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.persistence.EntityManagerFactory;
 
 import org.drools.core.impl.EnvironmentFactory;
+import org.jbpm.marshalling.impl.ProcessInstanceResolverStrategy;
 import org.jbpm.process.core.timer.GlobalSchedulerService;
+import org.jbpm.runtime.manager.api.SchedulerProvider;
 import org.jbpm.runtime.manager.impl.mapper.InMemoryMapper;
 import org.kie.api.KieBase;
+import org.kie.api.KieServices;
 import org.kie.api.io.Resource;
 import org.kie.api.io.ResourceType;
+import org.kie.api.marshalling.ObjectMarshallingStrategy;
 import org.kie.api.runtime.Environment;
 import org.kie.api.runtime.EnvironmentName;
 import org.kie.api.runtime.KieSessionConfiguration;
-import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.api.runtime.manager.RegisterableItemsFactory;
+import org.kie.api.task.UserGroupCallback;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderError;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.runtime.conf.ForceEagerActivationOption;
 import org.kie.internal.runtime.manager.Mapper;
-import org.kie.internal.runtime.manager.RegisterableItemsFactory;
 import org.kie.internal.runtime.manager.RuntimeEnvironment;
-import org.kie.internal.task.api.UserGroupCallback;
 
+/**
+ * The most basic implementation of the <code>RuntimeEnvironment</code> that, at the same time, serves as base 
+ * implementation for all extensions. Encapsulates all important configuration that <code>RuntimeManager</code>
+ * requires for execution.
+ * <ul>
+ *  <li>EntityManagerFactory - shared for all runtime engine build based on same <code>RuntimeEnvironment</code></li>
+ *  <li>Environment - Drools/jBPM environment object - will be cloned for every <code>RuntimeEngine</code></li>
+ *  <li>KieSessionConfiguration - will be build passed on defined properties - cloned for every <code>RuntimeEngine</code></li>
+ *  <li>KieBase - resulting knowledge base build on given assets or returned if it was preset</li>
+ *  <li>RegisterableItemsFactory - factory used to provide listeners and work item handlers</li>
+ *  <li>Mapper - mapper used to keep context information</li>
+ *  <li>UserGroupCallback - user group callback, if not given null will be returned</li>
+ *  <li>GlobalSchedulerService - since this environment implements <code>SchedulerProvider</code>
+ *  it allows to get <code>GlobalTimerService</code> if available</li>
+ * </ul>
+ *
+ */
 public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerProvider {
     
     protected boolean usePersistence;
     protected EntityManagerFactory emf;
     
+    protected Map<String, Object> environmentEntries;
     protected Environment environment;
     protected KieSessionConfiguration configuration;
     protected KieBase kbase;
@@ -35,8 +78,9 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
     protected Mapper mapper;
     protected UserGroupCallback userGroupCallback;
     protected GlobalSchedulerService schedulerService;
+    protected ClassLoader classLoader;
     
-    protected Properties sessionConfigProperties;
+    protected Properties sessionConfigProperties;      
     
     public SimpleRuntimeEnvironment() {
         this(new SimpleRegisterableItemsFactory());        
@@ -44,6 +88,7 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
     
     public SimpleRuntimeEnvironment(RegisterableItemsFactory registerableItemsFactory) {
         this.environment = EnvironmentFactory.newEnvironment();
+        this.environmentEntries = new HashMap<String, Object>();
         this.kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         this.registerableItemsFactory = registerableItemsFactory;
 
@@ -55,6 +100,11 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
         }
     }
     
+    /**
+     * Adds given asset to knowledge builder to produce KieBase
+     * @param resource asset to be added 
+     * @param type type of the asset
+     */
     public void addAsset(Resource resource, ResourceType type) {
         this.kbuilder.add(resource, type);
         if (this.kbuilder.hasErrors()) {            
@@ -67,10 +117,22 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
         }
     }
     
+    /**
+     * Adds element to the drools/jbpm environment - the value must be thread save as it will be shared between all 
+     * <code>RuntimeEngine</code> instances
+     * @param name name of the environment entry
+     * @param value value of the environment entry
+     */
     public void addToEnvironment(String name, Object value) {
         this.environment.set(name, value);
+        this.environmentEntries.put(name, value);
     }
     
+    /**
+     * Adds configuration property that will be part of <code>KieSessionConfiguration</code>
+     * @param name name of the property
+     * @param value value of the property
+     */
     public void addToConfiguration(String name, String value) {
         if (this.sessionConfigProperties == null) {
             this.sessionConfigProperties = new Properties();
@@ -85,6 +147,10 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
         }
         return this.kbase;
     }
+    
+    public Environment getEnvironmentTemplate() {
+    	return this.environment;
+    }
 
     @Override
     public Environment getEnvironment() {
@@ -94,10 +160,16 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
 
     @Override
     public KieSessionConfiguration getConfiguration() {
-        if (this.sessionConfigProperties != null) {
-            return KnowledgeBaseFactory.newKnowledgeSessionConfiguration(this.sessionConfigProperties);
+    	KieSessionConfiguration config = null;
+    	if (this.sessionConfigProperties != null) {
+    		config = KieServices.Factory.get().newKieSessionConfiguration(this.sessionConfigProperties, classLoader);
+        } else {
+        	config = KieServices.Factory.get().newKieSessionConfiguration(null, classLoader);
         }
-        return null;
+    	// add special option to fire activations marked as eager directly
+    	config.setOption(ForceEagerActivationOption.YES);
+    	
+    	return config;
     }
     @Override
     public boolean usePersistence() {
@@ -131,10 +203,45 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
         addIfPresent(EnvironmentName.GLOBALS, copy);
         addIfPresent(EnvironmentName.OBJECT_MARSHALLING_STRATEGIES, copy);
         addIfPresent(EnvironmentName.PERSISTENCE_CONTEXT_MANAGER, copy);
+        addIfPresent(EnvironmentName.TASK_PERSISTENCE_CONTEXT_MANAGER, copy);
         addIfPresent(EnvironmentName.TRANSACTION_MANAGER, copy);
         addIfPresent(EnvironmentName.TRANSACTION_SYNCHRONIZATION_REGISTRY, copy);
         addIfPresent(EnvironmentName.TRANSACTION, copy);
+        addIfPresent(EnvironmentName.USE_LOCAL_TRANSACTIONS, copy);
+        addIfPresent(EnvironmentName.USE_PESSIMISTIC_LOCKING, copy);        
         
+        if (usePersistence()) {
+            ObjectMarshallingStrategy[] strategies = (ObjectMarshallingStrategy[]) copy.get(EnvironmentName.OBJECT_MARSHALLING_STRATEGIES);        
+            
+            List<ObjectMarshallingStrategy> listStrategies = new ArrayList<ObjectMarshallingStrategy>(Arrays.asList(strategies));
+            listStrategies.add(0, new ProcessInstanceResolverStrategy());
+            strategies = new ObjectMarshallingStrategy[listStrategies.size()];  
+            copy.set(EnvironmentName.OBJECT_MARSHALLING_STRATEGIES, listStrategies.toArray(strategies));
+        }
+        // copy if present in environment template which in general should not be used 
+        // unless with some framework support to make EM thread safe - like spring 
+        addIfPresent(EnvironmentName.APP_SCOPED_ENTITY_MANAGER, copy);
+        addIfPresent(EnvironmentName.CMD_SCOPED_ENTITY_MANAGER, copy);
+        
+        
+        addIfPresent("IS_JTA_TRANSACTION", copy);
+        addIfPresent("IS_TIMER_CMT", copy);
+		addIfPresent("IS_SHARED_ENTITY_MANAGER", copy);
+		addIfPresent("TRANSACTION_LOCK_ENABLED", copy);
+		addIfPresent("IdentityProvider", copy);
+		addIfPresent("jbpm.business.calendar", copy);
+		
+		// handle for custom environment entries that might be required by non engine use cases
+		if (!environmentEntries.isEmpty()) {
+			for (Entry<String, Object> entry : environmentEntries.entrySet()) {
+				// don't override
+				if (copy.get(entry.getKey()) != null) {
+					continue;
+				}
+				copy.set(entry.getKey(), entry.getValue());
+			}
+		}
+
         return copy;
     }
     @Override
@@ -174,6 +281,7 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
     public GlobalSchedulerService getSchedulerService() {
         return this.schedulerService;
     }
+    
     public void setSchedulerService(GlobalSchedulerService schedulerService) {
         this.schedulerService = schedulerService;
     }
@@ -187,5 +295,13 @@ public class SimpleRuntimeEnvironment implements RuntimeEnvironment, SchedulerPr
     }
     public void setEmf(EntityManagerFactory emf) {
         this.emf = emf;
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 }

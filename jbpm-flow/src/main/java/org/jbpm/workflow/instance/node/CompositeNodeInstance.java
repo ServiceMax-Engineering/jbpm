@@ -20,13 +20,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.EventNode;
 import org.jbpm.workflow.core.node.EventNodeInterface;
+import org.jbpm.workflow.core.node.EventSubProcessNode;
 import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.instance.NodeInstance;
 import org.jbpm.workflow.instance.NodeInstanceContainer;
@@ -52,7 +55,27 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
     private long nodeInstanceCounter = 0;
     private boolean isCanceled = false;
     private int state = ProcessInstance.STATE_ACTIVE;
+    private Map<String, Integer> iterationLevels = new HashMap<String, Integer>();
+    private int currentLevel;
     
+    @Override
+    public int getLevelForNode(String uniqueID) {
+        if ("true".equalsIgnoreCase(System.getProperty("jbpm.loop.level.disabled"))) {
+            return 1;
+        }
+        Integer value = iterationLevels.get(uniqueID);
+        if (value == null && currentLevel == 0) {
+           value = new Integer(1);
+        } else if ((value == null && currentLevel > 0) || (value != null && currentLevel > 0 && value > currentLevel)) {
+            value = new Integer(currentLevel);
+        } else {
+            value++;
+        }
+
+        iterationLevels.put(uniqueID, value);
+        return value;
+    }
+   
     public void setProcessInstance(WorkflowProcessInstance processInstance) {
     	super.setProcessInstance(processInstance);
     	registerExternalEventNodeListeners();
@@ -65,7 +88,12 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
 					getProcessInstance().addEventListener(
 						((EventNode) node).getType(), new DoNothingEventListener(), true);
 				}
-			}
+			} else if (node instanceof EventSubProcessNode) {
+                List<String> events = ((EventSubProcessNode) node).getEvents();
+                for (String type : events) {
+                    getProcessInstance().addEventListener(type, new DoNothingEventListener(), true);
+                }
+            }
     	}
     }
     
@@ -79,6 +107,10 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
     
     public void internalTrigger(final org.kie.api.runtime.process.NodeInstance from, String type) {
     	super.internalTrigger(from, type);
+    	// if node instance was cancelled, abort
+		if (getNodeInstanceContainer().getNodeInstance(getId()) == null) {
+			return;
+		}
         CompositeNode.NodeAndType nodeAndType = getCompositeNode().internalGetLinkedIncomingNode(type);
         if (nodeAndType != null) {
 	        List<Connection> connections = nodeAndType.getNode().getIncomingConnections(nodeAndType.getType());
@@ -129,6 +161,7 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
 
     public void triggerCompleted(String outType) {
     	boolean cancelRemainingInstances = getCompositeNode().isCancelRemainingInstances();
+    	((org.jbpm.workflow.instance.NodeInstanceContainer)getNodeInstanceContainer()).setCurrentLevel(getLevel());
         triggerCompleted(outType, cancelRemainingInstances);
         if (cancelRemainingInstances) {
 	        while (!nodeInstances.isEmpty()) {
@@ -191,7 +224,7 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
     public NodeInstance getFirstNodeInstance(final long nodeId) {
         for ( final Iterator<NodeInstance> iterator = this.nodeInstances.iterator(); iterator.hasNext(); ) {
             final NodeInstance nodeInstance = iterator.next();
-            if ( nodeInstance.getNodeId() == nodeId ) {
+            if ( nodeInstance.getNodeId() == nodeId && nodeInstance.getLevel() == getCurrentLevel()) {
                 return nodeInstance;
             }
         }
@@ -214,7 +247,7 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
             return nodeInstance;
         }
         
-        NodeInstanceFactory conf = NodeInstanceFactoryRegistry.INSTANCE.getProcessNodeInstanceFactory(node);
+        NodeInstanceFactory conf = NodeInstanceFactoryRegistry.getInstance(getProcessInstance().getKnowledgeRuntime().getEnvironment()).getProcessNodeInstanceFactory(node);
         if (conf == null) {
             throw new IllegalArgumentException("Illegal node type: " + node.getClass());
         }
@@ -226,6 +259,7 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
     }
 
 	public void signalEvent(String type, Object event) {
+		List<NodeInstance> currentView = new ArrayList<NodeInstance>(this.nodeInstances);
 		super.signalEvent(type, event);
 		for (Node node: getCompositeNode().internalGetNodes()) {
 			if (node instanceof EventNodeInterface) {
@@ -233,8 +267,11 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
 					if (node instanceof EventNode && ((EventNode) node).getFrom() == null) {
 						EventNodeInstanceInterface eventNodeInstance = (EventNodeInstanceInterface) getNodeInstance(node);
 						eventNodeInstance.signalEvent(type, event);
+					} else if( node instanceof EventSubProcessNode ) { 
+					    EventNodeInstanceInterface eventNodeInstance = (EventNodeInstanceInterface) getNodeInstance(node);
+					    eventNodeInstance.signalEvent(type, event);
 					} else {
-						List<NodeInstance> nodeInstances = getNodeInstances(node.getId());
+						List<NodeInstance> nodeInstances = getNodeInstances(node.getId(), currentView);
 						if (nodeInstances != null && !nodeInstances.isEmpty()) {
 							for (NodeInstance nodeInstance : nodeInstances) {
 								((EventNodeInstanceInterface) nodeInstance)
@@ -250,6 +287,18 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
 	public List<NodeInstance> getNodeInstances(final long nodeId) {
 		List<NodeInstance> result = new ArrayList<NodeInstance>();
 		for (final Iterator<NodeInstance> iterator = this.nodeInstances
+				.iterator(); iterator.hasNext();) {
+			final NodeInstance nodeInstance = iterator.next();
+			if (nodeInstance.getNodeId() == nodeId) {
+				result.add(nodeInstance);
+			}
+		}
+		return result;
+	}
+	
+	public List<NodeInstance> getNodeInstances(final long nodeId, List<NodeInstance> currentView) {
+		List<NodeInstance> result = new ArrayList<NodeInstance>();
+		for (final Iterator<NodeInstance> iterator = currentView
 				.iterator(); iterator.hasNext();) {
 			final NodeInstance nodeInstance = iterator.next();
 			if (nodeInstance.getNodeId() == nodeId) {
@@ -315,7 +364,16 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
 	}
 
 	public void nodeInstanceCompleted(NodeInstance nodeInstance, String outType) {
-	    if (nodeInstance instanceof EndNodeInstance || nodeInstance instanceof FaultNodeInstance) {
+	    Node nodeInstanceNode = nodeInstance.getNode();
+	    if( nodeInstanceNode != null ) { 
+	        Object compensationBoolObj =  nodeInstanceNode.getMetaData().get("isForCompensation");
+	        boolean isForCompensation = compensationBoolObj == null ? false : ((Boolean) compensationBoolObj);
+	        if( isForCompensation ) { 
+	            return;
+	        }
+	    }
+            //BPM-002081, support non cancelling version of escaltion boundary event, till now it was not allowing the attachedTo activity to proceed
+	    if (nodeInstance instanceof EndNodeInstance || nodeInstance instanceof EventSubProcessNodeInstance || nodeInstance instanceof FaultNodeInstance) {
             if (((org.jbpm.workflow.core.WorkflowProcess) getProcessInstance().getProcess()).isAutoComplete() && !isCanceled()) {
                 if (nodeInstances.isEmpty()) {
                     triggerCompleted(
@@ -351,6 +409,16 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
 	public boolean isCanceled() {
 		return isCanceled;
 	}
+    public int getCurrentLevel() {
+        return currentLevel;
+    }
 
+    public void setCurrentLevel(int currentLevel) {
+        this.currentLevel = currentLevel;
+    }
+
+    public Map<String, Integer> getIterationLevels() {
+        return iterationLevels;
+    }
 
 }

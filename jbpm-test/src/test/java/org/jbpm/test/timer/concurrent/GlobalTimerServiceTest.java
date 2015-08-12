@@ -1,9 +1,6 @@
 package org.jbpm.test.timer.concurrent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +14,8 @@ import javax.transaction.UserTransaction;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.persistence.SingleSessionCommandService;
 import org.hibernate.StaleObjectStateException;
-import org.jbpm.process.audit.JPAProcessInstanceDbLog;
-import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.core.timer.GlobalSchedulerService;
 import org.jbpm.process.core.timer.impl.ThreadPoolSchedulerService;
-import org.jbpm.runtime.manager.impl.RuntimeEnvironmentBuilder;
 import org.jbpm.services.task.exception.PermissionDeniedException;
 import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
 import org.jbpm.test.timer.TimerBaseTest;
@@ -31,17 +25,31 @@ import org.junit.Before;
 import org.junit.Test;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeEnvironment;
+import org.kie.api.runtime.manager.RuntimeEnvironmentBuilder;
 import org.kie.api.runtime.manager.RuntimeManager;
+import org.kie.api.runtime.manager.RuntimeManagerFactory;
+import org.kie.api.runtime.manager.audit.AuditService;
+import org.kie.api.runtime.manager.audit.ProcessInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.task.TaskService;
+import org.kie.api.task.model.Group;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.api.task.model.User;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.manager.RuntimeEnvironment;
-import org.kie.internal.runtime.manager.RuntimeManagerFactory;
+import org.kie.internal.runtime.manager.context.EmptyContext;
 import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
+import org.kie.internal.task.api.InternalTaskService;
+import org.kie.internal.task.api.TaskModelProvider;
 import org.kie.internal.task.api.UserGroupCallback;
+import org.kie.internal.task.api.model.InternalOrganizationalEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GlobalTimerServiceTest extends TimerBaseTest {
+    
+    private static final Logger logger = LoggerFactory.getLogger(GlobalTimerServiceTest.class);
     
     private long maxWaitTime = 60*1000; // max wait to complete operation is set to 60 seconds to avoid build hangs
 	
@@ -55,6 +63,7 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
 	
 	private GlobalSchedulerService globalScheduler;
 
+	private RuntimeManager manager;
     
     @Before
     public void setup() {
@@ -70,12 +79,16 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
     @After
     public void teardown() {       
         globalScheduler.shutdown();
+        if (manager != null) {
+            manager.close();
+        }
         
     }
 	
     @Test
     public void testSessionPerProcessInstance() throws Exception {
-        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.getDefault()
+        RuntimeEnvironment environment = RuntimeEnvironmentBuilder.Factory.get()
+    			.newDefaultBuilder()
                 .userGroupCallback(userGroupCallback)
                 .addAsset(ResourceFactory.newClassPathResource("BPMN2-IntermediateCatchEventTimerCycleWithHT.bpmn2"), ResourceType.BPMN2)
                 .schedulerService(globalScheduler)
@@ -84,7 +97,24 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
         long startTimeStamp = System.currentTimeMillis();
         long maxEndTime = startTimeStamp + maxWaitTime;
         
-        RuntimeManager manager = RuntimeManagerFactory.Factory.get().newPerProcessInstanceRuntimeManager(environment);
+        manager = RuntimeManagerFactory.Factory.get().newPerProcessInstanceRuntimeManager(environment);
+        // prepare task service with users and groups
+        RuntimeEngine engine = manager.getRuntimeEngine(EmptyContext.get());
+        TaskService taskService = engine.getTaskService();
+        
+        Group grouphr = TaskModelProvider.getFactory().newGroup();
+        ((InternalOrganizationalEntity) grouphr).setId("HR");
+        
+        User mary = TaskModelProvider.getFactory().newUser();
+        ((InternalOrganizationalEntity) mary).setId("mary");
+        User john = TaskModelProvider.getFactory().newUser();
+        ((InternalOrganizationalEntity) john).setId("john");
+        
+        ((InternalTaskService)taskService).addGroup(grouphr);
+        ((InternalTaskService)taskService).addUser(mary);
+        ((InternalTaskService)taskService).addUser(john);
+        
+        manager.disposeRuntimeEngine(engine);
  
         completedStart = 0;
         for (int i=0; i<nbThreadsProcess; i++) {
@@ -101,19 +131,23 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
             }
         }
         //make sure all process instance were completed
-        JPAProcessInstanceDbLog.setEnvironment(environment.getEnvironment());
+        engine = manager.getRuntimeEngine(EmptyContext.get());
+        AuditService logService = engine.getAuditService();
         //active
-        List<ProcessInstanceLog> logs = JPAProcessInstanceDbLog.findActiveProcessInstances("IntermediateCatchEvent");
+        List<? extends ProcessInstanceLog> logs = logService.findActiveProcessInstances("IntermediateCatchEvent");
         assertNotNull(logs);
+        for (ProcessInstanceLog log : logs) {
+            logger.debug("Left over {}", log.getProcessInstanceId());
+        }
         assertEquals(0, logs.size());
         
         // completed
-        logs = JPAProcessInstanceDbLog.findProcessInstances("IntermediateCatchEvent");
+        logs = logService.findProcessInstances("IntermediateCatchEvent");
         assertNotNull(logs);
         assertEquals(nbThreadsProcess, logs.size());
+        manager.disposeRuntimeEngine(engine);
         
-        manager.close();
-        System.out.println("Done");
+        logger.debug("Done");
     }
     
 	
@@ -122,14 +156,14 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
 		synchronized((SingleSessionCommandService) ((CommandBasedStatefulKnowledgeSession) runtime.getKieSession()).getCommandService()) {
 			UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 			ut.begin();
-			System.out.println("Starting process on ksession " + runtime.getKieSession().getId());
+			logger.debug("Starting process on ksession {}", runtime.getKieSession().getIdentifier());
 			Map<String, Object> params = new HashMap<String, Object>();
 			DateTime now = new DateTime();
 		    now.plus(1000);
 
-			params.put("x", "R" + wait + "/PT1S");
+			params.put("x", "R2/" + wait + "/PT1S");
 			ProcessInstance processInstance = runtime.getKieSession().startProcess("IntermediateCatchEvent", params);
-			System.out.println("Started process instance " + processInstance.getId() + " on ksession " + runtime.getKieSession().getId());			
+			logger.debug("Started process instance {} on ksession {}", processInstance.getId(), runtime.getKieSession().getIdentifier());			
 			ut.commit();
 		}
 		
@@ -137,7 +171,7 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
 	}
 
 	
-	private boolean testCompleteTaskByProcessInstance(RuntimeEngine runtime, long piId) throws InterruptedException, Exception {
+	private boolean testCompleteTaskByProcessInstance(RuntimeManager manager, RuntimeEngine runtime, long piId) throws InterruptedException, Exception {
         boolean result = false;
         List<Status> statusses = new ArrayList<Status>();
         statusses.add(Status.Reserved);
@@ -145,35 +179,66 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
         List<TaskSummary> tasks = null;
         tasks = runtime.getTaskService().getTasksByStatusByProcessInstanceId(piId, statusses, "en-UK");
         if (tasks.isEmpty()) {
-            System.out.println("Task thread found no tasks");
+            logger.debug("Task thread found no tasks for piId {}" + piId);
             Thread.sleep(1000);
         } else {
             long taskId = tasks.get(0).getId();
-            System.out.println("Completing task " + taskId);
+            logger.debug("Completing task {} piId {}", taskId, piId);
             boolean success = false;
             try {
                 runtime.getTaskService().start(taskId, "john");
                 success = true;
+                
+                if (success) {
+                    runtime.getTaskService().complete(taskId, "john", null);
+                    logger.debug("Completed task {} piID {}", taskId, piId);
+                    result = true;
+       
+                }
             } catch (PermissionDeniedException e) {
                 // TODO can we avoid these by doing it all in one transaction?
-                System.out.println("Task thread was too late for starting task " + taskId);
-            } catch (RuntimeException e) {
-                if (e.getCause() instanceof OptimisticLockException || e.getCause() instanceof StaleObjectStateException) {
-                    System.out.println("Task thread got in conflict when starting task " + taskId);
-                } else {
-                    throw e;
-                }
+                logger.debug("Task thread was too late for starting task {} piId {}", taskId, piId);
+            } catch (Throwable e) {     
+                throw new RuntimeException(e);
+      
             }
-            if (success) {
-                runtime.getTaskService().complete(taskId, "john", null);
-                System.out.println("Completed task " + taskId);
-                result = true;
-   
-            }
+
         }
         
         return result;
     }
+	
+	   private boolean testRetryCompleteTaskByProcessInstance(RuntimeManager manager, RuntimeEngine runtime, long piId) throws InterruptedException, Exception {
+	        boolean result = false;
+	        List<Status> statusses = new ArrayList<Status>();
+	        statusses.add(Status.InProgress);
+	        
+	        List<TaskSummary> tasks = null;
+	        tasks = runtime.getTaskService().getTasksByStatusByProcessInstanceId(piId, statusses, "en-UK");
+	        if (tasks.isEmpty()) {
+	            logger.debug("Retry : Task thread found no tasks for piId {}", piId);
+	            Thread.sleep(1000);
+	        } else {
+	            long taskId = tasks.get(0).getId();
+	            logger.debug("Retry : Completing task {} piId {}", taskId, piId);
+	            try {
+	                
+                    runtime.getTaskService().complete(taskId, "john", null);
+                    logger.debug("Retry : Completed task {} piId {}", taskId, piId);
+                    result = true;
+       
+	                
+	            } catch (PermissionDeniedException e) {
+	                // TODO can we avoid these by doing it all in one transaction?
+	                logger.debug("Task thread was too late for starting task {} piId {}", taskId, piId);
+	            } catch (Exception e) {
+	                throw e;
+	            }
+
+	        }
+	        
+	        return result;
+	    }
 	
     public class StartProcessPerProcessInstanceRunnable implements Runnable {
         private RuntimeManager manager;
@@ -206,19 +271,47 @@ public class GlobalTimerServiceTest extends TimerBaseTest {
                 // wait for amount of time timer expires and plus 1s initially
                 Thread.sleep(wait * 1000 + 1000);
                 long processInstanceId = counter+1;
-                RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get(processInstanceId));
+                
 
                 for (int y = 0; y<wait; y++) {
-                    testCompleteTaskByProcessInstance(runtime, processInstanceId);
+                	RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get(processInstanceId));
+                	try {
+                        testCompleteTaskByProcessInstance(manager, runtime, processInstanceId);
+                    } catch (Throwable e) {
+                        if (checkOptimiticLockException(e)) {
+                            logger.debug("{} retrying for process instance {}", counter, processInstanceId);
+                            manager.disposeRuntimeEngine(runtime);
+                            runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get(processInstanceId));
+                            testRetryCompleteTaskByProcessInstance(manager, runtime, processInstanceId);
+                        } else {
+                            throw e;
+                        }
+                    }
+                	manager.disposeRuntimeEngine(runtime);
                 }
-                manager.disposeRuntimeEngine(runtime);
+                
 
-                
-                
                 completedTask++;
             } catch (Throwable t) {
                 t.printStackTrace();
             }
         }
     }
+   
+   public static boolean checkOptimiticLockException(Throwable e) {
+       Throwable rootCause = e.getCause();
+       while (rootCause != null) {
+           if ((rootCause instanceof OptimisticLockException || rootCause instanceof StaleObjectStateException) ){               
+               return true;
+           }
+           
+           rootCause = rootCause.getCause();
+       }
+       
+       if (e instanceof InvocationTargetException) {
+           return checkOptimiticLockException(((InvocationTargetException) e).getTargetException());
+       }
+       
+       return false;
+   }
 }

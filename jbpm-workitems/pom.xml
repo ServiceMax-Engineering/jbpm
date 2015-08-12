@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.jbpm</groupId>
     <artifactId>jbpm</artifactId>
-    <version>6.0.0-SNAPSHOT</version>
+    <version>6.2.0.006</version>
   </parent>
 
   <artifactId>jbpm-workitems</artifactId>
@@ -15,6 +15,10 @@
   <name>jBPM :: WorkItems</name>
 
   <dependencies>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-flow</artifactId>
@@ -28,6 +32,14 @@
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-bpmn2</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-internal</artifactId>
+    </dependency>
     <!-- Email -->
     <dependency>
       <groupId>javax.mail</groupId>
@@ -40,7 +52,6 @@
     <dependency>
       <groupId>org.subethamail</groupId>
       <artifactId>subethasmtp</artifactId>
-      <version>3.1.6</version>
       <scope>test</scope>
     </dependency>
     <!-- Commons -->
@@ -60,17 +71,19 @@
     <dependency>
       <groupId>jivesoftware</groupId>
       <artifactId>smack</artifactId>
-      <version>3.1.0</version>
+      <optional>true</optional>
     </dependency>
     <!-- RSS -->
     <dependency>
       <groupId>rome</groupId>
       <artifactId>rome</artifactId>
+      <optional>true</optional>
     </dependency>
     <!-- FTP -->
     <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.ftpserver</groupId>
@@ -78,7 +91,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>jdom</groupId>
+      <groupId>org.jdom</groupId>
       <artifactId>jdom</artifactId>
     </dependency>
     <dependency>
@@ -86,11 +99,21 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
     <!-- JaxWS dependencies -->
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-api</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.geronimo.specs</groupId>
+          <artifactId>geronimo-javamail_1.4_spec</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-frontend-jaxws</artifactId>
@@ -102,7 +125,6 @@
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-transports-http</artifactId>
-      <version>${cxf.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -113,19 +135,41 @@
     <dependency>
       <groupId>org.apache.neethi</groupId>
       <artifactId>neethi</artifactId>
-      <version>3.0.2</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.ws.xmlschema</groupId>
       <artifactId>xmlschema-core</artifactId>
-      <version>2.0.2</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-transports-http-jetty</artifactId>
-      <version>${cxf.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- REST -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.btm</groupId>
+      <artifactId>btm</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

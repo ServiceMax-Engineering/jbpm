@@ -20,10 +20,10 @@ public class CatchLinkNodeHandler extends AbstractNodeHandler implements
 
     @Override
     public void writeNode(Node node, StringBuilder xmlDump, int metaDataType) {
-
-        CatchLinkNode linkNode = (CatchLinkNode) node;
-        writeNode("intermediateCatchEvent", linkNode, xmlDump, metaDataType);
-        xmlDump.append(">" + EOL);
+	CatchLinkNode linkNode = (CatchLinkNode) node;
+	writeNode("intermediateCatchEvent", linkNode, xmlDump, metaDataType);
+	xmlDump.append(">" + EOL);
+        writeExtensionElements(linkNode, xmlDump);
 
         String name = (String) node.getMetaData().get(
                 IntermediateCatchEventHandler.LINK_NAME);

@@ -7,6 +7,7 @@ import javax.transaction.UserTransaction;
 
 import org.junit.Test;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.TaskSummary;
@@ -16,60 +17,72 @@ import org.slf4j.LoggerFactory;
 /**
  * This is a sample file to test a process.
  */
-public class ProcessPersistenceHumanTaskTest extends JbpmJUnitTestCase {
+public class ProcessPersistenceHumanTaskTest extends JbpmJUnitBaseTestCase {
 
-    private Logger testLogger = LoggerFactory.getLogger(ProcessPersistenceHumanTaskTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProcessPersistenceHumanTaskTest.class);
 
     public ProcessPersistenceHumanTaskTest() {
-        super(true);
-        setPersistence(true);
+        super(true, true);
     }
 
     @Test
     public void testProcess() throws Exception {
-        KieSession ksession = createKnowledgeSession("humantask.bpmn");
-        TaskService taskService = getTaskService();
+        createRuntimeManager("humantask.bpmn");
+        RuntimeEngine runtimeEngine = getRuntimeEngine();
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+
 
         ProcessInstance processInstance = ksession.startProcess("com.sample.bpmn.hello");
 
-        assertProcessInstanceActive(processInstance.getId(), ksession);
+        assertProcessInstanceActive(processInstance.getId());
         assertNodeTriggered(processInstance.getId(), "Start", "Task 1");
 
         // simulating a system restart
-        ksession = restoreSession(ksession, true);
-        taskService = getTaskService();
+        logger.debug("Reloading the environemnt to simulate system restart");
+        disposeRuntimeManager();
+        createRuntimeManager("humantask.bpmn");
+        runtimeEngine = getRuntimeEngine();
+        ksession = runtimeEngine.getKieSession();
+        taskService = runtimeEngine.getTaskService();
 
         // let john execute Task 1
         String taskGroup = "en-UK";
         List<TaskSummary> list = taskService.getTasksAssignedAsPotentialOwner("john", taskGroup);
         TaskSummary task = list.get(0);
-        testLogger.debug("John is executing task " + task.getName());
+        logger.debug("John is executing task " + task.getName());
         taskService.start(task.getId(), "john");
         taskService.complete(task.getId(), "john", null);
 
         assertNodeTriggered(processInstance.getId(), "Task 2");
 
         // simulating a system restart
-        ksession = restoreSession(ksession, true);
-        taskService = getTaskService();
+        logger.debug("Reloading the environemnt to simulate system restart once again");
+        disposeRuntimeManager();
+        createRuntimeManager("humantask.bpmn");
+        runtimeEngine = getRuntimeEngine();
+        ksession = runtimeEngine.getKieSession();
+        taskService = runtimeEngine.getTaskService();
 
         // let mary execute Task 2
         String taskUser = "mary";
         list = taskService.getTasksAssignedAsPotentialOwner(taskUser, taskGroup);
         assertTrue("No tasks found for potential owner " + taskUser + "/" + taskGroup, list.size() > 0);
         task = list.get(0);
-        testLogger.debug("Mary is executing task " + task.getName());
+        logger.debug("Mary is executing task " + task.getName());
         taskService.start(task.getId(), "mary");
         taskService.complete(task.getId(), "mary", null);
 
         assertNodeTriggered(processInstance.getId(), "End");
-        assertProcessInstanceCompleted(processInstance.getId(), ksession);
+        assertProcessInstanceCompleted(processInstance.getId());
     }
 
     @Test
     public void testTransactions() throws Exception {
-        KieSession ksession = createKnowledgeSession("humantask.bpmn");
-        TaskService taskService = getTaskService();
+        createRuntimeManager("humantask.bpmn");
+        RuntimeEngine runtimeEngine = getRuntimeEngine();
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
 
         UserTransaction ut = (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
         ut.begin();

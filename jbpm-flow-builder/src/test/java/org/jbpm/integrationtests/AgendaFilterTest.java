@@ -1,31 +1,38 @@
 package org.jbpm.integrationtests;
 
-import org.drools.core.command.runtime.rule.FireAllRulesCommand;
-import org.drools.core.event.DebugProcessEventListener;
-import org.drools.core.rule.Rule;
-import org.junit.Test;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
-import org.kie.internal.builder.KnowledgeBuilder;
-import org.kie.internal.builder.KnowledgeBuilderFactory;
-import org.kie.api.command.Command;
-import org.kie.internal.command.CommandFactory;
-import org.kie.api.definition.type.FactType;
-import org.kie.api.event.rule.DebugAgendaEventListener;
-import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.io.ResourceType;
-import org.kie.api.runtime.rule.AgendaFilter;
-import org.kie.api.runtime.rule.Match;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.drools.core.command.runtime.rule.FireAllRulesCommand;
+import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.core.event.DebugProcessEventListener;
+import org.jbpm.test.util.AbstractBaseTest;
+import org.junit.Test;
+import org.kie.api.command.Command;
+import org.kie.api.definition.type.FactType;
+import org.kie.api.event.rule.DebugAgendaEventListener;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.rule.AgendaFilter;
+import org.kie.api.runtime.rule.Match;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.command.CommandFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class AgendaFilterTest {
-
+public class AgendaFilterTest extends AbstractBaseTest {
+    
+    private static final Logger logger = LoggerFactory.getLogger(AgendaFilterTest.class);
+    
     @Test
     public void testAgendaFilter() {
         // JBRULES-3374
@@ -100,9 +107,7 @@ public class AgendaFilterTest {
             fail( kbuilder.getErrors().toString() );
         }
 
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        kbase.addKnowledgePackages( kbuilder.getKnowledgePackages() );
-        StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
+        KieSession ksession = createKieSession(kbuilder.getKnowledgePackages().toArray(new KnowledgePackage[0]));
 
         // go !
         Message message = new Message();
@@ -147,7 +152,7 @@ public class AgendaFilterTest {
         private Integer currentSalience = null;
 
         public boolean accept(Match activation) {
-            Rule rule = (Rule)activation.getRule();
+            RuleImpl rule = (RuleImpl)activation.getRule();
 
             if (currentSalience == null){
                 currentSalience = rule.getSalience() != null ? Integer.valueOf(rule.getSalience().toString()) : 0;
@@ -155,7 +160,7 @@ public class AgendaFilterTest {
             boolean nocancel = currentSalience >= Integer.valueOf(rule.getSalience().toString());
 
             if(!nocancel){
-                System.out.println("cancelling ->"+ rule.getName());
+                logger.info("cancelling -> {}", rule.getName());
             }
 
             return nocancel;
@@ -290,7 +295,7 @@ public class AgendaFilterTest {
 
         ksession.getAgendaEventListeners();
         ksession.getProcessEventListeners();
-        ksession.getWorkingMemoryEventListeners();
+        ksession.getRuleRuntimeEventListeners();
 
         ksession.dispose();
     }

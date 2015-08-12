@@ -16,8 +16,10 @@
 package org.jbpm.process.core.timer;
 
 import org.drools.core.time.InternalSchedulerService;
+import org.drools.core.time.JobHandle;
 import org.drools.core.time.SchedulerService;
 import org.drools.core.time.TimerService;
+import org.jbpm.process.core.timer.impl.GlobalTimerService.GlobalJobHandle;
 
 /**
  * Implementations of these interface are responsible for scheduled jobs in global manner,
@@ -37,4 +39,39 @@ public interface GlobalSchedulerService extends SchedulerService, InternalSchedu
      * Allows to shutdown the scheduler service
      */
     void shutdown();
+    
+    /**
+     * Builds JobHandle based on NamedJobContext
+     * @param ctx
+     * @return
+     */
+    JobHandle buildJobHandleForContext(NamedJobContext ctx);
+    
+    /**
+     * Indicates if given implementation of scheduler service supports 
+     * transactional timer store.
+     * @return
+     */
+    boolean isTransactional();
+    
+    /**
+     * Indicates if given implementation of scheduler service supports
+     * retries of failed timer jobs
+     * @return
+     */
+    boolean retryEnabled();
+    
+    /**
+     * Allows to set interceptor that will be used to schedule timer instances
+     * @param interceptor
+     */
+    void setInterceptor(SchedulerServiceInterceptor interceptor);
+    
+    /**
+     * Verifies if given job is still valid or it was already executed/vetoed.
+     * Especially important in multi node environments - cluster. 
+     * @param jobHandle
+     * @return
+     */
+    boolean isValid(GlobalJobHandle jobHandle);
 }

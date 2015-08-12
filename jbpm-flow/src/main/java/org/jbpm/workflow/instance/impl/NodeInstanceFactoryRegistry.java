@@ -19,8 +19,8 @@ package org.jbpm.workflow.instance.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.kie.api.definition.process.Node;
 import org.jbpm.workflow.core.node.ActionNode;
+import org.jbpm.workflow.core.node.BoundaryEventNode;
 import org.jbpm.workflow.core.node.CatchLinkNode;
 import org.jbpm.workflow.core.node.CompositeContextNode;
 import org.jbpm.workflow.core.node.CompositeNode;
@@ -44,6 +44,7 @@ import org.jbpm.workflow.core.node.WorkItemNode;
 import org.jbpm.workflow.instance.impl.factory.CreateNewNodeFactory;
 import org.jbpm.workflow.instance.impl.factory.ReuseNodeFactory;
 import org.jbpm.workflow.instance.node.ActionNodeInstance;
+import org.jbpm.workflow.instance.node.BoundaryEventNodeInstance;
 import org.jbpm.workflow.instance.node.CatchLinkNodeInstance;
 import org.jbpm.workflow.instance.node.CompositeContextNodeInstance;
 import org.jbpm.workflow.instance.node.CompositeNodeInstance;
@@ -64,52 +65,70 @@ import org.jbpm.workflow.instance.node.SubProcessNodeInstance;
 import org.jbpm.workflow.instance.node.ThrowLinkNodeInstance;
 import org.jbpm.workflow.instance.node.TimerNodeInstance;
 import org.jbpm.workflow.instance.node.WorkItemNodeInstance;
+import org.kie.api.definition.process.Node;
+import org.kie.api.runtime.Environment;
 
 public class NodeInstanceFactoryRegistry {
 
-	public static final NodeInstanceFactoryRegistry INSTANCE = new NodeInstanceFactoryRegistry();
+    private static final NodeInstanceFactoryRegistry INSTANCE = new NodeInstanceFactoryRegistry();
 
-	public Map<Class<? extends Node>, NodeInstanceFactory> registry;
+    private Map<Class< ? extends Node>, NodeInstanceFactory> registry;
+    
+    public static NodeInstanceFactoryRegistry getInstance(Environment environment) {
+        // allow custom NodeInstanceFactoryRegistry to be given as part of the environment - e.g simulation
+        if (environment != null && environment.get("NodeInstanceFactoryRegistry") != null) {
+            return (NodeInstanceFactoryRegistry) environment.get("NodeInstanceFactoryRegistry");
+        }
+        
+        return INSTANCE;
+    }
 
-	private NodeInstanceFactoryRegistry() {
-		this.registry = new HashMap<Class<? extends Node>, NodeInstanceFactory>();
+    protected NodeInstanceFactoryRegistry() {
+        this.registry = new HashMap<Class< ? extends Node>, NodeInstanceFactory>();
 
-		// hard wired nodes:
-		register(RuleSetNode.class, new CreateNewNodeFactory(
-				RuleSetNodeInstance.class));
-		register(Split.class, new CreateNewNodeFactory(SplitInstance.class));
-		register(Join.class, new ReuseNodeFactory(JoinInstance.class));
-		register(StartNode.class, new CreateNewNodeFactory(
-				StartNodeInstance.class));
-		register(EndNode.class, new CreateNewNodeFactory(EndNodeInstance.class));
-		register(MilestoneNode.class, new CreateNewNodeFactory(
-				MilestoneNodeInstance.class));
-		register(SubProcessNode.class, new CreateNewNodeFactory(
-				SubProcessNodeInstance.class));
-		register(ActionNode.class, new CreateNewNodeFactory(
-				ActionNodeInstance.class));
-		register(WorkItemNode.class, new CreateNewNodeFactory(
-				WorkItemNodeInstance.class));
-		register(TimerNode.class, new CreateNewNodeFactory(
-				TimerNodeInstance.class));
-		register(FaultNode.class, new CreateNewNodeFactory(
-				FaultNodeInstance.class));
-		register(CompositeNode.class, new CreateNewNodeFactory(
-				CompositeNodeInstance.class));
-		register(CompositeContextNode.class, new CreateNewNodeFactory(
-				CompositeContextNodeInstance.class));
-		register(HumanTaskNode.class, new CreateNewNodeFactory(
-				HumanTaskNodeInstance.class));
-		register(ForEachNode.class, new CreateNewNodeFactory(
-				ForEachNodeInstance.class));
-		register(EventNode.class, new CreateNewNodeFactory(
-				EventNodeInstance.class));
-		register(StateNode.class, new CreateNewNodeFactory(
-				StateNodeInstance.class));
-		register(DynamicNode.class, new CreateNewNodeFactory(
-				DynamicNodeInstance.class));
-
-		register(CatchLinkNode.class, new CreateNewNodeFactory(
+        // hard wired nodes:
+        register( RuleSetNode.class,
+                  new CreateNewNodeFactory( RuleSetNodeInstance.class ) );
+        register( Split.class,
+                  new CreateNewNodeFactory( SplitInstance.class ) );
+        register( Join.class,
+                  new ReuseNodeFactory( JoinInstance.class ) );
+        register( StartNode.class,
+                  new CreateNewNodeFactory( StartNodeInstance.class ) );
+        register( EndNode.class,
+                  new CreateNewNodeFactory( EndNodeInstance.class ) );
+        register( MilestoneNode.class,
+                  new CreateNewNodeFactory( MilestoneNodeInstance.class ) );
+        register( SubProcessNode.class,
+                  new CreateNewNodeFactory( SubProcessNodeInstance.class ) );
+        register( ActionNode.class,
+                  new CreateNewNodeFactory( ActionNodeInstance.class ) );
+        register( WorkItemNode.class,
+                  new CreateNewNodeFactory( WorkItemNodeInstance.class ) );
+        register( TimerNode.class,
+                  new CreateNewNodeFactory( TimerNodeInstance.class ) );
+        register( FaultNode.class,
+                  new CreateNewNodeFactory( FaultNodeInstance.class ) );
+        register(EventSubProcessNode.class, 
+                  new CreateNewNodeFactory(EventSubProcessNodeInstance.class));
+        register( CompositeNode.class,
+                  new CreateNewNodeFactory( CompositeNodeInstance.class ) );
+        register( CompositeContextNode.class,
+                  new CreateNewNodeFactory( CompositeContextNodeInstance.class ) );
+        register( HumanTaskNode.class,
+                  new CreateNewNodeFactory( HumanTaskNodeInstance.class ) );
+        register( ForEachNode.class,
+                  new CreateNewNodeFactory( ForEachNodeInstance.class ) );
+        register( EventNode.class,
+                  new CreateNewNodeFactory( EventNodeInstance.class ) );
+        register( StateNode.class,
+                  new CreateNewNodeFactory( StateNodeInstance.class ) );
+        register( DynamicNode.class,
+                  new CreateNewNodeFactory( DynamicNodeInstance.class ) );
+        register( BoundaryEventNode.class,
+                new CreateNewNodeFactory( BoundaryEventNodeInstance.class ) );
+        
+        register(CatchLinkNode.class, new CreateNewNodeFactory(
 				CatchLinkNodeInstance.class));
 		register(ThrowLinkNode.class, new CreateNewNodeFactory(
 				ThrowLinkNodeInstance.class));

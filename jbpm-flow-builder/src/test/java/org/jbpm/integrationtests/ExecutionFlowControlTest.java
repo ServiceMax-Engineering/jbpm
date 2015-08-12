@@ -1,20 +1,23 @@
 package org.jbpm.integrationtests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.TestCase;
-
+import org.jbpm.test.util.AbstractBaseTest;
+import org.junit.Test;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.runtime.process.ProcessInstance;
 
-public class ExecutionFlowControlTest extends TestCase {
+public class ExecutionFlowControlTest  extends AbstractBaseTest {
 
+    @Test
     public void testRuleFlowUpgrade() throws Exception {
         final KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         // Set the system property so that automatic conversion can happen
@@ -35,10 +38,8 @@ public class ExecutionFlowControlTest extends TestCase {
                       list.size() );
         assertEquals( "Rule1",
                       list.get( 0 ) );
-        assertEquals( "Rule3",
-                      list.get( 1 ) );
-        assertEquals( "Rule2",
-                      list.get( 2 ) );
+        list.subList(1,2).contains( "Rule2" );
+        list.subList(1,2).contains( "Rule3" );
         assertEquals( "Rule4",
                       list.get( 3 ) );
         assertEquals( ProcessInstance.STATE_COMPLETED,
