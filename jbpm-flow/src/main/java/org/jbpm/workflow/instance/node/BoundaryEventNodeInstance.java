@@ -41,11 +41,11 @@ public class BoundaryEventNodeInstance extends EventNodeInstance {
                 cancel();
             }
         } else { 
-            if (isAttachedToNodeActive(nodeInstances, attachedTo)) {
+            //if (isAttachedToNodeActive(nodeInstances, attachedTo)) {
                 super.signalEvent(type, event);
-            } else {
-                cancel();
-            }
+            //} else {
+            //    cancel();
+            //}
         }
     }
 

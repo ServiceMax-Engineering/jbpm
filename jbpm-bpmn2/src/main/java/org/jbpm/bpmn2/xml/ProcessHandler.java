@@ -366,16 +366,63 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
                             linkBoundaryTimerEvent(nodeContainer, node, attachedTo, attachedNode);
                         } else if (type.equals("Compensation")) {
                             linkBoundaryCompensationEvent(nodeContainer, node, attachedTo, attachedNode);
-                        } else if (node.getMetaData().get("SignalName") != null || type.startsWith("Message-")) {
+                        } else if (node.getMetaData().get("SignalName") != null) {
                             linkBoundarySignalEvent(nodeContainer, node, attachedTo, attachedNode);
                         } else if (type.startsWith("Condition-")) {
                             linkBoundaryConditionEvent(nodeContainer, node, attachedTo, attachedNode);
+                        } else if (type.startsWith("Message-")) {
+                        	linkBoundaryMessageEvent(nodeContainer, node, attachedTo, attachedNode);
                         }
                     }
                 }
             }
         }
     }
+    
+    private static void linkBoundaryMessageEvent(NodeContainer nodeContainer, Node node, String attachedTo, Node attachedNode) {
+        boolean cancelActivity = (Boolean) node.getMetaData()
+                .get("CancelActivity");
+        CompositeContextNode compositeNode = (CompositeContextNode) attachedNode;
+        ExceptionScope exceptionScope = (ExceptionScope) compositeNode
+                .getDefaultContext(ExceptionScope.EXCEPTION_SCOPE);
+        if (exceptionScope == null) {
+            exceptionScope = new ExceptionScope();
+            compositeNode.addContext(exceptionScope);
+            compositeNode.setDefaultContext(exceptionScope);
+        }
+        String messageCode = (String) node.getMetaData()
+                .get("MessageEvent");
+        ActionExceptionHandler exceptionHandler = new ActionExceptionHandler();
+        exceptionHandler
+                .setAction(new DroolsConsequenceAction(
+                        "java",
+                        (cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();"
+                                : "")
+                                + PROCESS_INSTANCE_SIGNAL_EVENT + "Message-"
+                                + attachedTo
+                                + "-"
+                                + messageCode + "\", null);"));
+        
+        exceptionHandler.setFaultVariable("__variable__");
+        
+        exceptionScope.setExceptionHandler(messageCode,
+                exceptionHandler);
+/* jboss merge had below code, but we want message to trigger exception
+        DroolsConsequenceAction actionAttachedTo =  new DroolsConsequenceAction("java", "" +
+        		"org.kie.api.definition.process.Node node = context.getNodeInstance().getNode().getNodeContainer().getNode(" +id+ ");" +
+        		"if (node instanceof org.jbpm.workflow.core.node.EventNode) {" +
+        		" ((org.jbpm.workflow.core.node.EventNode)node).getEventFilters().clear();" +
+        		"((org.jbpm.workflow.core.node.EventNode)node).addEventFilter(new org.jbpm.process.core.event.EventFilter () " +
+        		"{public boolean acceptsEvent(String type, Object event) { return false;}});" +
+        		"}");
+     
+
+        actionsAttachedTo.add(actionAttachedTo);
+        stateBasedNode.setActions(StateBasedNode.EVENT_NODE_EXIT, actionsAttachedTo);
+        
+*/    	
+    }
+    
     
     private static void linkBoundaryEscalationEvent(NodeContainer nodeContainer, Node node, String attachedTo, Node attachedNode) {
         boolean cancelActivity = (Boolean) node.getMetaData().get("CancelActivity");

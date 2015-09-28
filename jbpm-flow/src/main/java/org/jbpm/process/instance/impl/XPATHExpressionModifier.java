@@ -30,6 +30,7 @@ import net.sf.saxon.expr.AxisExpression;
 import net.sf.saxon.expr.Expression;
 import net.sf.saxon.expr.ItemChecker;
 import net.sf.saxon.expr.SlashExpression;
+import net.sf.saxon.expr.SimpleStepExpression;
 import net.sf.saxon.expr.VariableReference;
 import net.sf.saxon.om.NamePool;
 import net.sf.saxon.pattern.NameTest;
@@ -106,7 +107,10 @@ public class XPATHExpressionModifier {
 		SlashExpression pathExpr = null;
 		Expression step = null;
 
-		if (expression instanceof SlashExpression) {
+		if (expression instanceof SimpleStepExpression) {
+  			pathExpr = (SimpleStepExpression)expression;
+			step = pathExpr.getStep();
+		} else if (expression instanceof SlashExpression) {
 			pathExpr = (SlashExpression) expression;
 			step = pathExpr.getFirstStep();
 		} else if (expression instanceof AxisExpression) {

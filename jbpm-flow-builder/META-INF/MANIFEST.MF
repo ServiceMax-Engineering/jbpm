@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1442242406468
+Bnd-LastModified: 1443754177293
 Build-Jdk: 1.8.0_31
-Build-Timestamp: Mon, 14 Sep 2015 11:53:12 -0300
+Build-Timestamp: Thu, 1 Oct 2015 23:49:27 -0300
 Built-By: marianadabreu
 Bundle-Activator: org.jbpm.osgi.flow.compiler.Activator
 Bundle-Description: jBPM Flow Builder
@@ -11,17 +11,17 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: Flow Builder
 Bundle-SymbolicName: org.jbpm.flow.builder
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.2.0.201509141453
+Bundle-Version: 6.2.0.201510020249
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.compiler;version="6.2.0.201509141453",org.jbpm.
- compiler.xml;version="6.2.0.201509141453",org.jbpm.compiler.xml.process
- es;version="6.2.0.201509141453",org.jbpm.osgi.flow.compiler;version="6.
- 2.0.201509141453",org.jbpm.process.builder;version="6.2.0.201509141453"
- ,org.jbpm.process.builder.dialect;version="6.2.0.201509141453",org.jbpm
- .process.builder.dialect.java;version="6.2.0.201509141453",org.jbpm.pro
- cess.builder.dialect.mvel;version="6.2.0.201509141453",org.jbpm.process
- .workitem;version="6.2.0.201509141453"
+Export-Package: org.jbpm.compiler;version="6.2.0.201510020249",org.jbpm.
+ compiler.xml;version="6.2.0.201510020249",org.jbpm.compiler.xml.process
+ es;version="6.2.0.201510020249",org.jbpm.osgi.flow.compiler;version="6.
+ 2.0.201510020249",org.jbpm.process.builder;version="6.2.0.201510020249"
+ ,org.jbpm.process.builder.dialect;version="6.2.0.201510020249",org.jbpm
+ .process.builder.dialect.java;version="6.2.0.201510020249",org.jbpm.pro
+ cess.builder.dialect.mvel;version="6.2.0.201510020249",org.jbpm.process
+ .workitem;version="6.2.0.201510020249"
 Implementation-Title: jBPM :: Flow Builder
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-flow-builder/
 Implementation-Vendor: JBoss by Red Hat
@@ -63,7 +63,7 @@ Private-Package: org.jbpm.compiler;org.jbpm.compiler.xml;org.jbpm.compil
  ackage:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-flow-bui
  lder
-Scm-Revision: 40950b0288d6f5a6f81ef8a5cb14916612b97202
+Scm-Revision: e5c0e3faa13037639ae5b6e2d7fb8b902ae0e4e2
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-flow-builder
 Specification-Title: jBPM :: Flow Builder
 Specification-Vendor: JBoss by Red Hat

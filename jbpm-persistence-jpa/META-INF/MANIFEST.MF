@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1442242410791
+Bnd-LastModified: 1443754179459
 Build-Jdk: 1.8.0_31
-Build-Timestamp: Mon, 14 Sep 2015 11:53:12 -0300
+Build-Timestamp: Thu, 1 Oct 2015 23:49:27 -0300
 Built-By: marianadabreu
 Bundle-Description: jBPM JPA Persistence
 Bundle-DocURL: http://www.jboss.org/
@@ -10,14 +10,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: JPA Persistence
 Bundle-SymbolicName: org.jbpm.persistence.jpa
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.2.0.201509141453
+Bundle-Version: 6.2.0.201510020249
 Created-By: Apache Maven Bundle Plugin
 DynamicImport-Package: *
-Export-Package: org.jbpm.persistence;version="6.2.0.201509141453",org.jb
- pm.persistence.jta;version="6.2.0.201509141453",org.jbpm.persistence.ti
- mer;version="6.2.0.201509141453",org.jbpm.persistence.correlation;versi
- on="6.2.0.201509141453",org.jbpm.persistence.processinstance;version="6
- .2.0.201509141453"
+Export-Package: org.jbpm.persistence;version="6.2.0.201510020249",org.jb
+ pm.persistence.jta;version="6.2.0.201510020249",org.jbpm.persistence.ti
+ mer;version="6.2.0.201510020249",org.jbpm.persistence.correlation;versi
+ on="6.2.0.201510020249",org.jbpm.persistence.processinstance;version="6
+ .2.0.201510020249"
 Implementation-Title: jBPM :: JPA Persistence
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-persistence-jpa/
 Implementation-Vendor: JBoss by Red Hat
@@ -51,7 +51,7 @@ Private-Package: org.jbpm.persistence;org.jbpm.persistence.correlation;o
  ersistence.timer;-split-package:=merge-first
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-persiste
  nce-jpa
-Scm-Revision: 40950b0288d6f5a6f81ef8a5cb14916612b97202
+Scm-Revision: e5c0e3faa13037639ae5b6e2d7fb8b902ae0e4e2
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-persistence-jpa
 Specification-Title: jBPM :: JPA Persistence
 Specification-Vendor: JBoss by Red Hat

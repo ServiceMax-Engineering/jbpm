@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1442242424229
+Bnd-LastModified: 1443754186604
 Build-Jdk: 1.8.0_31
-Build-Timestamp: Mon, 14 Sep 2015 11:53:12 -0300
+Build-Timestamp: Thu, 1 Oct 2015 23:49:27 -0300
 Built-By: marianadabreu
 Bundle-Activator: org.jbpm.osgi.bpmn2.Activator
 Bundle-Description: jBPM BPMN2
@@ -11,14 +11,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: BPMN2
 Bundle-SymbolicName: org.jbpm.bpmn2
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 6.2.0.201509141453
+Bundle-Version: 6.2.0.201510020249
 Created-By: Apache Maven Bundle Plugin
-Export-Package: org.jbpm.bpmn2.core;version="6.2.0.201509141453",org.jbp
- m.osgi.bpmn2;version="6.2.0.201509141453",org.jbpm.bpmn2;version="6.2.0
- .201509141453",org.jbpm.bpmn2.handler;version="6.2.0.201509141453",org.
- jbpm.bpmn2.xml;version="6.2.0.201509141453",org.jbpm.bpmn2.xml.di;versi
- on="6.2.0.201509141453",org.jbpm.bpmn2.xpath;version="6.2.0.20150914145
- 3"
+Export-Package: org.jbpm.bpmn2.core;version="6.2.0.201510020249",org.jbp
+ m.osgi.bpmn2;version="6.2.0.201510020249",org.jbpm.bpmn2;version="6.2.0
+ .201510020249",org.jbpm.bpmn2.handler;version="6.2.0.201510020249",org.
+ jbpm.bpmn2.xml;version="6.2.0.201510020249",org.jbpm.bpmn2.xml.di;versi
+ on="6.2.0.201510020249",org.jbpm.bpmn2.xpath;version="6.2.0.20151002024
+ 9"
 Implementation-Title: jBPM :: BPMN2
 Implementation-URL: http://www.jboss.org/jbpm/jbpm-bpmn2/
 Implementation-Vendor: JBoss by Red Hat
@@ -65,7 +65,7 @@ Os-Name: Mac OS X
 Os-Version: 10.10.5
 Private-Package: .
 Scm-Connection: scm:git:git@github.com:droolsjbpm/jbpm.git/jbpm-bpmn2
-Scm-Revision: 40950b0288d6f5a6f81ef8a5cb14916612b97202
+Scm-Revision: e5c0e3faa13037639ae5b6e2d7fb8b902ae0e4e2
 Scm-Url: https://github.com/droolsjbpm/jbpm/jbpm-bpmn2
 Specification-Title: jBPM :: BPMN2
 Specification-Vendor: JBoss by Red Hat
