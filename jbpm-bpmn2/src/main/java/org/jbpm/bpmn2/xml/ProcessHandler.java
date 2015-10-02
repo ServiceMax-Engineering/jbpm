@@ -506,36 +506,29 @@ public class ProcessHandler extends BaseAbstractHandler implements Handler {
         String timeDate = (String) node.getMetaData().get("TimeDate");
         Timer timer = new Timer();
         if (timeDuration != null) {
-            timer.setDelay(timeDuration);
-            timer.setTimeType(Timer.TIME_DURATION);
+        	timer.setDelay(timeDuration);
+        	timer.setTimeType(Timer.TIME_DURATION);
             compositeNode.addTimer(timer, new DroolsConsequenceAction("java",
+                (cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();" : "") +
                 PROCESS_INSTANCE_SIGNAL_EVENT + "Timer-" + attachedTo + "-" + timeDuration + "\", null);"));
         } else if (timeCycle != null) {
-            int index = timeCycle.indexOf("###");
-            if (index != -1) {
-                String period = timeCycle.substring(index + 3);
-                timeCycle = timeCycle.substring(0, index);
+        	int index = timeCycle.indexOf("###");
+        	if (index != -1) {
+        		String period = timeCycle.substring(index + 3);
+        		timeCycle = timeCycle.substring(0, index);
                 timer.setPeriod(period);
-            }
-            timer.setDelay(timeCycle);
-            timer.setTimeType(Timer.TIME_CYCLE);
+        	}
+        	timer.setDelay(timeCycle);
+        	timer.setTimeType(Timer.TIME_CYCLE);
             compositeNode.addTimer(timer, new DroolsConsequenceAction("java",
+                (cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();" : "") +
                 PROCESS_INSTANCE_SIGNAL_EVENT + "Timer-" + attachedTo + "-" + timeCycle + (timer.getPeriod() == null ? "" : "###" + timer.getPeriod()) + "\", null);"));
         } else if (timeDate != null) {
             timer.setDate(timeDate);
             timer.setTimeType(Timer.TIME_DATE);
-            compositeNode.addTimer(timer, new DroolsConsequenceAction("java", PROCESS_INSTANCE_SIGNAL_EVENT + "Timer-" + attachedTo + "-" + timeDate + "\", null);"));
-        }
-        
-        if (cancelActivity) {
-            List<DroolsAction> actions = ((EventNode)node).getActions(EndNode.EVENT_NODE_EXIT);
-            if (actions == null) {
-                actions = new ArrayList<DroolsAction>();
-            }
-            DroolsConsequenceAction cancelAction =  new DroolsConsequenceAction("java", null);
-            cancelAction.setMetaData("Action", new CancelNodeInstanceAction(attachedTo));
-            actions.add(cancelAction);
-            ((EventNode)node).setActions(EndNode.EVENT_NODE_EXIT, actions);
+            compositeNode.addTimer(timer, new DroolsConsequenceAction("java",
+                (cancelActivity ? "((org.jbpm.workflow.instance.NodeInstance) kcontext.getNodeInstance()).cancel();" : "") +
+                PROCESS_INSTANCE_SIGNAL_EVENT + "Timer-" + attachedTo + "-" + timeDate + "\", null);"));
         }
     }
     
