@@ -37,6 +37,14 @@ public class CreateNewNodeFactory implements NodeInstanceFactory {
             nodeInstance.setNodeId(node.getId());
             nodeInstance.setNodeInstanceContainer(nodeInstanceContainer);
             nodeInstance.setProcessInstance(processInstance);
+            String uniqueId = (String) node.getMetaData().get("UniqueId");
+            assert uniqueId != null : node.getClass().getSimpleName() + " [" + node.getName() + "] does not have a unique id.";
+            if (uniqueId == null) {
+                uniqueId = node.getId()+"";
+            }
+            nodeInstance.setMetaData("UniqueId", uniqueId);
+            int level = ((org.jbpm.workflow.instance.NodeInstanceContainer)nodeInstanceContainer).getLevelForNode(uniqueId);
+            nodeInstance.setLevel(level);
             return nodeInstance;
         } catch (Exception e) {
         	e.printStackTrace();

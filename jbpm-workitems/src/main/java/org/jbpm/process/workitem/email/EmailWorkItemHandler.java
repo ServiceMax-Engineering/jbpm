@@ -18,7 +18,7 @@ package org.jbpm.process.workitem.email;
 
 import java.util.Arrays;
 
-import org.drools.core.process.instance.WorkItemHandler;
+import org.jbpm.process.workitem.AbstractLogOrThrowWorkItemHandler;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.process.WorkItemManager;
 
@@ -37,7 +37,7 @@ import org.kie.api.runtime.process.WorkItemManager;
  * 
  * @author <a href="mailto:kris_verlaenen@hotmail.com">Kris Verlaenen</a>
  */	
-public class EmailWorkItemHandler implements WorkItemHandler {
+public class EmailWorkItemHandler extends AbstractLogOrThrowWorkItemHandler {
 
 	private Connection connection;
 	
@@ -48,6 +48,10 @@ public class EmailWorkItemHandler implements WorkItemHandler {
 		setConnection(host, port, userName, password);
 	}
 	
+	public EmailWorkItemHandler(String host, String port, String userName, String password, String startTls) {
+		setConnection(host, port, userName, password, startTls);
+	}
+	
 	public void setConnection(String host, String port, String userName, String password) {
 		connection = new Connection();
 		connection.setHost(host);
@@ -56,23 +60,33 @@ public class EmailWorkItemHandler implements WorkItemHandler {
 		connection.setPassword(password);
 	}
 	
+	public void setConnection(String host, String port, String userName, String password, String startTls) {
+		connection = new Connection();
+		connection.setHost(host);
+		connection.setPort(port);
+		connection.setUserName(userName);
+		connection.setPassword(password);
+		connection.setStartTls(Boolean.parseBoolean(startTls));
+	}
+	
 	public Connection getConnection() {
 		return connection;
 	}
 	
 	public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
 		if (connection == null) {
-			throw new IllegalArgumentException(
-				"Connection not initialized for Email");
+			throw new IllegalArgumentException("Connection not initialized for Email");
 		}
-	
-		Email email = createEmail(workItem, connection);
-		SendHtml.sendHtml(email);
-		// avoid null pointer when used from deadline escalation handler
-	    if (manager != null) {
-	 	  manager.completeWorkItem(workItem.getId(), null);
-	 	
-	    }
+		try {
+    		Email email = createEmail(workItem, connection);
+    		SendHtml.sendHtml(email);
+    		// avoid null pointer when used from deadline escalation handler
+    	    if (manager != null) {
+    	 	  manager.completeWorkItem(workItem.getId(), null);    	 	
+    	    }
+		} catch (Exception e) {
+		    handleException(e);
+		}
 	}
 
 	protected static Email createEmail(WorkItem workItem, Connection connection) { 

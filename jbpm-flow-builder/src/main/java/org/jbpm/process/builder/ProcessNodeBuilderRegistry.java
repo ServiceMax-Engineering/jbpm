@@ -6,10 +6,13 @@ import java.util.Map;
 import org.kie.api.definition.process.Node;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.core.node.ActionNode;
+import org.jbpm.workflow.core.node.BoundaryEventNode;
 import org.jbpm.workflow.core.node.CompositeContextNode;
 import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.EventNode;
+import org.jbpm.workflow.core.node.EventSubProcessNode;
 import org.jbpm.workflow.core.node.FaultNode;
+import org.jbpm.workflow.core.node.ForEachNode;
 import org.jbpm.workflow.core.node.HumanTaskNode;
 import org.jbpm.workflow.core.node.MilestoneNode;
 import org.jbpm.workflow.core.node.RuleSetNode;
@@ -30,7 +33,7 @@ public class ProcessNodeBuilderRegistry {
         this.registry = new HashMap<Class< ? extends Node>, ProcessNodeBuilder>();
 
         register( StartNode.class,
-                  new ExtendedNodeBuilder() );
+                  new StartNodeBuilder() );
         register( EndNode.class,
                   new ExtendedNodeBuilder() );
         register( EventNode.class,
@@ -38,9 +41,9 @@ public class ProcessNodeBuilderRegistry {
         register( MilestoneNode.class,
                   new EventBasedNodeBuilder() );
         register( RuleSetNode.class,
-                  new EventBasedNodeBuilder() );
+                  new RuleSetNodeBuilder() );
         register( SubProcessNode.class,
-                  new EventBasedNodeBuilder() );
+                  new SubProcessNodeBuilder() );
         register( HumanTaskNode.class,
                   new WorkItemNodeBuilder() );
         register( WorkItemNode.class,
@@ -55,10 +58,18 @@ public class ProcessNodeBuilderRegistry {
                   new SplitNodeBuilder() );
         register( CompositeContextNode.class,
                   new EventBasedNodeBuilder() );
+        register( EventSubProcessNode.class,
+                new EventBasedNodeBuilder() );
         register( StateNode.class,
                   new EventBasedNodeBuilder() );
         register( NodeImpl.class,
                 new MultiConditionalSequenceFlowNodeBuilder() );
+        register( ForEachNode.class,
+                new EventBasedNodeBuilder() );
+        register( EventNode.class,
+                new EventNodeBuilder() );
+        register( BoundaryEventNode.class,
+                new EventNodeBuilder() );
     }
 
     public void register(Class< ? extends Node> cls,

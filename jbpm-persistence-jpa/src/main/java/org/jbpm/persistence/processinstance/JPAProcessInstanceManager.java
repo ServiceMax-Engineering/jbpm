@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.drools.core.common.InternalKnowledgeRuntime;
+import org.drools.persistence.TransactionManager;
+import org.drools.persistence.TransactionManagerHelper;
 import org.jbpm.persistence.ProcessPersistenceContext;
 import org.jbpm.persistence.ProcessPersistenceContextManager;
 import org.jbpm.persistence.correlation.CorrelationKeyInfo;
@@ -16,6 +18,7 @@ import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstanceManager;
 import org.jbpm.process.instance.impl.ProcessInstanceImpl;
 import org.jbpm.process.instance.timer.TimerManager;
+import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.jbpm.workflow.instance.node.StateBasedNodeInstance;
 import org.jbpm.workflow.instance.node.TimerNodeInstance;
 import org.kie.api.definition.process.Process;
@@ -57,7 +60,7 @@ public class JPAProcessInstanceManager
                     .get( EnvironmentName.PERSISTENCE_CONTEXT_MANAGER ))
                     .getProcessPersistenceContext();
 
-        context.persist( processInstanceInfo );
+        processInstanceInfo = context.persist( processInstanceInfo );
         ((org.jbpm.process.instance.ProcessInstance) processInstance).setId( processInstanceInfo.getId() );
         processInstanceInfo.updateLastReadDate();
         // persist correlation if exists
@@ -88,10 +91,24 @@ public class JPAProcessInstanceManager
         if (manager != null) {
             manager.validate((KieSession) kruntime, ProcessInstanceIdContext.get(id));
         }
+        TransactionManager txm = (TransactionManager) this.kruntime.getEnvironment().get( EnvironmentName.TRANSACTION_MANAGER );
         org.jbpm.process.instance.ProcessInstance processInstance = null;
         processInstance = (org.jbpm.process.instance.ProcessInstance) this.processInstances.get(id);
         if (processInstance != null) {
-            return processInstance;
+            if (((WorkflowProcessInstanceImpl) processInstance).isPersisted() && !readOnly) {
+            	ProcessPersistenceContextManager ppcm 
+        	    = (ProcessPersistenceContextManager) this.kruntime.getEnvironment().get( EnvironmentName.PERSISTENCE_CONTEXT_MANAGER );
+            	ppcm.beginCommandScopedEntityManager();
+            	ProcessPersistenceContext context = ppcm.getProcessPersistenceContext();
+                ProcessInstanceInfo processInstanceInfo = context.findProcessInstanceInfo( id );
+                if ( processInstanceInfo == null ) {
+                    return null;
+                }                
+                TransactionManagerHelper.addToUpdatableSet(txm, processInstanceInfo);
+                processInstanceInfo.updateLastReadDate();
+  
+            }
+        	return processInstance;
         }
 
     	// Make sure that the cmd scoped entity manager has started
@@ -104,11 +121,12 @@ public class JPAProcessInstanceManager
         if ( processInstanceInfo == null ) {
             return null;
         }
-        if (!readOnly) {
-        	processInstanceInfo.updateLastReadDate();
-        }
         processInstance = (org.jbpm.process.instance.ProcessInstance)
-        	processInstanceInfo.getProcessInstance(kruntime, this.kruntime.getEnvironment(), readOnly);
+        	processInstanceInfo.getProcessInstance(kruntime, this.kruntime.getEnvironment());
+        if (!readOnly) {
+            processInstanceInfo.updateLastReadDate();
+            TransactionManagerHelper.addToUpdatableSet(txm, processInstanceInfo);
+        }
         if (((ProcessInstanceImpl) processInstance).getProcessXml() == null) {
 	        Process process = kruntime.getKieBase().getProcess( processInstance.getProcessId() );
 	        if ( process == null ) {

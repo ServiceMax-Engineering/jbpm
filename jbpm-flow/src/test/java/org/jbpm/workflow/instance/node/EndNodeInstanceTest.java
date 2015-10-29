@@ -17,29 +17,37 @@
 package org.jbpm.workflow.instance.node;
 
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
 
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
 import org.drools.core.common.InternalKnowledgeRuntime;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
 import org.jbpm.workflow.core.impl.WorkflowProcessImpl;
 import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.instance.impl.NodeInstanceFactoryRegistry;
+import org.junit.Test;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.slf4j.LoggerFactory;
 
-public class EndNodeInstanceTest extends TestCase {
+public class EndNodeInstanceTest extends AbstractBaseTest {
 	
+    public void addLogger() { 
+        logger = LoggerFactory.getLogger(this.getClass());
+    }
+    
+    @Test
     public void testEndNode() {
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
         StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();        
         
         MockNode mockNode = new MockNode();        
         MockNodeInstanceFactory factory = new MockNodeInstanceFactory( new MockNodeInstance( mockNode ) );
-        NodeInstanceFactoryRegistry.INSTANCE.register(  mockNode.getClass(), factory );
+        NodeInstanceFactoryRegistry.getInstance(ksession.getEnvironment()).register(  mockNode.getClass(), factory );
         
         WorkflowProcessImpl process = new WorkflowProcessImpl(); 
         

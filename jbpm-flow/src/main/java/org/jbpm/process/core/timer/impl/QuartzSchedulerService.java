@@ -15,9 +15,11 @@
  */
 package org.jbpm.process.core.timer.impl;
 
+import java.io.NotSerializableException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.drools.core.time.AcceptsTimerJobFactoryManager;
@@ -29,6 +31,8 @@ import org.drools.core.time.TimerService;
 import org.drools.core.time.Trigger;
 import org.drools.core.time.impl.TimerJobInstance;
 import org.jbpm.process.core.timer.GlobalSchedulerService;
+import org.jbpm.process.core.timer.NamedJobContext;
+import org.jbpm.process.core.timer.SchedulerServiceInterceptor;
 import org.jbpm.process.core.timer.TimerServiceRegistry;
 import org.jbpm.process.core.timer.impl.GlobalTimerService.GlobalJobHandle;
 import org.jbpm.process.instance.timer.TimerManager.ProcessJobContext;
@@ -37,13 +41,17 @@ import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobPersistenceException;
+import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerMetaData;
 import org.quartz.SimpleTrigger;
-import org.quartz.impl.StdScheduler;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.jdbcjobstore.JobStoreCMT;
+import org.quartz.impl.jdbcjobstore.JobStoreSupport;
+import org.quartz.spi.JobStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Quartz based <code>GlobalSchedulerService</code> that is configured according
@@ -53,11 +61,18 @@ import org.quartz.impl.jdbcjobstore.JobStoreCMT;
  *
  */
 public class QuartzSchedulerService implements GlobalSchedulerService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(QuartzSchedulerService.class);
+    
+    private static final Integer START_DELAY = Integer.parseInt(System.getProperty("org.jbpm.timer.delay", "2"));
 
     private AtomicLong idCounter = new AtomicLong();
     private TimerService globalTimerService;
-    private Scheduler scheduler;
+    private SchedulerServiceInterceptor interceptor = new DelegateSchedulerServiceInterceptor(this);
     
+    // global data shared across all scheduler service instances
+    private static Scheduler scheduler;    
+    private static AtomicInteger timerServiceCounter = new AtomicInteger(0);
  
     public QuartzSchedulerService() {
         
@@ -74,11 +89,13 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
             if (processCtx instanceof StartProcessJobContext) {
                 jobname = "StartProcess-"+((StartProcessJobContext) processCtx).getProcessId()+ "-" + processCtx.getTimer().getId();
             }
+        } else if (ctx instanceof NamedJobContext) {
+            jobname = ((NamedJobContext) ctx).getJobName();
         } else {
             jobname = "Timer-"+ctx.getClass().getSimpleName()+ "-" + id;
         
         }
-        
+        logger.debug("Scheduling timer with name " + jobname);
         // check if this scheduler already has such job registered if so there is no need to schedule it again        
         try {
             JobDetail jobDetail = scheduler.getJobDetail(jobname, "jbpm");
@@ -99,17 +116,18 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
                                                                     (InternalSchedulerService) globalTimerService );
         quartzJobHandle.setTimerJobInstance( (TimerJobInstance) jobInstance );
 
-        internalSchedule(jobInstance);
+        interceptor.internalSchedule(jobInstance);
         return quartzJobHandle;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean removeJob(JobHandle jobHandle) {
         GlobalQuartzJobHandle quartzJobHandle = (GlobalQuartzJobHandle) jobHandle;
         
         try {
             
-            boolean removed =  this.scheduler.deleteJob(quartzJobHandle.getJobName(), quartzJobHandle.getJobGroup());            
+            boolean removed =  scheduler.deleteJob(quartzJobHandle.getJobName(), quartzJobHandle.getJobGroup());            
             return removed;
         } catch (SchedulerException e) {     
             
@@ -117,7 +135,7 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
         } catch (RuntimeException e) {
             SchedulerMetaData metadata;
             try {
-                metadata = this.scheduler.getMetaData();
+                metadata = scheduler.getMetaData();
                 if (metadata.getJobStoreClass().isAssignableFrom(JobStoreCMT.class)) {
                     return true;
                 }
@@ -157,8 +175,20 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
                 scheduler.rescheduleJob(quartzJobHandle.getJobName()+"_trigger", quartzJobHandle.getJobGroup(), triggerq);
             }
             
+        } catch (ObjectAlreadyExistsException e) {
+            // in general this should not happen even in clustered environment but just in case
+            // already registered jobs should be caught in scheduleJob but due to race conditions it might not 
+            // catch it in time - clustered deployments only
+            logger.warn("Job has already been scheduled, most likely running in cluster: {}", e.getMessage());
+            
         } catch (JobPersistenceException e) {
-            internalSchedule(new InmemoryTimerJobInstanceDelegate(quartzJobHandle.getJobName(), ((GlobalTimerService) globalTimerService).getTimerServiceId()));
+            if (e.getCause() instanceof NotSerializableException) {
+                // in case job cannot be persisted, like rule timer then make it in memory
+                internalSchedule(new InmemoryTimerJobInstanceDelegate(quartzJobHandle.getJobName(), ((GlobalTimerService) globalTimerService).getTimerServiceId()));
+            } else {
+                ((AcceptsTimerJobFactoryManager) globalTimerService).getTimerJobFactoryManager().removeTimerJobInstance(timerJobInstance);
+                throw new RuntimeException(e);
+            }
         } catch (SchedulerException e) {
             ((AcceptsTimerJobFactoryManager) globalTimerService).getTimerJobFactoryManager().removeTimerJobInstance(timerJobInstance);
             throw new RuntimeException("Exception while scheduling job", e);
@@ -166,25 +196,53 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
     }
 
     @Override
-    public void initScheduler(TimerService timerService) {
+    public synchronized void initScheduler(TimerService timerService) {
         this.globalTimerService = timerService;
+        timerServiceCounter.incrementAndGet();
         
-        try {
-            this.scheduler = StdSchedulerFactory.getDefaultScheduler();            
-            this.scheduler.start();
-        } catch (SchedulerException e) {
-            throw new RuntimeException("Exception when initializing QuartzSchedulerService", e);
+        if (scheduler == null) {            
+            try {
+                scheduler = StdSchedulerFactory.getDefaultScheduler();            
+                scheduler.startDelayed(START_DELAY);
+            } catch (SchedulerException e) {
+                throw new RuntimeException("Exception when initializing QuartzSchedulerService", e);
+            }
+            
+            if (isTransactional()) {
+            	// if it's transactional service directly - meaning data base job store
+            	// disable auto init of timers
+            	System.setProperty("org.jbpm.rm.init.timer", "false");
+            }
+        
         }
     }
 
     @Override
     public void shutdown() {
+    	if (scheduler == null) {
+    		return;
+    	}
+        int current = timerServiceCounter.decrementAndGet();
+        if (scheduler != null && current == 0) {
+            try {
+                scheduler.shutdown();        
+            } catch (SchedulerException e) {
+                logger.warn("Error encountered while shutting down the scheduler", e);
+            }
+            scheduler = null;
+        }
+        
+    }
+    
+    public void forceShutdown() {
         if (scheduler != null) {
             try {
-                this.scheduler.shutdown();
+                scheduler.shutdown();
+                timerServiceCounter.set(0);
             } catch (SchedulerException e) {
-//                e.printStackTrace();
+                logger.warn("Error encountered while shutting down (forced) the scheduler", e);
             }
+            scheduler = null;
         }
     }
 
@@ -215,6 +273,43 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
         public void setJobGroup(String jobGroup) {
             this.jobGroup = jobGroup;
         }
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((jobGroup == null) ? 0 : jobGroup.hashCode());
+			result = prime * result
+					+ ((jobName == null) ? 0 : jobName.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (getClass() != obj.getClass())
+				return false;
+			GlobalQuartzJobHandle other = (GlobalQuartzJobHandle) obj;
+			if (jobGroup == null) {
+				if (other.jobGroup != null)
+					return false;
+			} else if (!jobGroup.equals(other.jobGroup))
+				return false;
+			if (jobName == null) {
+				if (other.jobName != null)
+					return false;
+			} else if (!jobName.equals(other.jobName))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "GlobalQuartzJobHandle [jobName=" + jobName + ", jobGroup="
+					+ jobGroup + "]";
+		}
     
     }
     
@@ -227,7 +322,24 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
             try {
                 ((Callable<Void>)timerJobInstance).call();
             } catch (Exception e) {
-                throw new RuntimeException("Exception when executing scheduled job", e);
+                boolean reschedule = true;
+                Integer failedCount = (Integer) quartzContext.getJobDetail().getJobDataMap().get("failedCount");
+                if (failedCount == null) {
+                    failedCount = new Integer(0);
+                }
+                failedCount++;
+                quartzContext.getJobDetail().getJobDataMap().put("failedCount", failedCount);
+                if (failedCount > 5) {
+                    logger.error("Timer execution failed 5 times in a roll, unscheduling ({})", quartzContext.getJobDetail().getFullName());
+                    reschedule = false;
+                }
+                // let's give it a bit of time before failing/retrying
+                try {
+                    Thread.sleep(failedCount * 1000);
+                } catch (InterruptedException e1) {
+                    logger.debug("Got interrupted", e1);
+                }
+                throw new JobExecutionException("Exception when executing scheduled job", e, reschedule);
             }
             
         }
@@ -283,6 +395,7 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Void call() throws Exception {
             findDelegate();
@@ -290,4 +403,49 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
         }
         
     }
+
+    @Override
+    public JobHandle buildJobHandleForContext(NamedJobContext ctx) {
+        return new GlobalQuartzJobHandle(-1, ctx.getJobName(), "jbpm");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean isTransactional() {
+        try {
+            Class<JobStore> jobStoreClass = scheduler.getMetaData().getJobStoreClass();
+            if (JobStoreSupport.class.isAssignableFrom(jobStoreClass)) {
+                return true;
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to determine if quartz is transactional due to problems when checking job store class", e);
+        }
+        return false;
+    }
+
+    @Override
+    public void setInterceptor(SchedulerServiceInterceptor interceptor) {
+        this.interceptor = interceptor;
+        
+    }
+
+	@Override
+	public boolean retryEnabled() {
+		return false;
+	}
+
+	@Override
+	public boolean isValid(GlobalJobHandle jobHandle) {
+		if (scheduler == null && !isTransactional()) {
+			return true;
+		}
+		JobDetail jobDetail = null;
+		try {
+			jobDetail = scheduler.getJobDetail(((GlobalQuartzJobHandle)jobHandle).getJobName(), ((GlobalQuartzJobHandle)jobHandle).getJobGroup());
+		} catch (SchedulerException e) {
+			logger.warn("Cannot fetch job detail for job handle {}", jobHandle);
+		}
+		return jobDetail != null;
+	}
+
 }

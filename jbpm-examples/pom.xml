@@ -5,12 +5,12 @@
   <parent>
     <groupId>org.jbpm</groupId>
     <artifactId>jbpm</artifactId>
-    <version>6.0.0-SNAPSHOT</version>
+    <version>6.2.0.008</version>
   </parent>
 
   <artifactId>jbpm-examples</artifactId>
 
-  <name>jBPM examples</name>
+  <name>jBPM :: Examples</name>
   <description>Run JBPMExamplesApp to try the jBPM examples.</description>
 
   <repositories>
@@ -19,7 +19,7 @@
     <repository>
       <id>jboss-public-repository-group</id>
       <name>JBoss Public Repository Group</name>
-      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
       <layout>default</layout>
       <releases>
         <enabled>true</enabled>
@@ -48,6 +48,33 @@
             </archive>
           </configuration>
         </plugin>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+        	<groupId>org.eclipse.m2e</groupId>
+        	<artifactId>lifecycle-mapping</artifactId>
+        	<version>1.0.0</version>
+        	<configuration>
+        		<lifecycleMappingMetadata>
+        			<pluginExecutions>
+        				<pluginExecution>
+        					<pluginExecutionFilter>
+        						<groupId>org.codehaus.mojo</groupId>
+        						<artifactId>
+        							build-helper-maven-plugin
+        						</artifactId>
+        						<versionRange>[1.7,)</versionRange>
+        						<goals>
+        							<goal>parse-version</goal>
+        						</goals>
+        					</pluginExecutionFilter>
+        					<action>
+        						<ignore />
+        					</action>
+        				</pluginExecution>
+        			</pluginExecutions>
+        		</lifecycleMappingMetadata>
+        	</configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -66,13 +93,33 @@
   <dependencies>
     <!-- Internal dependencies -->
     <dependency>
+      <groupId>org.codehaus.btm</groupId>
+      <artifactId>btm</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-bpmn2</artifactId>
     </dependency>
-    <!--dependency>
+    <dependency>
       <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-human-task-hornetq</artifactId>
-    </dependency-->
+      <artifactId>jbpm-audit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-flow</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-runtime-manager</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-test</artifactId>
@@ -81,6 +128,12 @@
     	<groupId>org.subethamail</groupId>
     	<artifactId>subethasmtp-wiser</artifactId>
     	<scope>provided</scope>
+    	<exclusions>
+    	  <exclusion>
+    	    <artifactId>log4j</artifactId>
+    	    <groupId>log4j</groupId>
+    	  </exclusion>
+    	</exclusions>
     </dependency>
     <dependency>
     	<groupId>com.h2database</groupId>
@@ -92,8 +145,20 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-internal</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.thoughtworks.xstream</groupId>
       <artifactId>xstream</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
   </dependencies>
 </project>

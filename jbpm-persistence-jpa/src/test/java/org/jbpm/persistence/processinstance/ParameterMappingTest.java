@@ -7,27 +7,34 @@ import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSour
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jbpm.persistence.util.LoggingPrintStream;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.builder.KnowledgeBuilder;
-import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.kie.api.event.process.DefaultProcessEventListener;
 import org.kie.api.event.process.ProcessCompletedEvent;
 import org.kie.api.event.process.ProcessStartedEvent;
-import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.kie.api.io.ResourceType;
-import org.kie.internal.persistence.jpa.JPAKnowledgeService;
 import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.EnvironmentName;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.io.ResourceFactory;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
-public class ParameterMappingTest {
+@RunWith(Parameterized.class)
+public class ParameterMappingTest extends AbstractBaseTest {
     
     private HashMap<String, Object> context;
     
@@ -35,19 +42,27 @@ public class ParameterMappingTest {
     private static final String SUBPROCESS_ID = "org.jbpm.processinstance.helloworld";
     private StatefulKnowledgeSession ksession;
     private ProcessListener listener;
-
-    // Want to see the System.out output? Set the debug level for console in log4j.xml to DEBUG.
-    static { 
-        System.setOut(new LoggingPrintStream(System.out));
+    
+    public ParameterMappingTest(boolean locking) { 
+       this.useLocking = locking; 
     }
+
+    @Parameters
+    public static Collection<Object[]> persistence() {
+        Object[][] data = new Object[][] { { false }, { true } };
+        return Arrays.asList(data);
+    };
     
     @Before
     public void before() {
-        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME, false);
+        context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME);
         Environment env = createEnvironment(context);
+        if( useLocking ) { 
+            env.set(EnvironmentName.USE_PESSIMISTIC_LOCKING, true);
+        }
 
         ksession = JPAKnowledgeService.newStatefulKnowledgeSession(createKnowledgeBase(), null, env);
-        assertTrue("Valid KnowledgeSession could not be created.", ksession != null && ksession.getId() > 0);
+        assertTrue("Valid KnowledgeSession could not be created.", ksession != null && ksession.getIdentifier() > 0);
 
         listener = new ProcessListener();
         ksession.addEventListener(listener);

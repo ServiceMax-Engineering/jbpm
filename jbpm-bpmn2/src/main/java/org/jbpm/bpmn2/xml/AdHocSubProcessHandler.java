@@ -59,6 +59,8 @@ public class AdHocSubProcessHandler extends CompositeContextNodeHandler {
         		String expression = xmlNode.getTextContent();
         		if ("getActivityInstanceAttribute(\"numberOfActiveInstances\") == 0".equals(expression)) {
         			dynamicNode.setAutoComplete(true);
+        		} else {
+        			dynamicNode.setCompletionExpression(expression == null?"":expression);
         		}
         	}
         	xmlNode = xmlNode.getNextSibling();
@@ -76,18 +78,14 @@ public class AdHocSubProcessHandler extends CompositeContextNodeHandler {
 			xmlDump.append(" cancelRemainingInstances=\"false\"");
 		}
 		xmlDump.append(" ordering=\"Parallel\" >" + EOL);
+		writeExtensionElements(dynamicNode, xmlDump);
 		// nodes
 		List<Node> subNodes = getSubNodes(dynamicNode);
-    	xmlDump.append("    <!-- nodes -->" + EOL);
-        for (Node subNode: subNodes) {
-    		XmlBPMNProcessDumper.INSTANCE.visitNode(subNode, xmlDump, metaDataType);
-        }
+		XmlBPMNProcessDumper.INSTANCE.visitNodes(subNodes, xmlDump, metaDataType);
+        
         // connections
-        List<Connection> connections = getSubConnections(dynamicNode);
-    	xmlDump.append("    <!-- connections -->" + EOL);
-        for (Connection connection: connections) {
-        	XmlBPMNProcessDumper.INSTANCE.visitConnection(connection, xmlDump, metaDataType);
-        }
+        visitConnectionsAndAssociations(dynamicNode, xmlDump, metaDataType);
+        
         if (dynamicNode.isAutoComplete()) {
         	xmlDump.append("    <completionCondition xsi:type=\"tFormalExpression\">getActivityInstanceAttribute(\"numberOfActiveInstances\") == 0</completionCondition>" + EOL);
         }

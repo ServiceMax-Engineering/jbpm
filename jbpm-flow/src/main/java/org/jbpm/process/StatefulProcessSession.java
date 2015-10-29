@@ -6,24 +6,20 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-import org.drools.core.RuntimeDroolsException;
 import org.drools.core.SessionConfiguration;
 import org.drools.core.base.MapGlobalResolver;
 import org.drools.core.common.EndOperationListener;
 import org.drools.core.common.InternalKnowledgeRuntime;
 import org.drools.core.common.WorkingMemoryAction;
+import org.drools.core.impl.AbstractRuntime;
 import org.drools.core.time.TimerService;
 import org.drools.core.time.TimerServiceFactory;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessRuntimeImpl;
-import org.kie.internal.KnowledgeBase;
 import org.kie.api.command.Command;
 import org.kie.api.event.process.ProcessEventListener;
 import org.kie.api.event.rule.AgendaEventListener;
-import org.kie.api.event.rule.WorkingMemoryEventListener;
-import org.kie.internal.process.CorrelationAwareProcessRuntime;
-import org.kie.internal.process.CorrelationKey;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.event.rule.RuleRuntimeEventListener;
 import org.kie.api.runtime.Calendars;
 import org.kie.api.runtime.Channel;
 import org.kie.api.runtime.Environment;
@@ -35,14 +31,18 @@ import org.kie.api.runtime.process.WorkItemHandler;
 import org.kie.api.runtime.process.WorkItemManager;
 import org.kie.api.runtime.rule.Agenda;
 import org.kie.api.runtime.rule.AgendaFilter;
+import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.api.runtime.rule.FactHandle;
 import org.kie.api.runtime.rule.LiveQuery;
 import org.kie.api.runtime.rule.QueryResults;
-import org.kie.api.runtime.rule.SessionEntryPoint;
 import org.kie.api.runtime.rule.ViewChangedEventListener;
 import org.kie.api.time.SessionClock;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.process.CorrelationAwareProcessRuntime;
+import org.kie.internal.process.CorrelationKey;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
-public class StatefulProcessSession implements StatefulKnowledgeSession, InternalKnowledgeRuntime, CorrelationAwareProcessRuntime {
+public class StatefulProcessSession extends AbstractRuntime implements StatefulKnowledgeSession, InternalKnowledgeRuntime, CorrelationAwareProcessRuntime {
 
 	private KnowledgeBase kbase;
 	private InternalProcessRuntime processRuntime;
@@ -51,7 +51,7 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 	private Environment environment;
 	private TimerService timerService;
 	protected Queue<WorkingMemoryAction> actionQueue;
-	private int id;
+	private Long id;
 	private MapGlobalResolver globals = new MapGlobalResolver();
 	
 	public StatefulProcessSession(KnowledgeBase kbase, KieSessionConfiguration sessionConfiguration, Environment environment) {
@@ -163,7 +163,7 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
                     try {
                         action.execute(this);
                     } catch (Exception e) {
-                        throw new RuntimeDroolsException( "Unexpected exception executing action " + action.toString(), e );
+                        throw new RuntimeException( "Unexpected exception executing action " + action.toString(), e );
                     }
                 }
             }
@@ -186,12 +186,12 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		}
 	}
 	
-	public void setId(int id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
 	public int getId() {
-		return id;
+		return id.intValue();
 	}
 	
 	public void setEndOperationListener(EndOperationListener listener) {
@@ -266,11 +266,11 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		throw new UnsupportedOperationException();
 	}
 
-	public SessionEntryPoint getEntryPoint(String name) {
+	public EntryPoint getEntryPoint(String name) {
 		throw new UnsupportedOperationException();
 	}
 
-	public Collection<? extends SessionEntryPoint> getEntryPoints() {
+	public Collection<? extends EntryPoint> getEntryPoints() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -330,7 +330,7 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		throw new UnsupportedOperationException();
 	}
 
-	public void addEventListener(WorkingMemoryEventListener listener) {
+	public void addEventListener(RuleRuntimeEventListener listener) {
 		// Do nothing
 	}
 
@@ -342,11 +342,11 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 		return new ArrayList<AgendaEventListener>();
 	}
 
-	public Collection<WorkingMemoryEventListener> getWorkingMemoryEventListeners() {
-		return new ArrayList<WorkingMemoryEventListener>();
+	public Collection<RuleRuntimeEventListener> getRuleRuntimeEventListeners() {
+		return new ArrayList<RuleRuntimeEventListener>();
 	}
 
-	public void removeEventListener(WorkingMemoryEventListener listener) {
+	public void removeEventListener(RuleRuntimeEventListener listener) {
 		// Do nothing
 	}
 
@@ -357,7 +357,6 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
 	public long getLastIdleTimestamp() {
 		throw new UnsupportedOperationException();
 	}
-
 
     @Override
     public ProcessInstance startProcess(String processId,
@@ -382,5 +381,11 @@ public class StatefulProcessSession implements StatefulKnowledgeSession, Interna
     public void destroy() {
         dispose();
     }
+
+	@Override
+	public long getIdentifier() {
+		return id;
+	}
+
 
 }

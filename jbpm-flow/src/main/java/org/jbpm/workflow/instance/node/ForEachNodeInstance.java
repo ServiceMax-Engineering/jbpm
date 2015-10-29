@@ -19,27 +19,13 @@ package org.jbpm.workflow.instance.node;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 
-import org.kie.api.definition.process.Connection;
-import org.kie.api.definition.process.Node;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ContextInstance;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
-import org.jbpm.process.instance.impl.XPATHExpressionModifier;
-import org.jbpm.workflow.core.node.DataAssociation;
-import org.jbpm.workflow.core.node.Assignment;
 import org.jbpm.workflow.core.node.ForEachNode;
 import org.jbpm.workflow.core.node.ForEachNode.ForEachJoinNode;
 import org.jbpm.workflow.core.node.ForEachNode.ForEachSplitNode;
@@ -47,11 +33,11 @@ import org.jbpm.workflow.instance.NodeInstance;
 import org.jbpm.workflow.instance.NodeInstanceContainer;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
+import org.kie.api.definition.process.Connection;
+import org.kie.api.definition.process.Node;
 import org.mvel2.MVEL;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
+
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 /**
  * Runtime counterpart of a for each node.
@@ -75,6 +61,13 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
             nodeInstance.setNodeId(node.getId());
             nodeInstance.setNodeInstanceContainer(this);
             nodeInstance.setProcessInstance(getProcessInstance());
+            String uniqueID = (String) node.getMetaData().get("UniqueId");
+            assert uniqueID != null : node.getName() + " does not have a unique id.";
+            if (uniqueID == null) {
+                uniqueID = node.getId()+"";
+            }
+            int level = this.getLevelForNode(uniqueID);
+            nodeInstance.setLevel(level);
             return nodeInstance;
         } else if (node instanceof ForEachJoinNode) {
             ForEachJoinNodeInstance nodeInstance = (ForEachJoinNodeInstance)
@@ -84,6 +77,13 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
                 nodeInstance.setNodeId(node.getId());
                 nodeInstance.setNodeInstanceContainer(this);
                 nodeInstance.setProcessInstance(getProcessInstance());
+                String uniqueID = (String) node.getMetaData().get("UniqueId");
+                assert uniqueID != null : node.getName() + " does not have a unique id.";
+                if (uniqueID == null) {
+                    uniqueID = node.getId()+"";
+                }
+                int level = this.getLevelForNode(uniqueID);
+                nodeInstance.setLevel(level);
             }
             return nodeInstance;
         }
@@ -91,56 +91,8 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
     }
     
     @Override
-    public void internalTrigger(org.kie.api.runtime.process.NodeInstance from,
-            String type) {
-        super.internalTrigger(from, type);
-    }
-    
-
-    @Override
-    public void cancel() {
-        super.cancel();
-    }
-    
-
-    @Override
     public ContextContainer getContextContainer() {
         return (ContextContainer) getForEachNode().getCompositeNode();
-    }
-    
-    
-    
-    private Collection<?> evaluateCollectionExpression(String collectionExpression) {
-        // TODO: should evaluate this expression using MVEL
-        Object collection = null;
-        VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
-            resolveContextInstance(VariableScope.VARIABLE_SCOPE, collectionExpression);
-        if (variableScopeInstance != null) {
-            collection = variableScopeInstance.getVariable(collectionExpression);
-        } else {
-            try {
-                collection = MVEL.eval(collectionExpression, new NodeInstanceResolverFactory(this));
-            } catch (Throwable t) {
-                throw new IllegalArgumentException(
-                    "Could not find collection " + collectionExpression);
-            }
-            
-        }
-        if (collection == null) {
-            return Collections.EMPTY_LIST;
-        }
-        if (collection instanceof Collection<?>) {
-            return (Collection<?>) collection;
-        }
-        if (collection.getClass().isArray() ) {
-            List<Object> list = new ArrayList<Object>();
-            for (Object o: (Object[]) collection) {
-                list.add(o);
-            }
-            return list;
-        }
-        throw new IllegalArgumentException(
-            "Unexpected collection type: " + collection.getClass());
     }
     
     public class ForEachSplitNodeInstance extends NodeInstanceImpl {
@@ -220,14 +172,6 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
         		"Unexpected collection type: " + collection.getClass());
         }
         
-        private Collection<?> evaluateCollectionExpression(Element element) {
-        	NodeList nl = element.getChildNodes();
-        	List<Object> list = new ArrayList<Object>();
-        	for (int i =0; i< nl.getLength(); i++) {
-        		list.add(nl.item(i));
-        	}
-        	return list;    
-        }
     }
     
     public class ForEachJoinNodeInstance extends NodeInstanceImpl {
@@ -275,7 +219,7 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
             	((NodeInstanceContainer) getNodeInstanceContainer()).removeNodeInstance(this);
                 if (getForEachNode().isWaitForCompletion()) {
                 	
-                	if (System.getProperty("jbpm.enable.multi.con") == null) {
+                	if (!"true".equals(System.getProperty("jbpm.enable.multi.con"))) {
                 		
                 		triggerConnection(getForEachJoinNode().getTo());
                 	} else {
@@ -309,5 +253,11 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
         }
         
         return contextInstance;
-    }    
+    }
+
+    @Override
+    public int getLevelForNode(String uniqueID) {
+        // always 1 for for each
+        return 1;
+    }  
 }

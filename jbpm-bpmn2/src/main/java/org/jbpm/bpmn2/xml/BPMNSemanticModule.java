@@ -73,6 +73,7 @@ public class BPMNSemanticModule extends DefaultSemanticModule {
 
         addHandler("itemDefinition", new ItemDefinitionHandler());
         addHandler("message", new MessageHandler());
+        addHandler("signal", new SignalHandler());
         addHandler("interface", new InterfaceHandler());
         addHandler("operation", new OperationHandler());
         addHandler("inMessageRef", new InMessageRefHandler());
@@ -80,6 +81,7 @@ public class BPMNSemanticModule extends DefaultSemanticModule {
         addHandler("error", new ErrorHandler());
         addHandler("dataStore", new DataStoreHandler());
         addHandler("association", new AssociationHandler());
+        addHandler("documentation", new DocumentationHandler());
         
         handlersByClass.put(Split.class, new SplitHandler());
         handlersByClass.put(Join.class, new JoinHandler());

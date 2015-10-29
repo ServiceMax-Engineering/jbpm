@@ -1,27 +1,32 @@
 package org.jbpm.integrationtests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.TestCase;
-
 import org.jbpm.integrationtests.test.Person;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.instance.node.StateNodeInstance;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.runtime.process.NodeInstance;
-import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.api.runtime.process.WorkflowProcessInstance;
 
-public class ProcessStateTest extends TestCase {
+public class ProcessStateTest extends AbstractBaseTest {
     
+    @Test
     public void testManualSignalState() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -101,6 +106,7 @@ public class ProcessStateTest extends TestCase {
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
 
+    @Test
     public void testImmediateStateConstraint1() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -158,6 +164,7 @@ public class ProcessStateTest extends TestCase {
         assertEquals("1", list.get(0));
     }
     
+    @Test
     public void testImmediateStateConstraintPriorities1() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -215,6 +222,7 @@ public class ProcessStateTest extends TestCase {
         assertEquals("1", list.get(0));
     }
     
+    @Test
     public void testImmediateStateConstraintPriorities2() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -272,6 +280,7 @@ public class ProcessStateTest extends TestCase {
         assertEquals("2", list.get(0));
     }
     
+    @Test
     public void testDelayedStateConstraint() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -331,11 +340,13 @@ public class ProcessStateTest extends TestCase {
         assertTrue(list.isEmpty());
         Person person = new Person("John Doe", 30);
         ksession.insert(person);
+        ksession.fireAllRules();
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(1, list.size());
         assertEquals("1", list.get(0));
     }
     
+    @Test
     public void testDelayedStateConstraint2() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -395,11 +406,14 @@ public class ProcessStateTest extends TestCase {
         assertTrue(list.isEmpty());
         Person person = new Person("John Doe", 20);
         ksession.insert(person);
+        ksession.fireAllRules();
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(1, list.size());
         assertEquals("2", list.get(0));
     }
     
+    @Test
+    @Ignore
     public void FIXMEtestDelayedStateConstraintPriorities1() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -464,6 +478,8 @@ public class ProcessStateTest extends TestCase {
         assertEquals("1", list.get(0));
     }
     
+    @Test
+    @Ignore
     public void FIXMEtestDelayedStateConstraintPriorities2() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -528,6 +544,7 @@ public class ProcessStateTest extends TestCase {
         assertEquals("2", list.get(0));
     }
     
+    @Test
     public void testActionState() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -596,6 +613,7 @@ public class ProcessStateTest extends TestCase {
         assertTrue(list.contains("Action4a"));
     }
     
+    @Test
     public void testTimerState() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(

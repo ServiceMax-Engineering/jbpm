@@ -6,12 +6,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
-public class ParameterResolverTest {
+public class ParameterResolverTest extends AbstractBaseTest {
 
+    public void addLogger() { 
+        logger = LoggerFactory.getLogger(this.getClass());
+    }
     
     @Test
     public void testSingleVariable() {

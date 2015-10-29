@@ -5,19 +5,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
 import org.drools.persistence.info.SessionInfo;
 import org.drools.persistence.info.WorkItemInfo;
-import org.kie.internal.persistence.jpa.JPAKnowledgeService;
 import org.drools.persistence.map.EnvironmentBuilder;
-import org.kie.api.runtime.Environment;
-import org.kie.api.runtime.EnvironmentName;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.jbpm.persistence.ProcessStorage;
 import org.jbpm.persistence.ProcessStorageEnvironmentBuilder;
 import org.jbpm.persistence.processinstance.ProcessInstanceInfo;
 import org.junit.Before;
+import org.kie.api.KieBase;
+import org.kie.api.runtime.Environment;
+import org.kie.api.runtime.EnvironmentName;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
 public class MapBasedPersistenceTest extends MapPersistenceTest {
     
@@ -29,7 +29,7 @@ public class MapBasedPersistenceTest extends MapPersistenceTest {
     }
     
     @Override
-    protected StatefulKnowledgeSession createSession(KnowledgeBase kbase) {
+    protected StatefulKnowledgeSession createSession(KieBase kbase) {
         
         EnvironmentBuilder envBuilder = new ProcessStorageEnvironmentBuilder( storage );
         Environment env = KnowledgeBaseFactory.newEnvironment();
@@ -44,8 +44,8 @@ public class MapBasedPersistenceTest extends MapPersistenceTest {
     }
     
     @Override
-    protected StatefulKnowledgeSession disposeAndReloadSession(StatefulKnowledgeSession ksession, int ksessionId,
-                                                             KnowledgeBase kbase) {
+    protected StatefulKnowledgeSession disposeAndReloadSession(StatefulKnowledgeSession ksession, long ksessionId,
+                                                             KieBase kbase) {
         ksession.dispose();
         EnvironmentBuilder envBuilder = new ProcessStorageEnvironmentBuilder( storage );
         Environment env = KnowledgeBaseFactory.newEnvironment();
@@ -70,17 +70,17 @@ public class MapBasedPersistenceTest extends MapPersistenceTest {
     private static class SimpleProcessStorage
         implements
         ProcessStorage {
-        private Map<Integer, SessionInfo>      ksessions = new HashMap<Integer, SessionInfo>();
+        private Map<Long, SessionInfo>      ksessions = new HashMap<Long, SessionInfo>();
         private Map<Long, ProcessInstanceInfo> processes = new HashMap<Long, ProcessInstanceInfo>();
         private Map<Long, WorkItemInfo>        workItems = new HashMap<Long, WorkItemInfo>();
 
         public void saveOrUpdate(SessionInfo ksessionInfo) {
-            ksessionInfo.update();
+            ksessionInfo.transform();
             ksessions.put( ksessionInfo.getId(),
                            ksessionInfo );
         }
 
-        public SessionInfo findSessionInfo(Integer id) {
+        public SessionInfo findSessionInfo(Long id) {
             return ksessions.get( id );
         }
 
@@ -94,7 +94,7 @@ public class MapBasedPersistenceTest extends MapPersistenceTest {
         }
 
         public void saveOrUpdate(ProcessInstanceInfo processInstanceInfo) {
-            processInstanceInfo.update();
+            processInstanceInfo.transform();
             processes.put( processInstanceInfo.getId(),
                            processInstanceInfo );
         }
@@ -132,8 +132,18 @@ public class MapBasedPersistenceTest extends MapPersistenceTest {
             workItems.remove( workItemInfo.getId() );
         }
 
-        public Integer getNextStatefulKnowledgeSessionId() {
-            return  ksessions.size() + 1 ;
+        public Long getNextStatefulKnowledgeSessionId() {
+            return  new Long(ksessions.size() + 1) ;
+        }
+
+        @Override
+        public void lock(SessionInfo sessionInfo) {
+            throw new UnsupportedOperationException("Map based persistence does not support locking.");
+        }
+
+        @Override
+        public void lock(WorkItemInfo workItemInfo) {
+            throw new UnsupportedOperationException("Map based persistence does not support locking.");
         }
     }
 }

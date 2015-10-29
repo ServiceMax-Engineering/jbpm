@@ -22,7 +22,7 @@ public class EventTypeFilter implements EventFilter, Serializable {
 
 	private static final long serialVersionUID = 510l;
 	
-	private String type;
+	protected String type;
 	
 	public String getType() {
 		return type;
@@ -39,4 +39,7 @@ public class EventTypeFilter implements EventFilter, Serializable {
 		return false;
 	}
 
+	public String toString() { 
+	    return "Event filter: [" + this.type + "]";
+	}
 }

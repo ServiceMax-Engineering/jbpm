@@ -12,6 +12,7 @@
     
     <mapping-file>META-INF/JBPMorm.xml</mapping-file>
     <mapping-file>META-INF/Taskorm.xml</mapping-file>
+    <mapping-file>META-INF/TaskAuditorm.xml</mapping-file>
     
     <class>org.jbpm.persistence.processinstance.ProcessInstanceInfo</class>
     <class>org.drools.persistence.info.SessionInfo</class>
@@ -24,11 +25,12 @@
     <class>org.jbpm.persistence.correlation.CorrelationKeyInfo</class>
     <class>org.jbpm.persistence.correlation.CorrelationPropertyInfo</class>
     
+    <!-- manager -->
+    <class>org.jbpm.runtime.manager.impl.jpa.ContextMappingInfo</class>
+    
     <class>org.jbpm.services.task.impl.model.AttachmentImpl</class>
     <class>org.jbpm.services.task.impl.model.ContentImpl</class>
     <class>org.jbpm.services.task.impl.model.BooleanExpressionImpl</class>
-    <class>org.jbpm.services.task.impl.model.CommentImpl</class>
-    <class>org.jbpm.services.task.impl.model.DeadlineImpl</class>
     <class>org.jbpm.services.task.impl.model.CommentImpl</class>
     <class>org.jbpm.services.task.impl.model.DeadlineImpl</class>
     <class>org.jbpm.services.task.impl.model.DelegationImpl</class>
@@ -46,10 +48,13 @@
     <class>org.jbpm.services.task.impl.model.UserImpl</class>
     
     <!--BAM for task service -->
-    <class>org.jbpm.services.task.impl.model.BAMTaskSummaryImpl</class>
+    <class>org.jbpm.services.task.audit.impl.model.BAMTaskSummaryImpl</class>
     
     <!-- Event Classes -->
-    <class>org.jbpm.services.task.impl.model.TaskEventImpl</class>
+    <class>org.jbpm.services.task.audit.impl.model.TaskEventImpl</class>
+    
+    <!-- Task Audit Classes --> 
+    <class>org.jbpm.services.task.audit.impl.model.AuditTaskImpl</class>
     
     <properties>
       <property name="hibernate.max_fetch_depth" value="3"/>

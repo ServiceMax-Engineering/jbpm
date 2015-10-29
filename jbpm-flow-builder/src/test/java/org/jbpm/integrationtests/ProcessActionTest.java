@@ -1,26 +1,33 @@
 package org.jbpm.integrationtests;
 
+import static org.junit.Assert.*;
+
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.*;
-
-import junit.framework.TestCase;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.drools.core.io.impl.ReaderResource;
 import org.jbpm.integrationtests.handler.TestWorkItemHandler;
 import org.jbpm.integrationtests.test.Message;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.builder.KnowledgeBuilder;
-import org.kie.internal.builder.KnowledgeBuilderFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.jbpm.test.util.AbstractBaseTest;
+import org.junit.Test;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.ObjectFilter;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.rule.FactHandle;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
-public class ProcessActionTest extends TestCase {
+public class ProcessActionTest  extends AbstractBaseTest {
     
+    @Test
     public void testOnEntryExit() {
         KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -90,6 +97,7 @@ public class ProcessActionTest extends TestCase {
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
     
+    @Test
     public void testActionContextJava() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -119,7 +127,6 @@ public class ProcessActionTest extends TestCase {
 			"    <actionNode id=\"2\" name=\"MyActionNode\" >\n" +
 			"      <action type=\"expression\" dialect=\"java\" >System.out.println(\"Triggered\");\n" +
 			"String myVariable = (String) kcontext.getVariable(\"variable\");\n" +
-			"System.out.println(kcontext.getKnowledgeRuntime());\n" +
 			"list.add(myVariable);\n" +
 			"String nodeName = kcontext.getNodeInstance().getNodeName();\n" +
 			"list.add(nodeName);\n" +
@@ -154,6 +161,7 @@ public class ProcessActionTest extends TestCase {
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
     
+    @Test
 	public void testActionContextMVEL() {
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -221,6 +229,7 @@ public class ProcessActionTest extends TestCase {
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
 
+    @Test
 	public void testActionVariableJava() {
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -232,14 +241,14 @@ public class ProcessActionTest extends TestCase {
             "\n" +
             "  <header>\n" +
 			"    <imports>\n" +
-			"      <import name=\"org.jbpm.integrationtests.ProcessActionTest.TestVariable\" />\n" +
+			"      <import name=\"org.jbpm.integrationtests.TestVariable\" />\n" +
 			"    </imports>\n" +
 			"    <globals>\n" +
 			"      <global identifier=\"list\" type=\"java.util.List\" />\n" +
 			"    </globals>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"person\" >\n" +
-    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.ProcessActionTest.TestVariable\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.TestVariable\" />\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
             "  </header>\n" +
@@ -275,6 +284,7 @@ public class ProcessActionTest extends TestCase {
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
 	
+    @Test
 	public void testActionVariableMVEL() {
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -286,14 +296,14 @@ public class ProcessActionTest extends TestCase {
             "\n" +
             "  <header>\n" +
 			"    <imports>\n" +
-			"      <import name=\"org.jbpm.integrationtests.ProcessActionTest.TestVariable\" />\n" +
+			"      <import name=\"org.jbpm.integrationtests.TestVariable\" />\n" +
 			"    </imports>\n" +
 			"    <globals>\n" +
 			"      <global identifier=\"list\" type=\"java.util.List\" />\n" +
 			"    </globals>\n" +
     		"    <variables>\n" +
     		"      <variable name=\"person\" >\n" +
-    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"TestVariable\" />\n" +
+    		"        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.TestVariable\" />\n" +
     		"      </variable>\n" +
     		"    </variables>\n" +
             "  </header>\n" +
@@ -329,6 +339,7 @@ public class ProcessActionTest extends TestCase {
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
 	
+    @Test
     public void testActionNameConflict() {
     	KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         Reader source = new StringReader(
@@ -402,18 +413,5 @@ public class ProcessActionTest extends TestCase {
         assertEquals("Action2", list.get(0));
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
     }
-	
-	public static class TestVariable {
-		
-		private String name;
-		
-		public TestVariable(String name) {
-			this.name = name;
-		}
-		
-		public String getName() {
-			return name;
-		}
-	
-	}
+
 }

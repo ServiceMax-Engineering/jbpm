@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.drools.compiler.compiler.xml.XmlDumper;
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
@@ -34,18 +35,25 @@ import org.drools.core.xml.BaseAbstractHandler;
 import org.drools.core.xml.ExtensibleXmlParser;
 import org.drools.core.xml.Handler;
 import org.jbpm.bpmn2.core.Association;
+import org.jbpm.bpmn2.core.Definitions;
+import org.jbpm.bpmn2.core.Error;
 import org.jbpm.bpmn2.core.ItemDefinition;
 import org.jbpm.bpmn2.core.Lane;
 import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;
 import org.jbpm.process.core.context.variable.Variable;
+import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.DroolsAction;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.impl.ExtendedNodeImpl;
+import org.jbpm.workflow.core.node.ActionNode;
+import org.jbpm.workflow.core.node.EndNode;
+import org.jbpm.workflow.core.node.EventNode;
 import org.jbpm.workflow.core.node.ForEachNode;
-import org.jbpm.workflow.core.node.WorkItemNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
@@ -54,6 +62,8 @@ import org.xml.sax.SAXParseException;
 
 public abstract class AbstractNodeHandler extends BaseAbstractHandler implements Handler {
 
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractNodeHandler.class);
+    
     protected final static String EOL = System.getProperty( "line.separator" );
     protected Map<String, String> dataInputs = new HashMap<String, String>();
     protected Map<String, String> dataOutputs = new HashMap<String, String>();
@@ -88,24 +98,29 @@ public abstract class AbstractNodeHandler extends BaseAbstractHandler implements
         final Node node = createNode(attrs);
         String id = attrs.getValue("id");
         node.setMetaData("UniqueId", id);
-        try {
-            // remove starting _
-            id = id.substring(1);
-            // remove ids of parent nodes
-            id = id.substring(id.lastIndexOf("-") + 1);
-            final String name = attrs.getValue("name");
-            node.setName(name);
-            node.setId(new Integer(id));
-        } catch (NumberFormatException e) {
-            // id is not in the expected format, generating a new one
-            long newId = 0;
-            NodeContainer nodeContainer = (NodeContainer) parser.getParent();
-            for (org.kie.api.definition.process.Node n: nodeContainer.getNodes()) {
-                if (n.getId() > newId) {
-                    newId = n.getId();
+        final String name = attrs.getValue("name");
+        node.setName(name);
+        if ("true".equalsIgnoreCase(System.getProperty("jbpm.v5.id.strategy"))) {
+            try {
+                // remove starting _
+                id = id.substring(1);
+                // remove ids of parent nodes
+                id = id.substring(id.lastIndexOf("-") + 1);
+                node.setId(new Integer(id));
+            } catch (NumberFormatException e) {
+                // id is not in the expected format, generating a new one
+                long newId = 0;
+                NodeContainer nodeContainer = (NodeContainer) parser.getParent();
+                for (org.kie.api.definition.process.Node n: nodeContainer.getNodes()) {
+                    if (n.getId() > newId) {
+                        newId = n.getId();
+                    }
                 }
+                ((org.jbpm.workflow.core.Node) node).setId(++newId);
             }
-            ((org.jbpm.workflow.core.Node) node).setId(++newId);
+        } else {
+            AtomicInteger idGen = (AtomicInteger) parser.getMetaData().get("idGen");
+            node.setId(idGen.getAndIncrement());
         }
         return node;
     }
@@ -245,13 +260,34 @@ public abstract class AbstractNodeHandler extends BaseAbstractHandler implements
 		return new DroolsConsequenceAction("mvel", "");
     }
     
-    protected void writeScripts(ExtendedNodeImpl node, final StringBuilder xmlDump) {
-    	if (node.containsActions()) {
+    protected void writeMetaData(final Node node, final StringBuilder xmlDump) {
+    	XmlBPMNProcessDumper.writeMetaData(getMetaData(node), xmlDump);
+    }
+    
+    protected Map<String, Object> getMetaData(Node node) {
+    	return XmlBPMNProcessDumper.getMetaData(node.getMetaData());
+    }
+    
+    protected void writeExtensionElements(Node node, final StringBuilder xmlDump) {
+    	if (containsExtensionElements(node)) {
     		xmlDump.append("      <extensionElements>" + EOL);
-    		writeScripts("onEntry", node.getActions("onEntry"), xmlDump);
-    		writeScripts("onExit", node.getActions("onExit"), xmlDump);
+    		if (node instanceof ExtendedNodeImpl) {
+    			writeScripts("onEntry", ((ExtendedNodeImpl) node).getActions("onEntry"), xmlDump);
+    			writeScripts("onExit", ((ExtendedNodeImpl) node).getActions("onExit"), xmlDump);
+    		}
+    		writeMetaData(node, xmlDump);
     		xmlDump.append("      </extensionElements>" + EOL);
     	}
+    }
+    
+    protected boolean containsExtensionElements(Node node) {
+    	if (!getMetaData(node).isEmpty()) {
+    		return true;
+    	}
+    	if (node instanceof ExtendedNodeImpl && ((ExtendedNodeImpl) node).containsActions()) {
+    		return true;
+    	}
+    	return false;
     }
     
     protected void writeScripts(final String type, List<DroolsAction> actions, final StringBuilder xmlDump) {
@@ -420,4 +456,81 @@ public abstract class AbstractNodeHandler extends BaseAbstractHandler implements
         return dataType;
     }
     
+    protected String getErrorIdForErrorCode(String errorCode, Node node) { 
+        org.kie.api.definition.process.NodeContainer parent = node.getNodeContainer();
+        while( ! (parent instanceof RuleFlowProcess) && parent instanceof Node ) { 
+            parent = ((Node) parent).getNodeContainer();
+        }
+        if( ! (parent instanceof RuleFlowProcess) ) { 
+           throw new RuntimeException( "This should never happen: !(parent instanceof RuleFlowProcess): parent is " + parent.getClass().getSimpleName() );
+        }
+        List<Error> errors = ((Definitions) ((RuleFlowProcess) parent).getMetaData("Definitions")).getErrors();
+        Error error = null;
+        for( Error listError : errors ) { 
+            if( errorCode.equals(listError.getErrorCode()) ) {
+                error = listError;
+                break;
+            } else if ( errorCode.equals(listError.getId()) ) {
+                error = listError;
+                break;
+            }
+        }
+        if (error == null) {
+            throw new IllegalArgumentException("Could not find error with errorCode " + errorCode);
+        }
+        return error.getId();
+    }
+    
+    protected void handleThrowCompensationEventNode(final Node node, final Element element,
+            final String uri, final String localName, final ExtensibleXmlParser parser) { 
+        org.w3c.dom.Node xmlNode = element.getFirstChild();
+        assert node instanceof ActionNode || node instanceof EndNode 
+             : "Node is neither an ActionNode nor an EndNode but a " + node.getClass().getSimpleName();
+        while (xmlNode != null) {
+            if ("compensateEventDefinition".equals(xmlNode.getNodeName())) {
+                String activityRef = ((Element) xmlNode).getAttribute("activityRef");
+                if (activityRef == null ) { 
+                    activityRef = "";
+                }
+                node.setMetaData("compensation-activityRef", activityRef);
+
+                /**
+                 * waitForCompletion: 
+                 * BPMN 2.0 Spec, p. 304: 
+                 * "By default, compensation is triggered synchronously, that is the compensation throw event 
+                 *  waits for the completion of the triggered compensation handler. 
+                 *  Alternatively, compensation can be triggered without waiting for its completion, 
+                 *  by setting the throw compensation event's waitForCompletion attribute to false."
+                 */
+                String nodeId = (String) node.getMetaData().get("UniqueId");
+                String waitForCompletionString = ((Element) xmlNode).getAttribute("waitForCompletion");
+                boolean waitForCompletion = true;
+                if( waitForCompletionString != null && waitForCompletionString.length() > 0 ) { 
+                    waitForCompletion = Boolean.parseBoolean(waitForCompletionString);
+                }
+                if( ! waitForCompletion ) { 
+                    throw new IllegalArgumentException("Asynchronous compensation [" + nodeId + ", " + node.getName() 
+                            + "] is not yet supported!");
+                }
+                
+            }
+            xmlNode = xmlNode.getNextSibling();
+        }
+    }
+
+	protected void writeVariableName(EventNode eventNode, StringBuilder xmlDump) {
+		if (eventNode.getVariableName() != null) {
+			xmlDump.append("      <dataOutput id=\"" + XmlBPMNProcessDumper.getUniqueNodeId(eventNode) + "_Output\" name=\"event\" />" + EOL);
+			xmlDump.append("      <dataOutputAssociation>" + EOL);
+			xmlDump.append(
+				"      <sourceRef>" + XmlBPMNProcessDumper.getUniqueNodeId(eventNode) + "_Output</sourceRef>" + EOL +
+				"      <targetRef>" + XmlDumper.replaceIllegalChars(eventNode.getVariableName()) + "</targetRef>" + EOL);
+			xmlDump.append("      </dataOutputAssociation>" + EOL);
+			xmlDump.append("      <outputSet>" + EOL);
+			xmlDump.append("        <dataOutputRefs>" + XmlBPMNProcessDumper.getUniqueNodeId(eventNode) + "_Output</dataOutputRefs>" + EOL);
+			xmlDump.append("      </outputSet>" + EOL);
+		}
+	}
+    
+
 }

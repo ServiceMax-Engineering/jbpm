@@ -3,35 +3,29 @@ package org.jbpm.bpmn2.persistence;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.drools.core.WorkingMemory;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
 import org.drools.core.command.impl.KnowledgeCommandContext;
-import org.drools.core.event.ActivationCancelledEvent;
-import org.drools.core.event.ActivationCreatedEvent;
-import org.drools.core.event.AfterActivationFiredEvent;
-import org.drools.core.event.AgendaEventListener;
-import org.drools.core.event.AgendaGroupPoppedEvent;
-import org.drools.core.event.AgendaGroupPushedEvent;
-import org.drools.core.event.BeforeActivationFiredEvent;
-import org.drools.core.event.RuleFlowGroupActivatedEvent;
-import org.drools.core.event.RuleFlowGroupDeactivatedEvent;
-import org.drools.core.impl.StatefulKnowledgeSessionImpl;
-import org.jbpm.bpmn2.JbpmTestCase;
+import org.jbpm.bpmn2.JbpmBpmn2TestCase;
 import org.jbpm.process.audit.AuditLoggerFactory;
 import org.jbpm.process.audit.AuditLoggerFactory.Type;
+import org.jbpm.process.instance.event.listeners.TriggerRulesEventListener;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.api.KieBase;
 import org.kie.api.event.process.DefaultProcessEventListener;
 import org.kie.api.event.process.ProcessStartedEvent;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.internal.persistence.jpa.JPAKnowledgeService;
 import org.kie.api.runtime.Environment;
+import org.kie.internal.persistence.jpa.JPAKnowledgeService;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
+public class TimerCycleOnBinaryPackageTest extends JbpmBpmn2TestCase {
 
+    private static final Logger logger = LoggerFactory.getLogger(TimerCycleOnBinaryPackageTest.class);
     private StatefulKnowledgeSession ksession;
 
     public TimerCycleOnBinaryPackageTest() {
@@ -61,7 +55,7 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
 
         assertEquals(0, getNumberOfProcessInstances("defaultPackage.TimerProcess"));
-        int sessionId = ksession.getId();
+        long sessionId = ksession.getIdentifier();
         Environment env = ksession.getEnvironment();
 
         final List<Long> list = new ArrayList<Long>();
@@ -71,8 +65,8 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
             }
         });
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
+        ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext()).getKieSession()
                 .addEventListener(new TriggerRulesEventListener(ksession));
 
         
@@ -80,7 +74,7 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         Thread.sleep(5000);
 
         assertEquals(2, getNumberOfProcessInstances("defaultPackage.TimerProcess"));
-        System.out.println("dispose");
+        logger.info("dispose");
         ksession.dispose();
 
         ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId,
@@ -94,9 +88,10 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
             }
         });
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         
 
@@ -111,7 +106,7 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
 
         assertEquals(0, getNumberOfProcessInstances("defaultPackage.TimerProcess"));
-        int sessionId = ksession.getId();
+        long sessionId = ksession.getIdentifier();
         Environment env = ksession.getEnvironment();
 
         final List<Long> list = new ArrayList<Long>();
@@ -121,16 +116,15 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
             }
         });
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
-
-        
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         Thread.sleep(5000);
 
         assertEquals(2, getNumberOfProcessInstances("defaultPackage.TimerProcess"));
-        System.out.println("dispose");
+        logger.info("dispose");
         ksession.dispose();
 
         ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId,
@@ -144,37 +138,38 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
             }
         });
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
-
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         Thread.sleep(5000);
         ksession.dispose();
         assertEquals(4, getNumberOfProcessInstances("defaultPackage.TimerProcess"));
     }
 
-    @Test
+    @Test @Ignore("beta4 phreak")
     public void testStartTimerCycleFromDiscDRL() throws Exception {
         KieBase kbase = createKnowledgeBaseFromDisc("rules-timer.drl");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
 
-        int sessionId = ksession.getId();
+        long sessionId = ksession.getIdentifier();
         Environment env = ksession.getEnvironment();
 
         final List<String> list = new ArrayList<String>();
         ksession.setGlobal("list", list);
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         ksession.fireAllRules();
 
         Thread.sleep(5000);
 
         assertEquals(2, list.size());
-        System.out.println("dispose");
+        logger.info("dispose");
         ksession.dispose();
 
         ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId,
@@ -184,9 +179,10 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         final List<String> list2 = new ArrayList<String>();
         ksession.setGlobal("list", list2);
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         ksession.fireAllRules();
 
@@ -195,27 +191,28 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         assertEquals(3, list2.size());
     }
 
-    @Test
+    @Test @Ignore("beta4 phreak")
     public void testStartTimerCycleFromClasspathDRL() throws Exception {
-        KieBase kbase = createKnowledgeBase("rules-timer.drl");
+        KieBase kbase = createKnowledgeBaseWithoutDumper("rules-timer.drl");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
 
-        int sessionId = ksession.getId();
+        long sessionId = ksession.getIdentifier();
         Environment env = ksession.getEnvironment();
 
         final List<String> list = new ArrayList<String>();
         ksession.setGlobal("list", list);
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         ksession.fireAllRules();
 
         Thread.sleep(5000);
 
         assertEquals(2, list.size());
-        System.out.println("dispose");
+        logger.info("dispose");
         ksession.dispose();
 
         ksession = JPAKnowledgeService.loadStatefulKnowledgeSession(sessionId,
@@ -225,9 +222,10 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         final List<String> list2 = new ArrayList<String>();
         ksession.setGlobal("list", list2);
 
-        ((StatefulKnowledgeSessionImpl) ((KnowledgeCommandContext) ((CommandBasedStatefulKnowledgeSession) ksession)
-                .getCommandService().getContext()).getKieSession()).session
-                .addEventListener(new TriggerRulesEventListener(ksession));
+        ((KnowledgeCommandContext) 
+                ((CommandBasedStatefulKnowledgeSession) ksession)
+                .getCommandService().getContext())
+        .getKieSession().addEventListener(new TriggerRulesEventListener(ksession));
 
         ksession.fireAllRules();
 
@@ -236,57 +234,5 @@ public class TimerCycleOnBinaryPackageTest extends JbpmTestCase {
         assertEquals(3, list2.size());
     }
 
-    private static class TriggerRulesEventListener implements
-            AgendaEventListener {
 
-        private StatefulKnowledgeSession ksession;
-
-        public TriggerRulesEventListener(StatefulKnowledgeSession ksession) {
-
-            this.ksession = ksession;
-        }
-
-        public void activationCreated(ActivationCreatedEvent event,
-                WorkingMemory workingMemory) {
-            ksession.fireAllRules();
-        }
-
-        public void activationCancelled(ActivationCancelledEvent event,
-                WorkingMemory workingMemory) {
-        }
-
-        public void beforeActivationFired(BeforeActivationFiredEvent event,
-                WorkingMemory workingMemory) {
-        }
-
-        public void afterActivationFired(AfterActivationFiredEvent event,
-                WorkingMemory workingMemory) {
-        }
-
-        public void agendaGroupPopped(AgendaGroupPoppedEvent event,
-                WorkingMemory workingMemory) {
-        }
-
-        public void agendaGroupPushed(AgendaGroupPushedEvent event,
-                WorkingMemory workingMemory) {
-        }
-
-        public void beforeRuleFlowGroupActivated(
-                RuleFlowGroupActivatedEvent event, WorkingMemory workingMemory) {
-        }
-
-        public void afterRuleFlowGroupActivated(
-                RuleFlowGroupActivatedEvent event, WorkingMemory workingMemory) {
-            workingMemory.fireAllRules();
-        }
-
-        public void beforeRuleFlowGroupDeactivated(
-                RuleFlowGroupDeactivatedEvent event, WorkingMemory workingMemory) {
-        }
-
-        public void afterRuleFlowGroupDeactivated(
-                RuleFlowGroupDeactivatedEvent event, WorkingMemory workingMemory) {
-        }
-
-    }
 }

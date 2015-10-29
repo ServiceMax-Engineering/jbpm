@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
-public class EndEventTest extends JbpmTestCase {
+public class EndEventTest extends JbpmBpmn2TestCase {
 
     @Parameters
     public static Collection<Object[]> persistence() {
@@ -89,22 +89,11 @@ public class EndEventTest extends JbpmTestCase {
 
     @Test
     public void testEscalationEndEventProcess() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-EscalationEndEvent.bpmn2");
+        KieBase kbase = createKnowledgeBase("escalation/BPMN2-EscalationEndEvent.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         ProcessInstance processInstance = ksession
                 .startProcess("EscalationEndEvent");
         assertProcessInstanceAborted(processInstance);
-        
-    }
-
-    @Test
-    public void testCompensateEndEventProcess() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-CompensateEndEvent.bpmn2");
-        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
-        ProcessInstance processInstance = ksession
-                .startProcess("CompensateEndEvent");
-        assertProcessInstanceCompleted(processInstance);
-        assertNodeTriggered(processInstance.getId(), "StartProcess", "Task", "CompensateEvent", "CompensateEvent2", "Compensate", "EndEvent");
         
     }
 
@@ -134,7 +123,7 @@ public class EndEventTest extends JbpmTestCase {
 
     @Test
     public void testOnEntryExitScript() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-OnEntryExitScriptProcess.bpmn2");
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-OnEntryExitScriptProcess.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         ksession.getWorkItemManager().registerWorkItemHandler("MyTask",
                 new SystemOutWorkItemHandler());
@@ -149,7 +138,7 @@ public class EndEventTest extends JbpmTestCase {
 
     @Test
     public void testOnEntryExitNamespacedScript() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-OnEntryExitNamespacedScriptProcess.bpmn2");
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-OnEntryExitNamespacedScriptProcess.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         ksession.getWorkItemManager().registerWorkItemHandler("MyTask",
                 new SystemOutWorkItemHandler());
@@ -164,7 +153,7 @@ public class EndEventTest extends JbpmTestCase {
 
     @Test
     public void testOnEntryExitMixedNamespacedScript() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-OnEntryExitMixedNamespacedScriptProcess.bpmn2");
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-OnEntryExitMixedNamespacedScriptProcess.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         ksession.getWorkItemManager().registerWorkItemHandler("MyTask",
                 new SystemOutWorkItemHandler());
@@ -179,7 +168,7 @@ public class EndEventTest extends JbpmTestCase {
     
     @Test
     public void testOnEntryExitScriptDesigner() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-OnEntryExitDesignerScriptProcess.bpmn2");
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-OnEntryExitDesignerScriptProcess.bpmn2");
         StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
         ksession.getWorkItemManager().registerWorkItemHandler("MyTask",
                 new SystemOutWorkItemHandler());
@@ -192,4 +181,28 @@ public class EndEventTest extends JbpmTestCase {
         
     }
     
+    @Test
+    public void testTerminateWithinSubprocessEnd() throws Exception {
+        KieBase kbase = createKnowledgeBase("subprocess/BPMN2-SubprocessWithParallelSpitTerminate.bpmn2");
+        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        ProcessInstance processInstance = ksession.startProcess("BPMN2-SubprocessWithParallelSpitTerminate");
+        
+        ksession.signalEvent("signal1", null, processInstance.getId());
+        
+        assertProcessInstanceCompleted(processInstance);
+        
+    }
+    
+    @Test
+    public void testTerminateEnd() throws Exception {
+        KieBase kbase = createKnowledgeBase("BPMN2-ParallelSpitTerminate.bpmn2");
+        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        ProcessInstance processInstance = ksession.startProcess("BPMN2-ParallelSpitTerminate");
+        
+        ksession.signalEvent("Signal 1", null, processInstance.getId());
+        
+        assertProcessInstanceCompleted(processInstance);
+        
+    }
+
 }

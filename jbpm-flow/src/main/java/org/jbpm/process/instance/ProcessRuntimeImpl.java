@@ -4,28 +4,29 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.core.RuleBase;
 import org.drools.core.SessionConfiguration;
-import org.drools.core.common.AbstractWorkingMemory;
+import org.drools.core.command.impl.GenericCommand;
+import org.drools.core.command.impl.KnowledgeCommandContext;
 import org.drools.core.common.InternalKnowledgeRuntime;
-import org.drools.core.common.InternalRuleBase;
 import org.drools.core.common.InternalWorkingMemory;
 import org.drools.core.common.WorkingMemoryAction;
+import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.drools.core.event.ProcessEventSupport;
 import org.drools.core.impl.InternalKnowledgeBase;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.MarshallerWriteContext;
 import org.drools.core.marshalling.impl.ProtobufMessages.ActionQueue.Action;
-import org.drools.core.rule.Rule;
 import org.drools.core.time.AcceptsTimerJobFactoryManager;
 import org.drools.core.time.TimeUtils;
 import org.drools.core.time.impl.CronExpression;
 import org.drools.core.time.impl.DefaultTimerJobFactoryManager;
 import org.drools.core.time.impl.TrackableTimeJobFactoryManager;
 import org.jbpm.process.core.event.EventFilter;
+import org.jbpm.process.core.event.EventTransformer;
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.process.core.timer.BusinessCalendar;
 import org.jbpm.process.core.timer.DateTimeUtils;
@@ -49,16 +50,20 @@ import org.kie.api.event.process.ProcessEventListener;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
 import org.kie.api.event.rule.MatchCreatedEvent;
 import org.kie.api.event.rule.RuleFlowGroupDeactivatedEvent;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.runtime.process.EventListener;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkItemManager;
+import org.kie.internal.command.Context;
 import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
 import org.kie.internal.utils.CompositeClassLoader;
 
 public class ProcessRuntimeImpl implements InternalProcessRuntime {
 	
-	private AbstractWorkingMemory workingMemory;
 	private InternalKnowledgeRuntime kruntime;
 	
 	private ProcessInstanceManager processInstanceManager;
@@ -97,17 +102,13 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
         }
     }
 
-    
-	
-	public ProcessRuntimeImpl(AbstractWorkingMemory workingMemory) {
-		this.workingMemory = workingMemory;
+	public ProcessRuntimeImpl(InternalWorkingMemory workingMemory) {
 		AcceptsTimerJobFactoryManager jfm = ( AcceptsTimerJobFactoryManager ) workingMemory.getTimerService();
 		if ( jfm.getTimerJobFactoryManager() instanceof DefaultTimerJobFactoryManager ) {
 		    jfm.setTimerJobFactoryManager( new TrackableTimeJobFactoryManager() );
 		}
 		
 		this.kruntime = (InternalKnowledgeRuntime) workingMemory.getKnowledgeRuntime();
-		((CompositeClassLoader) getRootClassLoader()).addClassLoader( getClass().getClassLoader() );
 		initProcessInstanceManager();
 		initSignalManager();
 		timerManager = new TimerManager(kruntime, kruntime.getTimerService());
@@ -151,12 +152,12 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 	}
 	
 	private ClassLoader getRootClassLoader() {
-		RuleBase ruleBase = ((InternalKnowledgeBase) kruntime.getKieBase()).getRuleBase();
-		if (ruleBase != null) {
-			return ((InternalRuleBase) ((InternalKnowledgeBase) kruntime.getKieBase()).getRuleBase()).getRootClassLoader();
+		KieBase kbase = ((InternalKnowledgeBase) kruntime.getKieBase());
+		if (kbase != null) {
+			return ((InternalKnowledgeBase) kbase).getRootClassLoader();
 		}
 		CompositeClassLoader result = new CompositeClassLoader();
-		result.addClassLoader(this.getClass().getClassLoader());
+		result.addClassLoader(Thread.currentThread().getContextClassLoader());
 		return result;
 	}
 	
@@ -166,10 +167,15 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
 
     public ProcessInstance startProcess(String processId,
                                         Map<String, Object> parameters) {
+    	return startProcess(processId, parameters, null);
+    }
+    
+    public ProcessInstance startProcess(String processId,
+            Map<String, Object> parameters, String trigger) {
     	ProcessInstance processInstance = createProcessInstance(processId, parameters);
         if ( processInstance != null ) {
             // start process instance
-        	return startProcessInstance(processInstance.getId());
+        	return startProcessInstance(processInstance.getId(), trigger);
         }
         return null;
     }
@@ -179,20 +185,24 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
         return createProcessInstance(processId, null, parameters);
     }
     
-    public ProcessInstance startProcessInstance(long processInstanceId) {
-        try {
+    public ProcessInstance startProcessInstance(long processInstanceId, String trigger) {
+    	try {
             kruntime.startOperation();
             if ( !kruntime.getActionQueue().isEmpty() ) {
             	kruntime.executeQueuedActions();
             }
             ProcessInstance processInstance = getProcessInstance(processInstanceId);
 	        getProcessEventSupport().fireBeforeProcessStarted( processInstance, kruntime );
-	        ((org.jbpm.process.instance.ProcessInstance) processInstance).start();
+	        ((org.jbpm.process.instance.ProcessInstance) processInstance).start(trigger);
 	        getProcessEventSupport().fireAfterProcessStarted( processInstance, kruntime );
 	        return processInstance;
         } finally {
         	kruntime.endOperation();
         }
+    }
+    
+    public ProcessInstance startProcessInstance(long processInstanceId) {
+        return startProcessInstance(processInstanceId, null);
     }
     
     @Override
@@ -282,9 +292,9 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
         	public void afterProcessRemoved(AfterProcessRemovedEvent event) {
         		if (event.getProcess() instanceof RuleFlowProcess) {
         			String type = (String)
-    				    ((RuleFlowProcess) event.getProcess()).getMetaData().get("StartProcessEventType");
+    				    ((RuleFlowProcess) event.getProcess()).getRuntimeMetaData().get("StartProcessEventType");
         			StartProcessEventListener listener = (StartProcessEventListener)
-        				((RuleFlowProcess) event.getProcess()).getMetaData().get("StartProcessEventListener");
+        				((RuleFlowProcess) event.getProcess()).getRuntimeMetaData().get("StartProcessEventListener");
         			if (type != null && listener != null) {
         				signalManager.removeEventListener(type, listener);
         			}
@@ -297,28 +307,31 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
     @SuppressWarnings({ "deprecation", "unchecked" })
 	private void initProcessEventListener(Process process) {
     	if ( process instanceof RuleFlowProcess ) {
-            Node startNode = ((RuleFlowProcess) process).getStart();
-            if (startNode != null && startNode instanceof StartNode) {
-                List<Trigger> triggers = ((StartNode) startNode).getTriggers();
-                if ( triggers != null ) {
-                    for ( Trigger trigger : triggers ) {
-                        if ( trigger instanceof EventTrigger ) {
-                            final List<EventFilter> filters = ((EventTrigger) trigger).getEventFilters();
-                            String type = null;
-                            for ( EventFilter filter : filters ) {
-                                if ( filter instanceof EventTypeFilter ) {
-                                    type = ((EventTypeFilter) filter).getType();
+    	    for (Node node : ((RuleFlowProcess) process).getNodes()) {
+    	        if (node instanceof StartNode) {
+                    StartNode startNode = (StartNode) node;
+                    if (startNode != null) {
+                        List<Trigger> triggers = startNode.getTriggers();
+                        if ( triggers != null ) {
+                            for ( Trigger trigger : triggers ) {
+                                if ( trigger instanceof EventTrigger ) {
+                                    final List<EventFilter> filters = ((EventTrigger) trigger).getEventFilters();
+                                    String type = null;
+                                    for ( EventFilter filter : filters ) {
+                                        if ( filter instanceof EventTypeFilter ) {
+                                            type = ((EventTypeFilter) filter).getType();
+                                        }
+                                    }
+                                    StartProcessEventListener listener = new StartProcessEventListener( process.getId(),
+                                                                                                        filters,
+                                                                                                        trigger.getInMappings(),
+                                                                                                        startNode.getEventTransformer());
+                                    signalManager.addEventListener( type,
+                                                                    listener );
+                                    ((RuleFlowProcess) process).getRuntimeMetaData().put("StartProcessEventType", type);
+                                    ((RuleFlowProcess) process).getRuntimeMetaData().put("StartProcessEventListener", listener);
                                 }
                             }
-                            StartProcessEventListener listener = new StartProcessEventListener( process.getId(),
-                                                                                                filters,
-                                                                                                trigger.getInMappings(),
-                                                                                                (List<AssignmentAction>) startNode.getMetaData().get(AssignmentAction.ASSIGNMENT_ACTION),
-                                                                                                this);
-                            signalManager.addEventListener( type,
-                                                            listener );
-                            ((RuleFlowProcess) process).getMetaData().put("StartProcessEventType", type);
-                            ((RuleFlowProcess) process).getMetaData().put("StartProcessEventListener", listener);
                         }
                     }
         	    }
@@ -342,10 +355,73 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
         return processEventSupport.getEventListeners();
     }
 
+    private class StartProcessEventListener implements EventListener {
+    	
+	    private String              processId;
+	    private List<EventFilter>   eventFilters;
+	    private Map<String, String> inMappings;
+	    private EventTransformer eventTransformer;
+	
+	    public StartProcessEventListener(String processId,
+	                                     List<EventFilter> eventFilters,
+	                                     Map<String, String> inMappings,
+	                                     EventTransformer eventTransformer) {
+	        this.processId = processId;
+	        this.eventFilters = eventFilters;
+	        this.inMappings = inMappings;
+	        this.eventTransformer = eventTransformer;
+	    }
+	
+	    public String[] getEventTypes() {
+	        return null;
+	    }
+	
+	    public void signalEvent(final String type,
+	                            Object event) {
+	        for ( EventFilter filter : eventFilters ) {
+	            if ( !filter.acceptsEvent( type,
+	                                       event ) ) {
+	                return;
+	            }
+	        }
+	        if (eventTransformer != null) {
+    			event = eventTransformer.transformEvent(event);
+    		}
+	        Map<String, Object> params = null;
+	        if ( inMappings != null && !inMappings.isEmpty() ) {
+	        	params = new HashMap<String, Object>();
+	        	
+	        	if (inMappings.size() == 1) {
+	        		params.put( inMappings.keySet().iterator().next(), event );
+	        	} else {
+		            for ( Map.Entry<String, String> entry : inMappings.entrySet() ) {
+		                if ( "event".equals( entry.getValue() ) ) {
+		                    params.put( entry.getKey(),
+		                                event );
+		                } else {
+		                    params.put( entry.getKey(),
+		                                entry.getValue() );
+	                }
+	            }
+	        	}
+	        }
+	        RuntimeManager manager = (RuntimeManager) kruntime.getEnvironment().get("RuntimeManager");
+            if (manager != null) {
+                RuntimeEngine runtime = manager.getRuntimeEngine(ProcessInstanceIdContext.get());
+                KieSession ksession = runtime.getKieSession();
+                
+                ksession.execute(new StartProcessWithTypeCommand(processId, params, type));
+                
+            } else {
+            	startProcess( processId, params, type );
+            }
+	    }
+	}
+
     private void initProcessActivationListener() {
     	kruntime.addEventListener(new DefaultAgendaEventListener() {
 			public void matchCreated(MatchCreatedEvent event) {
-                String ruleFlowGroup = ((Rule) event.getMatch().getRule()).getRuleFlowGroup();
+                String ruleFlowGroup = ((RuleImpl) event.getMatch().getRule()).getRuleFlowGroup();
                 if ( "DROOLS_SYSTEM".equals( ruleFlowGroup ) ) {
                     // new activations of the rule associate with a state node
                     // signal process instances of that state node
@@ -369,7 +445,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
         kruntime.addEventListener(new DefaultAgendaEventListener() {
             public void afterRuleFlowGroupDeactivated(final RuleFlowGroupDeactivatedEvent event) {
             	if (kruntime instanceof StatefulKnowledgeSession) {
-                    signalManager.signalEvent( "RuleFlowGroup_" + event.getRuleFlowGroup().getName() + "_" + ((StatefulKnowledgeSession) kruntime).getId(),
+                    signalManager.signalEvent( "RuleFlowGroup_" + event.getRuleFlowGroup().getName() + "_" + ((StatefulKnowledgeSession) kruntime).getIdentifier(),
                             null );
             	} else {
                     signalManager.signalEvent( "RuleFlowGroup_" + event.getRuleFlowGroup().getName(),
@@ -378,6 +454,29 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
             }
         } );
     }
+    
+    private class StartProcessWithTypeCommand implements  GenericCommand<Void> {
+		private static final long serialVersionUID = -8890906804846111698L;
+		
+		private String processId;
+		private Map<String, Object> params;
+		private String type;
+
+		private StartProcessWithTypeCommand(String processId, Map<String, Object> params, String type) {
+			this.processId = processId;
+			this.params = params;
+			this.type = type;
+		}
+		
+		@Override
+		public Void execute(Context context) {
+			KieSession ksession = ((KnowledgeCommandContext) context).getKieSession();
+			((ProcessRuntimeImpl)((InternalKnowledgeRuntime)ksession).getProcessRuntime()).startProcess( processId,
+                      params, type );
+			
+			return null;
+		}
+	}
 
 	public void abortProcessInstance(long processInstanceId) {
 		ProcessInstance processInstance = getProcessInstance(processInstanceId);
@@ -426,7 +525,6 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
             kruntime.getKieBase().removeEventListener(knowledgeBaseListener);
             kruntime = null;
         }
-        workingMemory = null;
 	}
 
 	public void clearProcessInstances() {
@@ -491,7 +589,7 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
             for (StartNode startNode : startNodes) {
                 if (startNode != null && startNode.getTimer() != null) {
                     TimerInstance timerInstance = null;
-                    if (CronExpression.isValidExpression(startNode.getTimer().getDelay())) {
+                    if (startNode.getTimer().getDelay() != null && CronExpression.isValidExpression(startNode.getTimer().getDelay())) {
                         timerInstance = new TimerInstance();
                         timerInstance.setCronExpression(startNode.getTimer().getDelay());
                         
@@ -543,7 +641,12 @@ public class ProcessRuntimeImpl implements InternalProcessRuntime {
                     timerInstance.setPeriod(repeatValues[2]);
                 } else {
                     timerInstance.setDelay(repeatValues[0]);
-                    timerInstance.setPeriod(repeatValues[0]);
+                    try {
+                    	long period = DateTimeUtils.parseTimeString(timer.getPeriod());
+                    	timerInstance.setPeriod(period);
+                    } catch (RuntimeException e) {
+                    	timerInstance.setPeriod(repeatValues[0]);
+                    }
                 }
                 
                 break;

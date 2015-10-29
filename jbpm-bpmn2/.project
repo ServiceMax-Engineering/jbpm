@@ -2,7 +2,7 @@
   <name>jbpm-bpmn2</name>
   <comment>jBPM BPMN2. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
   <projects>
-    <project>jbpm-bam</project>
+    <project>jbpm-audit</project>
     <project>jbpm-flow</project>
     <project>jbpm-flow-builder</project>
     <project>jbpm-persistence-jpa</project>
@@ -11,15 +11,8 @@
     <buildCommand>
       <name>org.eclipse.jdt.core.javabuilder</name>
     </buildCommand>
-    <buildCommand>
-      <name>org.eclipse.pde.ManifestBuilder</name>
-    </buildCommand>
-    <buildCommand>
-      <name>org.eclipse.pde.SchemaBuilder</name>
-    </buildCommand>
   </buildSpec>
   <natures>
     <nature>org.eclipse.jdt.core.javanature</nature>
-    <nature>org.eclipse.pde.PluginNature</nature>
   </natures>
 </projectDescription>

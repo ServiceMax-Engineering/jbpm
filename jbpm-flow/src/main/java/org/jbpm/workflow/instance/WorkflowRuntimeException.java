@@ -6,9 +6,9 @@ import java.util.Map;
 
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
-import org.jbpm.workflow.core.impl.NodeImpl;
-import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
+import org.jbpm.process.instance.impl.ProcessInstanceImpl;
 import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.ProcessInstance;
 
 /**
  * This exception provides the context information of the error in execution of the flow. <br/>
@@ -18,38 +18,45 @@ public class WorkflowRuntimeException extends RuntimeException {
 
     /** Generated serial version uid */
     private static final long serialVersionUID = 8210449548783940188L;
-    
+
     private long processInstanceId;
     private String processId;
     private long nodeInstanceId;
     private long nodeId;
     private String nodeName;
-    
+
     private Map<String, Object> variables;
 
-    public WorkflowRuntimeException(Exception e) {
-        super(e);
+    public WorkflowRuntimeException(NodeInstance nodeInstance, ProcessInstance processInstance, String message) {
+        super(message);
+        initialize(nodeInstance, processInstance);
     }
 
-    public WorkflowRuntimeException(NodeInstance nodeInstance, String message, Exception e) {
+    public WorkflowRuntimeException(NodeInstance nodeInstance, ProcessInstance processInstance, String message, Exception e) {
         super(message, e);
-        initialize(nodeInstance);
+        initialize(nodeInstance, processInstance);
     }
-    
-    public WorkflowRuntimeException(NodeInstance nodeInstance, Exception e) {
+
+    public WorkflowRuntimeException(NodeInstance nodeInstance, ProcessInstance processInstance, Exception e) {
         super(e);
-        initialize(nodeInstance);
+        initialize(nodeInstance, processInstance);
     }
-    
-    private void initialize(NodeInstance nodeInstance) {
-        this.processInstanceId = nodeInstance.getProcessInstance().getId();
-        this.processId = nodeInstance.getProcessInstance().getProcessId();
-        this.nodeInstanceId = nodeInstance.getId();
-        this.nodeId = nodeInstance.getNodeId();
-        this.nodeName = nodeInstance.getNodeName();
+
+    private void initialize(NodeInstance nodeInstance, ProcessInstance processInstance) {
+        this.processInstanceId = processInstance.getId();
+        this.processId = processInstance.getProcessId();
+        if( nodeInstance != null ) { 
+            this.nodeInstanceId = nodeInstance.getId();
+            this.nodeId = nodeInstance.getNodeId();
+            if( ((ProcessInstanceImpl) processInstance).getKnowledgeRuntime() != null ) { 
+                this.nodeName = nodeInstance.getNodeName();
+            }
+        }
         
-        VariableScopeInstance variableScope 
-            = (VariableScopeInstance) ((NodeImpl) ((NodeInstanceImpl) nodeInstance).getNode()).getContext(VariableScope.VARIABLE_SCOPE);
+        VariableScopeInstance variableScope =  (VariableScopeInstance) 
+                ((org.jbpm.process.instance.ProcessInstance) processInstance).getContextInstance( 
+                        VariableScope.VARIABLE_SCOPE );
+            // set input parameters
         if( variableScope != null ) { 
             this.variables = variableScope.getVariables();
         } else { 
@@ -133,8 +140,12 @@ public class WorkflowRuntimeException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        return MessageFormat.format("[{0}:{4} - {1}:{2}] -- {3}", getProcessId(),
-                getNodeName(), getNodeId(), getCause().getMessage(), getProcessInstanceId());
+        return MessageFormat.format("[{0}:{4} - {1}:{2}] -- {3}", 
+                getProcessId(),
+                (getNodeName() == null ? "?" : getNodeName()), 
+                (getNodeId() == 0 ? "?" : getNodeId()), 
+                (getCause() == null ? getMessage() : getCause().getMessage()), 
+                getProcessInstanceId());
     }
 
 }

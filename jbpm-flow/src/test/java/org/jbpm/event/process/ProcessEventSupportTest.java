@@ -21,12 +21,13 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.drools.core.definitions.impl.KnowledgePackageImp;
-import org.drools.core.rule.Package;
+import org.drools.core.definitions.InternalKnowledgePackage;
+import org.drools.core.definitions.impl.KnowledgePackageImpl;
 import org.jbpm.process.core.event.EventFilter;
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.process.instance.impl.Action;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.core.DroolsAction;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
@@ -37,9 +38,6 @@ import org.jbpm.workflow.core.node.EventNode;
 import org.jbpm.workflow.core.node.EventTrigger;
 import org.jbpm.workflow.core.node.StartNode;
 import org.junit.Test;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
-import org.kie.internal.definition.KnowledgePackage;
 import org.kie.api.event.process.ProcessCompletedEvent;
 import org.kie.api.event.process.ProcessEvent;
 import org.kie.api.event.process.ProcessEventListener;
@@ -47,18 +45,27 @@ import org.kie.api.event.process.ProcessNodeLeftEvent;
 import org.kie.api.event.process.ProcessNodeTriggeredEvent;
 import org.kie.api.event.process.ProcessStartedEvent;
 import org.kie.api.event.process.ProcessVariableChangedEvent;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.kie.api.runtime.process.ProcessContext;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.definition.KnowledgePackage;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ProcessEventSupportTest {
+public class ProcessEventSupportTest extends AbstractBaseTest {
+    
+    public void addLogger() { 
+        logger = LoggerFactory.getLogger(this.getClass());
+    }
 
 	@Test
     public void testProcessEventListener() throws Exception {
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
 
         // create a simple package with one process to test the events
-        final Package pkg = new Package( "org.drools.test" );
+        final InternalKnowledgePackage pkg = new KnowledgePackageImpl( "org.drools.test" );
         RuleFlowProcess process = new RuleFlowProcess();
         process.setId("org.drools.core.process.event");
         process.setName("Event Process");
@@ -73,7 +80,7 @@ public class ProcessEventSupportTest {
         DroolsAction action = new DroolsConsequenceAction("java", null);
         action.setMetaData("Action", new Action() {
 			public void execute(ProcessContext context) throws Exception {
-            	System.out.println("Executed action");
+            	logger.info("Executed action");
 			}
         });
         actionNode.setAction(action);
@@ -95,7 +102,7 @@ public class ProcessEventSupportTest {
         
         pkg.addProcess(process);
         List<KnowledgePackage> pkgs = new ArrayList<KnowledgePackage>();
-        pkgs.add( new KnowledgePackageImp( pkg ) );
+        pkgs.add( pkg );
         kbase.addKnowledgePackages( pkgs );
         
         StatefulKnowledgeSession session = kbase.newStatefulKnowledgeSession();
@@ -171,7 +178,7 @@ public class ProcessEventSupportTest {
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
 
         // create a simple package with one process to test the events
-        final Package pkg = new Package( "org.drools.test" );
+        final InternalKnowledgePackage pkg = new KnowledgePackageImpl( "org.drools.test" );
         RuleFlowProcess process = new RuleFlowProcess();
         process.setId("org.drools.core.process.event");
         process.setName("Event Process");
@@ -186,7 +193,7 @@ public class ProcessEventSupportTest {
         DroolsAction action = new DroolsConsequenceAction("java", null);
         action.setMetaData("Action", new Action() {
             public void execute(ProcessContext context) throws Exception {
-                System.out.println("Executed action");
+                logger.info("Executed action");
             }
         });
         actionNode.setAction(action);
@@ -223,7 +230,7 @@ public class ProcessEventSupportTest {
         
         pkg.addProcess(process);
         List<KnowledgePackage> pkgs = new ArrayList<KnowledgePackage>();
-        pkgs.add( new KnowledgePackageImp( pkg ) );
+        pkgs.add( pkg );
         kbase.addKnowledgePackages( pkgs );
         
         StatefulKnowledgeSession session = kbase.newStatefulKnowledgeSession();
@@ -309,7 +316,7 @@ public class ProcessEventSupportTest {
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
 
         // create a simple package with one process to test the events
-        final Package pkg = new Package( "org.drools.test" );
+        final InternalKnowledgePackage pkg = new KnowledgePackageImpl( "org.drools.test" );
         RuleFlowProcess process = new RuleFlowProcess();
         process.setId("org.drools.core.process.event");
         process.setName("Event Process");
@@ -324,7 +331,7 @@ public class ProcessEventSupportTest {
         DroolsAction action = new DroolsConsequenceAction("java", null);
         action.setMetaData("Action", new Action() {
             public void execute(ProcessContext context) throws Exception {
-                System.out.println("Executed action");
+                logger.info("Executed action");
             }
         });
         actionNode.setAction(action);
@@ -347,7 +354,7 @@ public class ProcessEventSupportTest {
         
         pkg.addProcess(process);
         List<KnowledgePackage> pkgs = new ArrayList<KnowledgePackage>();
-        pkgs.add( new KnowledgePackageImp( pkg ) );
+        pkgs.add( pkg );
         kbase.addKnowledgePackages( pkgs );
         
         StatefulKnowledgeSession session = kbase.newStatefulKnowledgeSession();
@@ -421,7 +428,7 @@ public class ProcessEventSupportTest {
         KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
 
         // create a simple package with one process to test the events
-        final Package pkg = new Package( "org.drools.test" );
+        final InternalKnowledgePackage pkg = new KnowledgePackageImpl( "org.drools.test" );
         RuleFlowProcess process = new RuleFlowProcess();
         process.setId("org.drools.core.process.event");
         process.setName("Event Process");
@@ -441,7 +448,7 @@ public class ProcessEventSupportTest {
         DroolsAction action = new DroolsConsequenceAction("java", null);
         action.setMetaData("Action", new Action() {
             public void execute(ProcessContext context) throws Exception {
-                System.out.println("Executed action");
+                logger.info("Executed action");
             }
         });
         actionNode.setAction(action);
@@ -463,7 +470,7 @@ public class ProcessEventSupportTest {
         
         pkg.addProcess(process);
         List<KnowledgePackage> pkgs = new ArrayList<KnowledgePackage>();
-        pkgs.add( new KnowledgePackageImp( pkg ) );
+        pkgs.add( pkg );
         kbase.addKnowledgePackages( pkgs );
         
         StatefulKnowledgeSession session = kbase.newStatefulKnowledgeSession();

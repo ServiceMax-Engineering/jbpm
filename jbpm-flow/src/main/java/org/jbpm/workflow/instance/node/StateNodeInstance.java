@@ -16,18 +16,18 @@
 
 package org.jbpm.workflow.instance.node;
 
+import org.drools.core.common.InternalAgenda;
 import org.drools.core.common.InternalKnowledgeRuntime;
-import org.kie.api.definition.process.Connection;
-import org.kie.api.event.rule.MatchCreatedEvent;
-import org.kie.api.runtime.process.EventListener;
-import org.kie.api.runtime.process.NodeInstance;
-import org.drools.core.runtime.rule.impl.InternalAgenda;
 import org.drools.core.spi.Activation;
 import org.jbpm.workflow.core.Constraint;
 import org.jbpm.workflow.core.impl.ExtendedNodeImpl;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.instance.NodeInstanceContainer;
+import org.kie.api.definition.process.Connection;
+import org.kie.api.event.rule.MatchCreatedEvent;
+import org.kie.api.runtime.process.EventListener;
+import org.kie.api.runtime.process.NodeInstance;
 
 public class StateNodeInstance extends CompositeContextNodeInstance implements EventListener {
 
@@ -39,7 +39,11 @@ public class StateNodeInstance extends CompositeContextNodeInstance implements E
     
 	public void internalTrigger(NodeInstance from, String type) {
 		super.internalTrigger(from, type);
-        // TODO: composite states trigger
+		// if node instance was cancelled, abort
+		if (getNodeInstanceContainer().getNodeInstance(getId()) == null) {
+			return;
+		}        
+		// TODO: composite states trigger
         StateNode stateNode = getStateNode();
         Connection selected = null;
         int priority = Integer.MAX_VALUE;

@@ -28,10 +28,6 @@ import java.util.Map;
 
 import org.drools.core.common.InternalKnowledgeRuntime;
 import org.drools.core.spi.ProcessContext;
-import org.kie.api.definition.process.Connection;
-import org.kie.api.definition.process.Node;
-import org.kie.api.runtime.process.NodeInstance;
-import org.kie.api.runtime.process.NodeInstanceContainer;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.core.context.exception.ExceptionScope;
@@ -50,6 +46,12 @@ import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.WorkflowRuntimeException;
 import org.jbpm.workflow.instance.node.CompositeNodeInstance;
+import org.kie.api.definition.process.Connection;
+import org.kie.api.definition.process.Node;
+import org.kie.api.runtime.process.NodeInstance;
+import org.kie.api.runtime.process.NodeInstanceContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.kie.api.event.process.ProcessEventListener;
 import org.kie.api.event.process.ProcessNodeTriggeredEvent;
@@ -64,12 +66,14 @@ public abstract class NodeInstanceImpl implements
 		org.jbpm.workflow.instance.NodeInstance, Serializable {
 
 	private static final long serialVersionUID = 510l;
-
+	private static final Logger logger = LoggerFactory.getLogger(NodeInstanceImpl.class);
+	
 	private long id;
     private long nodeId;
     private WorkflowProcessInstance processInstance;
     private org.jbpm.workflow.instance.NodeInstanceContainer nodeInstanceContainer;
     private Map<String, Object> metaData = new HashMap<String, Object>();
+    private int level;
 
     public void setId(final long id) {
         this.id = id;
@@ -90,6 +94,14 @@ public abstract class NodeInstanceImpl implements
     public String getNodeName() {
     	Node node = getNode();
     	return node == null ? "" : node.getName();
+    }
+    
+    public int getLevel() {
+        return this.level;
+    }
+    
+    public void setLevel(int level) {
+        this.level = level;
     }
 
     public void setProcessInstance(final WorkflowProcessInstance processInstance) {
@@ -112,8 +124,15 @@ public abstract class NodeInstanceImpl implements
     }
 
     public Node getNode() {
-        return ((org.jbpm.workflow.core.NodeContainer)
-    		this.nodeInstanceContainer.getNodeContainer()).internalGetNode( this.nodeId );
+    	try {
+    		return ((org.jbpm.workflow.core.NodeContainer)
+				this.nodeInstanceContainer.getNodeContainer()).internalGetNode( this.nodeId );
+    	} catch (IllegalArgumentException e) {
+    		throw new IllegalArgumentException(
+				"Unknown node id: " + this.nodeId 
+				+ " for node instance " + getUniqueId()
+				+ " for process instance " + this.processInstance, e);
+    	}
     }
     
     public boolean isInversionOfControl() {
@@ -130,6 +149,7 @@ public abstract class NodeInstanceImpl implements
 				.getKnowledgeRuntime();
 		InternalProcessRuntime processRuntime = (InternalProcessRuntime) kruntime.getProcessRuntime();
 		if (!hidden) {
+                        //bpm-002146 [M10] Add another state 'Canceled' for nodes which is being canceled
 			List<ProcessEventListener> listeners = processRuntime
 			.getProcessEventSupport()
 			.getEventListeners();
@@ -168,6 +188,8 @@ public abstract class NodeInstanceImpl implements
     	}
     	
     	if (from != null) {
+    	    int level = ((org.jbpm.workflow.instance.NodeInstance)from).getLevel();
+    	    ((org.jbpm.workflow.instance.NodeInstanceContainer)getNodeInstanceContainer()).setCurrentLevel(level);
 	    	Collection<Connection> incoming = getNode().getIncomingConnections(type);
 	    	for (Connection conn : incoming) {
 	    	    if (conn.getFrom().getId() == from.getNodeId()) {
@@ -188,7 +210,7 @@ public abstract class NodeInstanceImpl implements
             throw e;
         }
         catch (Exception e) {
-            throw new WorkflowRuntimeException(this, e);
+            throw new WorkflowRuntimeException(this, getProcessInstance(), e);
         }
         if (!hidden) {
         	((InternalProcessRuntime) kruntime.getProcessRuntime())
@@ -215,21 +237,37 @@ public abstract class NodeInstanceImpl implements
             ExceptionScopeInstance exceptionScopeInstance = (ExceptionScopeInstance)
                 resolveContextInstance(ExceptionScope.EXCEPTION_SCOPE, exceptionName);
             if (exceptionScopeInstance == null) {
-                throw new WorkflowRuntimeException(this, "Unable to execute Action: " + e.getMessage(), e);
+                throw new WorkflowRuntimeException(this, getProcessInstance(), "Unable to execute Action: " + e.getMessage(), e);
             }
             exceptionScopeInstance.handleException(exceptionName, e);
         }
     }
     
     protected void triggerCompleted(String type, boolean remove) {
+        Node node = getNode();
+        if (node != null) {
+	    	String uniqueId = (String) node.getMetaData().get("UniqueId");
+	    	if( uniqueId == null ) { 
+	    	    uniqueId = ((NodeImpl) node).getUniqueId();
+	    	}
+	    	((WorkflowProcessInstanceImpl) processInstance).addCompletedNodeId(uniqueId);
+	    	((WorkflowProcessInstanceImpl) processInstance).getIterationLevels().remove(uniqueId);
+        }
+
+        // if node instance was cancelled, or containing container instance was cancelled
+    	if ((getNodeInstanceContainer().getNodeInstance(getId()) == null)
+    			|| (((org.jbpm.workflow.instance.NodeInstanceContainer) getNodeInstanceContainer()).getState() != ProcessInstance.STATE_ACTIVE)) {
+    		return;
+    	}
+    	
         if (remove) {
             ((org.jbpm.workflow.instance.NodeInstanceContainer) getNodeInstanceContainer())
             	.removeNodeInstance(this);
         }
-        Node node = getNode();
+
         List<Connection> connections = null;
         if (node != null) {
-        	if (System.getProperty("jbpm.enable.multi.con") != null && ((NodeImpl) node).getConstraints().size() > 0) {
+        	if ("true".equals(System.getProperty("jbpm.enable.multi.con")) && ((NodeImpl) node).getConstraints().size() > 0) {
         		int priority = Integer.MAX_VALUE;
         		connections = ((NodeImpl)node).getDefaultOutgoingConnections();
                 boolean found = false;
@@ -290,10 +328,10 @@ public abstract class NodeInstanceImpl implements
                 }   
                 return;
         	} else {
-        		connections = node.getOutgoingConnections(type);
+        		connections = node.getOutgoingConnections(type); 
         	}
         }
-        if (connections == null || connections.isEmpty()) {
+        if (connections == null || connections.isEmpty() ) {
         	boolean hidden = false;
         	Node currentNode = getNode();
         	if (currentNode != null && currentNode.getMetaData().get("hidden") != null) {
@@ -420,78 +458,79 @@ public abstract class NodeInstanceImpl implements
     private ContextInstanceContainer getContextInstanceContainer(ContextContainer contextContainer) {
     	ContextInstanceContainer contextInstanceContainer = null; 
 		if (this instanceof ContextInstanceContainer) {
-			contextInstanceContainer = (ContextInstanceContainer) this;
-		} else {
-			contextInstanceContainer = getEnclosingContextInstanceContainer(this);
-		}
-		while (contextInstanceContainer != null) {
-			if (contextInstanceContainer.getContextContainer() == contextContainer) {
-				return contextInstanceContainer;
-			}
-			contextInstanceContainer = getEnclosingContextInstanceContainer((NodeInstance) contextInstanceContainer);
-		}
-		return null;
-	}
+        	contextInstanceContainer = (ContextInstanceContainer) this;
+        } else {
+        	contextInstanceContainer = getEnclosingContextInstanceContainer(this);
+        }
+        while (contextInstanceContainer != null) {
+    		if (contextInstanceContainer.getContextContainer() == contextContainer) {
+    			return contextInstanceContainer;
+    		}
+    		contextInstanceContainer = getEnclosingContextInstanceContainer(
+				(NodeInstance) contextInstanceContainer);
+    	}
+        return null;
+    }
+    
+    private ContextInstanceContainer getEnclosingContextInstanceContainer(NodeInstance nodeInstance) {
+    	NodeInstanceContainer nodeInstanceContainer = nodeInstance.getNodeInstanceContainer();
+    	while (true) {
+    		if (nodeInstanceContainer instanceof ContextInstanceContainer) {
+    			return (ContextInstanceContainer) nodeInstanceContainer;
+    		}
+    		if (nodeInstanceContainer instanceof NodeInstance) {
+    			nodeInstanceContainer = ((NodeInstance) nodeInstanceContainer).getNodeInstanceContainer();
+    		} else {
+    			return null;
+    		}
+    	}
+    }
+    
+    public Object getVariable(String variableName) {
+    	VariableScopeInstance variableScope = (VariableScopeInstance)
+    		resolveContextInstance(VariableScope.VARIABLE_SCOPE, variableName);
+    	if (variableScope == null) {
+    		variableScope = (VariableScopeInstance) ((ProcessInstance) 
+    			getProcessInstance()).getContextInstance(VariableScope.VARIABLE_SCOPE);
+    	}
+    	return variableScope.getVariable(variableName);
+    }
+    
+    public void setVariable(String variableName, Object value) {
+    	VariableScopeInstance variableScope = (VariableScopeInstance)
+    		resolveContextInstance(VariableScope.VARIABLE_SCOPE, variableName);
+    	if (variableScope == null) {
+    		variableScope = (VariableScopeInstance) getProcessInstance().getContextInstance(VariableScope.VARIABLE_SCOPE);
+    		if (variableScope.getVariableScope().findVariable(variableName) == null) {
+    			variableScope = null;
+    		}
+    	}
+    	if (variableScope == null) {
+    		logger.error("Could not find variable {}", variableName);
+    		logger.error("Using process-level scope");
+    		variableScope = (VariableScopeInstance) ((ProcessInstance) 
+    			getProcessInstance()).getContextInstance(VariableScope.VARIABLE_SCOPE);
+    	}
+    	variableScope.setVariable(variableName, value);
+    }
 
-	private ContextInstanceContainer getEnclosingContextInstanceContainer(
-			NodeInstance nodeInstance) {
-		NodeInstanceContainer nodeInstanceContainer = nodeInstance
-				.getNodeInstanceContainer();
-		while (true) {
-			if (nodeInstanceContainer instanceof ContextInstanceContainer) {
-				return (ContextInstanceContainer) nodeInstanceContainer;
-			}
-			if (nodeInstanceContainer instanceof NodeInstance) {
-				nodeInstanceContainer = ((NodeInstance) nodeInstanceContainer)
-						.getNodeInstanceContainer();
-			} else {
-				return null;
-			}
-		}
-	}
-
-	public Object getVariable(String variableName) {
-		VariableScopeInstance variableScope = (VariableScopeInstance) resolveContextInstance(
-				VariableScope.VARIABLE_SCOPE, variableName);
-		if (variableScope == null) {
-			variableScope = (VariableScopeInstance) ((ProcessInstance) getProcessInstance())
-					.getContextInstance(VariableScope.VARIABLE_SCOPE);
-		}
-		return variableScope.getVariable(variableName);
-	}
-
-	public void setVariable(String variableName, Object value) {
-		VariableScopeInstance variableScope = (VariableScopeInstance) resolveContextInstance(
-				VariableScope.VARIABLE_SCOPE, variableName);
-		if (variableScope == null) {
-			variableScope = (VariableScopeInstance) getProcessInstance()
-					.getContextInstance(VariableScope.VARIABLE_SCOPE);
-			if (variableScope.getVariableScope().findVariable(variableName) == null) {
-				variableScope = null;
-			}
-		}
-		if (variableScope == null) {
-			System.err.println("Could not find variable " + variableName);
-			System.err.println("Using process-level scope");
-			variableScope = (VariableScopeInstance) ((ProcessInstance) getProcessInstance())
-					.getContextInstance(VariableScope.VARIABLE_SCOPE);
-		}
-		variableScope.setVariable(variableName, value);
-	}
-
-	public String getUniqueId() {
-		String result = "" + getId();
-		NodeInstanceContainer parent = getNodeInstanceContainer();
-		while (parent instanceof CompositeNodeInstance) {
-			CompositeNodeInstance nodeInstance = (CompositeNodeInstance) parent;
-			result = nodeInstance.getId() + ":" + result;
-			parent = nodeInstance.getNodeInstanceContainer();
-		}
-		return result;
-	}
-
-	public Map<String, Object> getMetaData() {
-		return this.metaData;
+    public String getUniqueId() {
+    	String result = "" + getId();
+    	NodeInstanceContainer parent = getNodeInstanceContainer();
+    	while (parent instanceof CompositeNodeInstance) {
+    		CompositeNodeInstance nodeInstance = (CompositeNodeInstance) parent;
+    		result = nodeInstance.getId() + ":" + result;
+    		parent = nodeInstance.getNodeInstanceContainer();
+    	}
+    	return result;
+    }
+    
+    public Map<String, Object> getMetaData() {
+        return this.metaData;
+    }
+    
+	public Object getMetaData(String name) {
+		return this.metaData.get(name);
 	}
 
     public void setMetaData(String name, Object data) {

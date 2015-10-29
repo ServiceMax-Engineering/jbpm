@@ -29,13 +29,14 @@ import javax.xml.xpath.XPathFactory;
 import net.sf.saxon.expr.AxisExpression;
 import net.sf.saxon.expr.Expression;
 import net.sf.saxon.expr.ItemChecker;
-import net.sf.saxon.expr.PathExpression;
+import net.sf.saxon.expr.SlashExpression;
+import net.sf.saxon.expr.SimpleStepExpression;
 import net.sf.saxon.expr.VariableReference;
-import net.sf.saxon.om.Axis;
 import net.sf.saxon.om.NamePool;
 import net.sf.saxon.pattern.NameTest;
 import net.sf.saxon.pattern.NodeKindTest;
 import net.sf.saxon.pattern.NodeTest;
+import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.xpath.XPathExpressionImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
@@ -103,11 +104,14 @@ public class XPATHExpressionModifier {
 
 		Document document = toDOMDocument(contextNode);
 
-		PathExpression pathExpr = null;
+		SlashExpression pathExpr = null;
 		Expression step = null;
 
-		if (expression instanceof PathExpression) {
-			pathExpr = (PathExpression) expression;
+		if (expression instanceof SimpleStepExpression) {
+  			pathExpr = (SimpleStepExpression)expression;
+			step = pathExpr.getStep();
+		} else if (expression instanceof SlashExpression) {
+			pathExpr = (SlashExpression) expression;
 			step = pathExpr.getFirstStep();
 		} else if (expression instanceof AxisExpression) {
 			pathExpr = null;
@@ -131,7 +135,7 @@ public class XPATHExpressionModifier {
 				QName childName = getQualifiedName(nameTest.getFingerprint(),
 						((XPathFactoryImpl) xpf).getConfiguration().getNamePool()/*, contextUris*/);
 
-				if (Axis.CHILD == axisExpr.getAxis()) {
+				if (Axis.CHILD.getAxisNumber() == axisExpr.getAxis()) {
 					if (NodeKindTest.ELEMENT.getNodeKindMask() != nameTest.getNodeKindMask()) {
 						break;
 					}
@@ -165,7 +169,7 @@ public class XPATHExpressionModifier {
 					        break;
 					    }
 					}
-				} else if (Axis.ATTRIBUTE == axisExpr.getAxis()) {
+				} else if (Axis.ATTRIBUTE.getAxisNumber() == axisExpr.getAxis()) {
 					if (NodeKindTest.ATTRIBUTE.getNodeKindMask() != nameTest.getNodeKindMask()) {
 						break;
 					}
@@ -198,8 +202,8 @@ public class XPATHExpressionModifier {
 			if (pathExpr != null) {
 				Expression remainingSteps = pathExpr.getRemainingSteps();
 
-				if (remainingSteps instanceof PathExpression) {
-					pathExpr = (PathExpression) remainingSteps;
+				if (remainingSteps instanceof SlashExpression) {
+					pathExpr = (SlashExpression) remainingSteps;
 					step = pathExpr.getFirstStep();
 				} else if (remainingSteps instanceof AxisExpression) {
 					pathExpr = null;

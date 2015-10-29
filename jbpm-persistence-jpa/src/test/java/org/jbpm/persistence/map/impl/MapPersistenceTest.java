@@ -1,28 +1,25 @@
 package org.jbpm.persistence.map.impl;
 
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
-import org.drools.core.common.AbstractRuleBase;
-import org.drools.core.impl.InternalKnowledgeBase;
 import org.drools.core.process.instance.WorkItemHandler;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.runtime.process.WorkItem;
-import org.kie.api.runtime.process.WorkItemManager;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.Assert;
 import org.junit.Test;
+import org.kie.api.KieBase;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemManager;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
-public abstract class MapPersistenceTest {
+public abstract class MapPersistenceTest extends AbstractBaseTest {
 
     @Test
     public void startProcessInPersistentEnvironment() {
         String processId = "minimalProcess";
 
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newShortestProcess( processId ) );
+        KieBase kbase = createKieBase(ProcessCreatorForHelp.newShortestProcess( processId ) );
         
         StatefulKnowledgeSession crmPersistentSession = createSession(kbase);
 
@@ -36,13 +33,10 @@ public abstract class MapPersistenceTest {
         String processId = "minimalProcess";
         String workName = "MyWork";
 
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newProcessWithOneWork( processId,
-                                                                          workName ) );
+        KieBase kbase = createKieBase(ProcessCreatorForHelp.newProcessWithOneWork( processId, workName ));
 
         StatefulKnowledgeSession ksession = createSession(kbase);
-        int ksessionId = ksession.getId();
+        long ksessionId = ksession.getIdentifier();
 
         DummyWorkItemHandler handler = new DummyWorkItemHandler();
         ksession.getWorkItemManager()
@@ -70,8 +64,7 @@ public abstract class MapPersistenceTest {
         RuleFlowProcess process = ProcessCreatorForHelp.newSimpleEventProcess( processId,
                                                          eventType );
 
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess( process );
+        KieBase kbase = createKieBase(process);
         
         StatefulKnowledgeSession crmPersistentSession = createSession(kbase);
 
@@ -94,15 +87,12 @@ public abstract class MapPersistenceTest {
         String processId = "minimalProcess";
         String workName = "MyWork";
 
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newProcessWithOneWork( processId,
-                                                                          workName ) );
+        KieBase kbase = createKieBase(ProcessCreatorForHelp.newProcessWithOneWork( processId, workName ) );
 
         StatefulKnowledgeSession ksession1 = createSession(kbase);
-        int ksession1Id = ksession1.getId();
+        long ksession1Id = ksession1.getIdentifier();
         StatefulKnowledgeSession ksession2 = createSession(kbase);
-        int ksession2Id = ksession2.getId();
+        long ksession2Id = ksession2.getIdentifier();
 
         DummyWorkItemHandler handler1 = new DummyWorkItemHandler();
         ksession1.getWorkItemManager()
@@ -138,13 +128,13 @@ public abstract class MapPersistenceTest {
     
     @Test
     public void multipleKSessionDifferentIdTest() {
-        KnowledgeBase kbase1 = KnowledgeBaseFactory.newKnowledgeBase();
-        KnowledgeBase kbase2 = KnowledgeBaseFactory.newKnowledgeBase();
+        KieBase kbase1 = KnowledgeBaseFactory.newKnowledgeBase();
+        KieBase kbase2 = KnowledgeBaseFactory.newKnowledgeBase();
 
         StatefulKnowledgeSession ksession1 = createSession(kbase1);
         StatefulKnowledgeSession ksession2 = createSession(kbase2);
 
-        Assert.assertNotSame(ksession1.getId(), ksession2.getId());
+        Assert.assertNotSame(ksession1.getIdentifier(), ksession2.getIdentifier());
 
     }
 
@@ -158,16 +148,13 @@ public abstract class MapPersistenceTest {
         RuleFlowProcess process2 = ProcessCreatorForHelp.newSimpleEventProcess( processId,
                                                                                eventType );
 
-        KnowledgeBase kbase1 = KnowledgeBaseFactory.newKnowledgeBase();
-        KnowledgeBase kbase2 = KnowledgeBaseFactory.newKnowledgeBase();
-
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase1).getRuleBase()).addProcess( process1 );
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase2).getRuleBase()).addProcess( process2 );
+        KieBase kbase1 = createKieBase(process1);
+        KieBase kbase2 = createKieBase(process2);
 
         StatefulKnowledgeSession ksession1 = createSession(kbase1);
         StatefulKnowledgeSession ksession2 = createSession(kbase2);
 
-        Assert.assertNotSame(ksession1.getId(), ksession2.getId());
+        Assert.assertNotSame(ksession1.getIdentifier(), ksession2.getIdentifier());
 
         Long processInstance1Id = ksession1.startProcess(processId).getId();
 
@@ -182,15 +169,8 @@ public abstract class MapPersistenceTest {
         String processId = "minimalProcess";
         String workName = "MyWork";
 
-        KnowledgeBase kbase1 = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase1).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newProcessWithOneWork( processId,
-                                                                          workName ) );
-
-        KnowledgeBase kbase2 = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase2).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newProcessWithOneWork( processId,
-                                                                          workName ) );
+        KieBase kbase1 = createKieBase(ProcessCreatorForHelp.newProcessWithOneWork( processId, workName ) );
+        KieBase kbase2 = createKieBase(ProcessCreatorForHelp.newProcessWithOneWork( processId, workName ) );
 
         StatefulKnowledgeSession ksession1 = createSession(kbase1);
         StatefulKnowledgeSession ksession2 = createSession(kbase2);
@@ -217,10 +197,7 @@ public abstract class MapPersistenceTest {
         int knowledgeSessionsCountBeforeTest = getKnowledgeSessionsCount(); 
         int processInstancesBeforeTest = getProcessInstancesCount();
         
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newProcessWithOneWork( processId,
-                                                                          workName ) );
+        KieBase kbase = createKieBase(ProcessCreatorForHelp.newProcessWithOneWork( processId, workName ) );
 
         StatefulKnowledgeSession crmPersistentSession = createSession( kbase );
         ChrashingWorkItemHandler handler = new ChrashingWorkItemHandler();
@@ -247,12 +224,9 @@ public abstract class MapPersistenceTest {
         int knowledgeSessionsCountBeforeTest = getKnowledgeSessionsCount(); 
         int processInstancesBeforeTest = getProcessInstancesCount();
         
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase())
-                .addProcess( ProcessCreatorForHelp.newProcessWithOneWork(subProcessId, workName));
-
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase())
-        .addProcess( ProcessCreatorForHelp.newProcessWithOneSubProcess(processId, subProcessId));
+        KieBase kbase = createKieBase(
+                ProcessCreatorForHelp.newProcessWithOneWork(subProcessId, workName),
+                ProcessCreatorForHelp.newProcessWithOneSubProcess(processId, subProcessId));
 
         StatefulKnowledgeSession ksession = createSession(kbase);
 
@@ -270,11 +244,11 @@ public abstract class MapPersistenceTest {
     }
 
 
-    protected abstract StatefulKnowledgeSession createSession(KnowledgeBase kbase);
+    protected abstract StatefulKnowledgeSession createSession(KieBase kbase);
     
     protected abstract StatefulKnowledgeSession disposeAndReloadSession(StatefulKnowledgeSession crmPersistentSession,
-                                                                        int ksessionId,
-                                                                        KnowledgeBase kbase);
+                                                                        long ksessionId,
+                                                                        KieBase kbase);
 
     protected abstract int getProcessInstancesCount();
 

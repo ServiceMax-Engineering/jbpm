@@ -1,36 +1,43 @@
 package org.jbpm.integrationtests;
 
+import static org.junit.Assert.*;
+
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.*;
-
-import junit.framework.TestCase;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.drools.compiler.compiler.DroolsError;
-import org.drools.compiler.compiler.PackageBuilder;
-import org.drools.core.RuleBase;
-import org.drools.core.RuleBaseFactory;
-import org.drools.core.WorkingMemory;
-import org.drools.core.rule.Package;
+import org.drools.core.definitions.InternalKnowledgePackage;
 import org.jbpm.integrationtests.handler.TestWorkItemHandler;
 import org.jbpm.process.instance.ProcessInstance;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.instance.node.DynamicNodeInstance;
 import org.jbpm.workflow.instance.node.DynamicUtils;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.logger.KnowledgeRuntimeLogger;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.logger.KnowledgeRuntimeLoggerFactory;
-import org.kie.api.runtime.process.WorkItem;
-import org.kie.api.runtime.process.WorkflowProcessInstance;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ProcessDynamicNodeTest extends TestCase {
+public class ProcessDynamicNodeTest extends AbstractBaseTest {
     
+    private static final Logger logger = LoggerFactory.getLogger(ProcessDynamicNodeTest.class);
+    
+    @Test
+    @Ignore
     public void TODOtestDynamicActions() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
@@ -81,23 +88,23 @@ public class ProcessDynamicNodeTest extends TestCase {
             "  </connections>\n" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
+        InternalKnowledgePackage pkg = builder.getPackage();
         for (DroolsError error: builder.getErrors().getErrors()) {
-        	System.err.println(error);
+            logger.error(error.toString());
         }
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        
+        StatefulKnowledgeSession ksession = createKieSession(pkg);
+        
         List<String> list = new ArrayList<String>();
-        workingMemory.setGlobal("list", list);
-        ProcessInstance processInstance = ( ProcessInstance )
-            workingMemory.startProcess("org.drools.dynamic");
+        ksession.setGlobal("list", list);
+        ProcessInstance processInstance = ( ProcessInstance ) ksession.startProcess("org.drools.dynamic");
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(4, list.size());
     }
 
+    @Test
+    @Ignore
     public void TODOtestDynamicAsyncActions() {
-        PackageBuilder builder = new PackageBuilder();
         Reader source = new StringReader(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<process xmlns=\"http://drools.org/drools-5.0/process\"\n" +
@@ -147,28 +154,28 @@ public class ProcessDynamicNodeTest extends TestCase {
             "  </connections>\n" +
             "</process>");
         builder.addRuleFlow(source);
-        Package pkg = builder.getPackage();
+        InternalKnowledgePackage pkg = builder.getPackage();
         for (DroolsError error: builder.getErrors().getErrors()) {
-        	System.err.println(error);
+            logger.error(error.toString());
         }
-        RuleBase ruleBase = RuleBaseFactory.newRuleBase();
-        ruleBase.addPackage( pkg );
-        WorkingMemory workingMemory = ruleBase.newStatefulSession();
+        
+        StatefulKnowledgeSession ksession = createKieSession(pkg);
+        
         List<String> list = new ArrayList<String>();
-        workingMemory.setGlobal("list", list);
+        ksession.setGlobal("list", list);
         TestWorkItemHandler testHandler = new TestWorkItemHandler();
-        workingMemory.getWorkItemManager().registerWorkItemHandler("Work", testHandler);
-        ProcessInstance processInstance = ( ProcessInstance )
-            workingMemory.startProcess("org.drools.dynamic");
+        ksession.getWorkItemManager().registerWorkItemHandler("Work", testHandler);
+        ProcessInstance processInstance = ( ProcessInstance ) ksession.startProcess("org.drools.dynamic");
         assertEquals(ProcessInstance.STATE_ACTIVE, processInstance.getState());
         assertEquals(1, list.size());
         WorkItem workItem = testHandler.getWorkItem(); 
         assertNotNull(workItem);
-        workingMemory.getWorkItemManager().completeWorkItem(workItem.getId(), null);
+        ksession.getWorkItemManager().completeWorkItem(workItem.getId(), null);
         assertEquals(ProcessInstance.STATE_COMPLETED, processInstance.getState());
         assertEquals(3, list.size());
     }
     
+    @Test
     public void testAddDynamicWorkItem() {
     	Reader source = new StringReader(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -222,6 +229,7 @@ public class ProcessDynamicNodeTest extends TestCase {
 		logger.close();
     }
 
+    @Test
     public void testAddDynamicSubProcess() {
     	Reader source = new StringReader(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

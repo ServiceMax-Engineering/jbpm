@@ -23,6 +23,7 @@ import java.util.List;
 import org.kie.api.definition.process.Node;
 import org.drools.core.process.core.datatype.DataType;
 import org.jbpm.process.core.Context;
+import org.jbpm.process.core.context.AbstractContext;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
@@ -54,6 +55,7 @@ public class ForEachNode extends CompositeContextNode {
         ForEachSplitNode split = new ForEachSplitNode();
         split.setName("ForEachSplit");
         split.setMetaData("hidden", true);
+        split.setMetaData("UniqueId", getMetaData("Uniqueid") + ":foreach:split");
         super.addNode(split);
         super.linkIncomingConnections(
             org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, 
@@ -62,6 +64,7 @@ public class ForEachNode extends CompositeContextNode {
         CompositeContextNode compositeNode = new CompositeContextNode();
         compositeNode.setName("ForEachComposite");
         compositeNode.setMetaData("hidden", true);
+        compositeNode.setMetaData("UniqueId", getMetaData("Uniqueid") + ":foreach:composite");
         super.addNode(compositeNode);
         VariableScope variableScope = new VariableScope();
         compositeNode.addContext(variableScope);
@@ -70,6 +73,7 @@ public class ForEachNode extends CompositeContextNode {
         ForEachJoinNode join = new ForEachJoinNode();
         join.setName("ForEachJoin");
         join.setMetaData("hidden", true);
+        join.setMetaData("UniqueId", getMetaData("Uniqueid") + ":foreach:join");
         super.addNode(join);
         super.linkOutgoingConnections(
             new CompositeNode.NodeAndType(join, org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE),
@@ -320,5 +324,36 @@ public class ForEachSplitNode extends ExtendedNodeImpl {
         }
         return super.getContext(contextType);
     }
+    
+    @Override
+    public void addContext(Context context) {
+    	getCompositeNode().addContext(context);
+        ((AbstractContext) context).setContextContainer(getCompositeNode());
+    }
 
+    @Override
+    public void setDefaultContext(Context context) {
+    	getCompositeNode().setDefaultContext(context);
+        ((AbstractContext) context).setContextContainer(getCompositeNode());
+    }
+    
+    @Override
+    public List<Context> getContexts(String contextType) {
+    	List<Context> contexts = super.getContexts(contextType);
+    	if (contexts == null) {
+    		contexts = getCompositeNode().getContexts(contextType);        
+        }
+        
+        return contexts;
+    }
+    
+    @Override
+    public Context getContext(String contextType, long id) {
+        Context ctx =  super.getContext(contextType, id);
+        if (ctx == null) {
+        	ctx = getCompositeNode().getContext(contextType, id);        
+        }
+        
+        return ctx;
+    }
 }

@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.drools.core.WorkItemHandlerNotFoundException;
-import org.drools.core.common.AbstractRuleBase;
-import org.drools.core.impl.InternalKnowledgeBase;
 import org.drools.core.process.core.ParameterDefinition;
 import org.drools.core.process.core.Work;
 import org.drools.core.process.core.datatype.impl.type.IntegerDataType;
@@ -21,6 +19,7 @@ import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
 import org.jbpm.process.test.Person;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
 import org.jbpm.workflow.core.node.EndNode;
@@ -28,22 +27,23 @@ import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.junit.Assert;
 import org.junit.Test;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.slf4j.LoggerFactory;
 
-public class WorkItemTest {
+public class WorkItemTest extends AbstractBaseTest {
 
+    public void addLogger() { 
+        logger = LoggerFactory.getLogger(this.getClass());
+    }
+    
 	@Test
     public void testReachNonRegisteredWorkItemHandler() {
         String processId = "org.drools.actions";
         String workName = "Unnexistent Task";
         RuleFlowProcess process = getWorkItemProcess( processId,
                                                       workName );
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess( process );
-        StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
+        KieSession ksession = createKieSession(process); 
 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put( "UserName",
@@ -68,10 +68,8 @@ public class WorkItemTest {
         String workName = "Unnexistent Task";
         RuleFlowProcess process = getWorkItemProcess( processId,
                                                       workName );
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        ((AbstractRuleBase) ((InternalKnowledgeBase) kbase).getRuleBase()).addProcess( process );
-        StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
-
+        KieSession ksession = createKieSession(process); 
+        
         ksession.getWorkItemManager().registerWorkItemHandler( workName,
                                                                new DoNothingWorkItemHandler() );
 

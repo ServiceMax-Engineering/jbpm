@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  *      env.set(EnvironmentName.ENTITY_MANAGER_FACTORY, emf);
  *      env.set(EnvironmentName.TRANSACTION_MANAGER, new ContainerManagedTransactionManager());
  *      env.set(EnvironmentName.PERSISTENCE_CONTEXT_MANAGER, new JpaProcessPersistenceContextManager(env));
+ *      env.set(EnvironmentName.TASK_PERSISTENCE_CONTEXT_MANAGER, new JPATaskPersistenceContextManager(env));
  * </code>
  * Since it dedicated to be run in CMT begine/commit/rollback are no-op methods. <br/>
  * Status of the transaction is always Active.
@@ -91,9 +92,32 @@ public class ContainerManagedTransactionManager implements TransactionManager {
             return tsrObject;
         } catch (NamingException ex) {
             logger.warn("Error when getting TransactionSynchronizationRegistry from JNDI ", ex);
+            String customJndiLocation = System.getProperty("jbpm.tsr.jndi.lookup", "java:jboss/TransactionSynchronizationRegistry");
+            try {
+
+                Object tsrObject =  InitialContext.doLookup(customJndiLocation);
+                logger.debug( "JTA TransactionSynchronizationRegistry found at default JNDI location [{}]",
+                        customJndiLocation );
+
+                return tsrObject;
+            } catch (Exception e1) {
+                logger.debug( "No JTA TransactionSynchronizationRegistry found at default JNDI location [{}]",
+                        customJndiLocation,
+                        ex );
+            }
         }
 
         return null;
     }
+
+	@Override
+	public void putResource(Object key, Object resource) {
+		TransactionSynchronizationRegistryHelper.putResource(this.txSyncRegistry, key, resource);
+	}
+
+	@Override
+	public Object getResource(Object key) {
+		return TransactionSynchronizationRegistryHelper.getResource(this.txSyncRegistry, key);
+	}
 
 }

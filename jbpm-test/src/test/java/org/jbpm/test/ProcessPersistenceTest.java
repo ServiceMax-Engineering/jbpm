@@ -3,35 +3,39 @@ package org.jbpm.test;
 import javax.naming.InitialContext;
 import javax.transaction.UserTransaction;
 
-import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
-import org.jbpm.test.JbpmJUnitTestCase;
 import org.junit.Test;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.runtime.process.ProcessInstance;
 
 /**
  * This is a sample file to test a process.
  */
-public class ProcessPersistenceTest extends JbpmJUnitTestCase {
+public class ProcessPersistenceTest extends JbpmJUnitBaseTestCase {
 	
 	public ProcessPersistenceTest() {
-		super(true);
-		setPersistence(true);
+		super(true, true);
 	}
 
 	@Test
 	public void testProcess() {
-	    KieSession ksession = createKnowledgeSession("hello.bpmn");
+	    RuntimeManager manager = createRuntimeManager("hello.bpmn");
+	    RuntimeEngine runtimeEngine = getRuntimeEngine();
+	    KieSession ksession = runtimeEngine.getKieSession();
 		ProcessInstance processInstance = ksession.startProcess("com.sample.bpmn.hello");
 		// check whether the process instance has completed successfully
-		assertProcessInstanceCompleted(processInstance.getId(), ksession);
+		assertProcessInstanceCompleted(processInstance.getId());
 		assertNodeTriggered(processInstance.getId(), "StartProcess", "Hello", "EndProcess");
+		manager.disposeRuntimeEngine(runtimeEngine);
+		manager.close();
 	}
 
 	@Test
 	public void testTransactions() throws Exception {
-	    KieSession ksession = createKnowledgeSession("humantask.bpmn");
-		ksession.getWorkItemManager().registerWorkItemHandler("Human Task", new DoNothingWorkItemHandler());
+	    createRuntimeManager("humantask.bpmn");
+	    RuntimeEngine runtimeEngine = getRuntimeEngine();
+	    KieSession ksession = runtimeEngine.getKieSession();
 		
 		UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
         ut.begin();

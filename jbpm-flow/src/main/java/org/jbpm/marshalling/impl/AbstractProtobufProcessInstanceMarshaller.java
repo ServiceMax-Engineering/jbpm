@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.drools.core.common.DefaultFactHandle;
-import org.drools.core.common.InternalRuleBase;
 import org.drools.core.common.InternalWorkingMemory;
+import org.drools.core.impl.InternalKnowledgeBase;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.MarshallerWriteContext;
 import org.drools.core.marshalling.impl.PersisterHelper;
@@ -49,20 +49,7 @@ import org.jbpm.workflow.instance.impl.NodeInstanceFactoryRegistry;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.jbpm.workflow.instance.impl.factory.CreateNewNodeFactory;
-import org.jbpm.workflow.instance.node.CompositeContextNodeInstance;
-import org.jbpm.workflow.instance.node.DynamicNodeInstance;
-import org.jbpm.workflow.instance.node.EventNodeInstance;
-import org.jbpm.workflow.instance.node.EventSubProcessNodeInstance;
-import org.jbpm.workflow.instance.node.ForEachNodeInstance;
-import org.jbpm.workflow.instance.node.HumanTaskNodeInstance;
-import org.jbpm.workflow.instance.node.JoinInstance;
-import org.jbpm.workflow.instance.node.MilestoneNodeInstance;
-import org.jbpm.workflow.instance.node.RuleSetNodeInstance;
-import org.jbpm.workflow.instance.node.StateBasedNodeInstance;
-import org.jbpm.workflow.instance.node.StateNodeInstance;
-import org.jbpm.workflow.instance.node.SubProcessNodeInstance;
-import org.jbpm.workflow.instance.node.TimerNodeInstance;
-import org.jbpm.workflow.instance.node.WorkItemNodeInstance;
+import org.jbpm.workflow.instance.node.*;
 import org.kie.api.definition.process.Process;
 import org.kie.api.runtime.process.NodeInstance;
 import org.kie.api.runtime.process.NodeInstanceContainer;
@@ -95,6 +82,11 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         if (workFlow.getProcessXml() != null) {
             _instance.setProcessXml( workFlow.getProcessXml());
         }
+        if (workFlow.getDescription() != null) {
+            _instance.setDescription(workFlow.getDescription());
+        }
+        
+        _instance.addAllCompletedNodeIds(workFlow.getCompletedNodeIds());
 
         SwimlaneContextInstance swimlaneContextInstance = (SwimlaneContextInstance) workFlow.getContextInstance( SwimlaneContext.SWIMLANE_SCOPE );
         if ( swimlaneContextInstance != null ) {
@@ -151,6 +143,24 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
             }
         }
         
+        List<Map.Entry<String, Integer>> iterationlevels = new ArrayList<Map.Entry<String, Integer>>( workFlow.getIterationLevels().entrySet() );
+        Collections.sort( iterationlevels,
+                          new Comparator<Map.Entry<String, Integer>>() {
+                              public int compare(Map.Entry<String, Integer> o1,
+                                                 Map.Entry<String, Integer> o2) {
+                                  return o1.getKey().compareTo( o2.getKey() );
+                              }
+                          } );
+
+        for ( Map.Entry<String, Integer> level : iterationlevels ) {
+            if ( level.getValue() != null ) {
+                _instance.addIterationLevels( 
+                        JBPMMessages.IterationLevel.newBuilder()
+                        .setId(level.getKey())
+                        .setLevel(level.getValue()) );
+            }
+        }
+        
         return _instance.build();
     }
 
@@ -158,7 +168,9 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                                                                        NodeInstance nodeInstance) throws IOException {
         JBPMMessages.ProcessInstance.NodeInstance.Builder _node = JBPMMessages.ProcessInstance.NodeInstance.newBuilder()
                 .setId( nodeInstance.getId() )
-                .setNodeId( nodeInstance.getNodeId() );
+                .setNodeId( nodeInstance.getNodeId())
+                .setLevel(((org.jbpm.workflow.instance.NodeInstance)nodeInstance).getLevel());
+                        
         _node.setContent( writeNodeInstanceContent( _node, 
                                                     nodeInstance, 
                                                     context ) );
@@ -322,6 +334,24 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 }
             }
             
+            List<Map.Entry<String, Integer>> iterationlevels = new ArrayList<Map.Entry<String, Integer>>( forEachNodeInstance.getIterationLevels().entrySet() );
+            Collections.sort( iterationlevels,
+                              new Comparator<Map.Entry<String, Integer>>() {
+                                  public int compare(Map.Entry<String, Integer> o1,
+                                                     Map.Entry<String, Integer> o2) {
+                                      return o1.getKey().compareTo( o2.getKey() );
+                                  }
+                              } );
+
+            for ( Map.Entry<String, Integer> level : iterationlevels ) {
+                if ( level.getKey() != null && level.getValue() != null ) {
+                    _foreach.addIterationLevels( 
+                            JBPMMessages.IterationLevel.newBuilder()
+                            .setId(level.getKey())
+                            .setLevel(level.getValue()) );
+                }
+            }
+            
             _content = JBPMMessages.ProcessInstance.NodeInstanceContent.newBuilder()
                     .setType( NodeInstanceType.FOR_EACH_NODE )
                     .setForEach( _foreach.build() );
@@ -357,6 +387,24 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 for ( Map.Entry<String, Object> variable : variables ) {
                     
                     _composite.addVariable( ProtobufProcessMarshaller.marshallVariable( context, variable.getKey(), variable.getValue() ) );
+                }
+            }
+            
+            List<Map.Entry<String, Integer>> iterationlevels = new ArrayList<Map.Entry<String, Integer>>( compositeNodeInstance.getIterationLevels().entrySet() );
+            Collections.sort( iterationlevels,
+                              new Comparator<Map.Entry<String, Integer>>() {
+                                  public int compare(Map.Entry<String, Integer> o1,
+                                                     Map.Entry<String, Integer> o2) {
+                                      return o1.getKey().compareTo( o2.getKey() );
+                                  }
+                              } );
+
+            for ( Map.Entry<String, Integer> level : iterationlevels ) {
+                if (level.getKey() != null && level.getValue() != null ) {
+                    _composite.addIterationLevels( 
+                            JBPMMessages.IterationLevel.newBuilder()
+                            .setId(level.getKey())
+                            .setLevel(level.getValue()) );
                 }
             }
             
@@ -428,7 +476,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
 
     // Input methods
     public ProcessInstance readProcessInstance(MarshallerReaderContext context) throws IOException {
-        InternalRuleBase ruleBase = context.ruleBase;
+        InternalKnowledgeBase ruleBase = context.kBase;
         InternalWorkingMemory wm = context.wm;
         
         JBPMMessages.ProcessInstance _instance = (org.jbpm.marshalling.impl.JBPMMessages.ProcessInstance) context.parameterObject;
@@ -464,9 +512,13 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
             processInstance.setProcess( process );
         }
         processInstance.setKnowledgeRuntime( wm.getKnowledgeRuntime() );
+        processInstance.setDescription(_instance.getDescription());
         processInstance.setState( _instance.getState() );
         processInstance.setParentProcessInstanceId(_instance.getParentProcessInstanceId());
         long nodeInstanceCounter = _instance.getNodeInstanceCounter();
+        for( String completedNodeId : _instance.getCompletedNodeIdsList() ) { 
+            processInstance.addCompletedNodeId(completedNodeId);
+        }
 
         if ( _instance.getSwimlaneContextCount() > 0 ) {
             Context swimlaneContext = ((org.jbpm.process.core.Process) process).getDefaultContext( SwimlaneContext.SWIMLANE_SCOPE );
@@ -510,6 +562,13 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 }
             }
         }
+        
+        if ( _instance.getIterationLevelsCount() > 0 ) {
+            
+            for ( JBPMMessages.IterationLevel _level : _instance.getIterationLevelsList()) {
+                processInstance.getIterationLevels().put(_level.getId(), _level.getLevel());
+            }
+        }
         processInstance.internalSetNodeInstanceCounter( nodeInstanceCounter );
     	processInstance.reconnect();
         return processInstance;
@@ -530,6 +589,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         nodeInstance.setNodeInstanceContainer( nodeInstanceContainer );
         nodeInstance.setProcessInstance( (org.jbpm.workflow.instance.WorkflowProcessInstance) processInstance );
         nodeInstance.setId( _node.getId() );
+        nodeInstance.setLevel(_node.getLevel()==0?1:_node.getLevel());
 
         switch ( _node.getContent().getType() ) {
             case COMPOSITE_CONTEXT_NODE :
@@ -545,6 +605,12 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                         } catch ( ClassNotFoundException e ) {
                             throw new IllegalArgumentException( "Could not reload variable " + _variable.getName() );
                         }
+                    }
+                }
+                if ( _node.getContent().getComposite().getIterationLevelsCount() > 0 ) {
+                    
+                    for ( JBPMMessages.IterationLevel _level : _node.getContent().getComposite().getIterationLevelsList()) {
+                        ((CompositeContextNodeInstance) nodeInstance).getIterationLevels().put(_level.getId(), _level.getLevel());
                     }
                 }
                 for ( JBPMMessages.ProcessInstance.NodeInstance _instance : _node.getContent().getComposite().getNodeInstanceList() ) {
@@ -581,6 +647,12 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                             throw new IllegalArgumentException( "Could not reload variable " + _variable.getName() );
                         }
                     }
+                    if ( _node.getContent().getForEach().getIterationLevelsCount() > 0 ) {
+                        
+                        for ( JBPMMessages.IterationLevel _level : _node.getContent().getForEach().getIterationLevelsList()) {
+                            ((ForEachNodeInstance) nodeInstance).getIterationLevels().put(_level.getId(), _level.getLevel());
+                        }
+                    }
                 }
                 break;
             case EVENT_SUBPROCESS_NODE :
@@ -589,6 +661,15 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                     readNodeInstance( context,
                                       (EventSubProcessNodeInstance) nodeInstance,
                                       processInstance );
+                    VariableScopeInstance variableScopeInstance = (VariableScopeInstance) ((EventSubProcessNodeInstance) nodeInstance).getContextInstance( VariableScope.VARIABLE_SCOPE );
+                    for ( JBPMMessages.Variable _variable : _node.getContent().getComposite().getVariableList() ) {
+                        try {
+                            Object _value = ProtobufProcessMarshaller.unmarshallVariableValue( context, _variable );
+                            variableScopeInstance.internalSetVariable( _variable.getName(), _value );
+                        } catch ( ClassNotFoundException e ) {
+                            throw new IllegalArgumentException( "Could not reload variable " + _variable.getName() );
+                        }
+                    }
                 }
                 break;
             default :
@@ -626,13 +707,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 }
                 break;
             case HUMAN_TASK_NODE :
-//                nodeInstance = new HumanTaskNodeInstance();
-    			try {
-    				nodeInstance = (NodeInstanceImpl) ((CreateNewNodeFactory) NodeInstanceFactoryRegistry.INSTANCE.registry.get(HumanTaskNode.class)).cls.newInstance();
-    			} catch (Exception e) {
-    				// TODO Auto-generated catch block
-    				throw new RuntimeException(e);
-    			}
+                nodeInstance = new HumanTaskNodeInstance();
                 ((HumanTaskNodeInstance) nodeInstance).internalSetWorkItemId( _content.getHumanTask().getWorkItemId() );
                 if ( _content.getHumanTask().getTimerInstanceIdCount() > 0 ) {
                     List<Long> timerInstances = new ArrayList<Long>();
@@ -643,13 +718,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 }
                 break;
             case WORK_ITEM_NODE :
-//                nodeInstance = new WorkItemNodeInstance();
-    			try {
-    				nodeInstance = (NodeInstanceImpl) ((CreateNewNodeFactory) NodeInstanceFactoryRegistry.INSTANCE.registry.get(WorkItemNode.class)).cls.newInstance();
-    			} catch (Exception e) {
-    				// TODO Auto-generated catch block
-    				throw new RuntimeException(e);
-    			}
+                nodeInstance = new WorkItemNodeInstance();
                 ((WorkItemNodeInstance) nodeInstance).internalSetWorkItemId( _content.getWorkItem().getWorkItemId() );
                 if ( _content.getWorkItem().getTimerInstanceIdCount() > 0 ) {
                     List<Long> timerInstances = new ArrayList<Long>();
@@ -734,7 +803,7 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 break;
             case STATUS_SUB_NODE:
 			try {
-				nodeInstance = (NodeInstanceImpl) ((CreateNewNodeFactory) NodeInstanceFactoryRegistry.INSTANCE.registry.get(Class.forName("com.intalio.bpm.engine.status.subprocess.StatusSubProcessNode"))).cls.newInstance();
+				nodeInstance = (NodeInstanceImpl)Class.forName("com.intalio.bpm.engine.status.subprocess.StatusSubProcessNode").newInstance();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				throw new RuntimeException(e);

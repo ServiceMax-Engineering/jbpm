@@ -16,21 +16,42 @@
 
 package org.jbpm.bpmn2.handler;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.jbpm.bpmn2.JbpmTestCase;
-import org.jbpm.bpmn2.handler.LoggingTaskHandlerWrapper.InputParameter;
+import org.jbpm.bpmn2.JbpmBpmn2TestCase;
+import org.jbpm.bpmn2.handler.LoggingTaskHandlerDecorator.InputParameter;
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.kie.api.KieBase;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
 
-public class LoggingTaskHandlerWrapperTest extends JbpmTestCase {
+@RunWith(Parameterized.class)
+public class LoggingTaskHandlerWrapperTest extends JbpmBpmn2TestCase {
     
     private StatefulKnowledgeSession ksession;
     
-    public LoggingTaskHandlerWrapperTest() {
-        super(false);
+    @Parameters
+    public static Collection<Object[]> persistence() {
+        Object[][] data = new Object[][] { { false }, { true} };
+        return Arrays.asList(data);
+    };
+
+    public LoggingTaskHandlerWrapperTest(boolean persistence) {
+        super(persistence);
+    }
+
+    @BeforeClass
+    public static void setup() throws Exception {
+        setUpDataSource();
     }
 
     @After
@@ -46,7 +67,7 @@ public class LoggingTaskHandlerWrapperTest extends JbpmTestCase {
         KieBase kbase = createKnowledgeBase("BPMN2-ExceptionThrowingServiceProcess.bpmn2");
         ksession = createKnowledgeSession(kbase);
         
-        LoggingTaskHandlerWrapper loggingTaskHandlerWrapper = new LoggingTaskHandlerWrapper(ServiceTaskHandler.class, 2);
+        LoggingTaskHandlerDecorator loggingTaskHandlerWrapper = new LoggingTaskHandlerDecorator(ServiceTaskHandler.class, 2);
         loggingTaskHandlerWrapper.setPrintStackTrace(false);
         ksession.getWorkItemManager().registerWorkItemHandler("Service Task", loggingTaskHandlerWrapper);
 
@@ -65,9 +86,9 @@ public class LoggingTaskHandlerWrapperTest extends JbpmTestCase {
         KieBase kbase = createKnowledgeBase("BPMN2-ExceptionThrowingServiceProcess.bpmn2");
         ksession = createKnowledgeSession(kbase);
         
-        LoggingTaskHandlerWrapper loggingTaskHandlerWrapper = new LoggingTaskHandlerWrapper(ServiceTaskHandler.class, 2);
+        LoggingTaskHandlerDecorator loggingTaskHandlerWrapper = new LoggingTaskHandlerDecorator(ServiceTaskHandler.class, 2);
         loggingTaskHandlerWrapper.setLoggedMessageFormat("{0} - {1} - {2} - {3}");
-        List<InputParameter> inputParameters = new ArrayList<LoggingTaskHandlerWrapper.InputParameter>();
+        List<InputParameter> inputParameters = new ArrayList<LoggingTaskHandlerDecorator.InputParameter>();
         inputParameters.add(InputParameter.EXCEPTION_CLASS);
         inputParameters.add(InputParameter.WORK_ITEM_ID);
         inputParameters.add(InputParameter.WORK_ITEM_NAME);

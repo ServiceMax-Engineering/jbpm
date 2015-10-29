@@ -1,8 +1,6 @@
 package org.jbpm.bpmn2.concurrency.persistence;
 
-import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
-import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
-import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
+import static org.jbpm.persistence.util.PersistenceUtil.*;
 
 import java.util.HashMap;
 
@@ -11,10 +9,13 @@ import org.jbpm.persistence.util.PersistenceUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.kie.api.runtime.Environment;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.persistence.jpa.JPAKnowledgeService;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.runtime.Environment;
+
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
 
 /**
  * Class to reproduce bug with multiple threads using persistence and each
@@ -29,12 +30,14 @@ public class OneProcessPerThreadPersistenceTest extends OneProcessPerThreadTest 
 
     @Before
     public void setup() {
-        context = setupWithPoolingDataSource(PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME, false);
+        context = setupWithPoolingDataSource(PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME);
     }
 
     @After
     public void tearDown() throws Exception {
-
+        BitronixTransactionManager txm = TransactionManagerServices.getTransactionManager();
+        assertTrue("There is still a transaction running!", txm.getCurrentTransaction() == null );
+        
         cleanUp(context);
     }
 

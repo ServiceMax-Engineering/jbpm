@@ -19,25 +19,22 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
-import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
 import org.drools.core.common.InternalKnowledgeRuntime;
-import org.drools.core.common.InternalRuleBase;
-import org.drools.core.event.ProcessEventSupport;
 import org.drools.core.impl.InternalKnowledgeBase;
 import org.drools.core.impl.StatefulKnowledgeSessionImpl;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.MarshallerWriteContext;
 import org.drools.core.marshalling.impl.PersisterHelper;
 import org.drools.core.marshalling.impl.ProtobufMarshaller;
+import org.drools.persistence.Transformable;
 import org.jbpm.marshalling.impl.JBPMMessages;
 import org.jbpm.marshalling.impl.ProcessInstanceMarshaller;
 import org.jbpm.marshalling.impl.ProcessMarshallerRegistry;
 import org.jbpm.marshalling.impl.ProtobufRuleFlowProcessInstanceMarshaller;
-import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.process.instance.impl.ProcessInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.kie.api.runtime.Environment;
@@ -45,7 +42,7 @@ import org.kie.api.runtime.process.ProcessInstance;
 
 @Entity
 @SequenceGenerator(name="processInstanceInfoIdSeq", sequenceName="PROCESS_INSTANCE_INFO_ID_SEQ")
-public class ProcessInstanceInfo{
+public class ProcessInstanceInfo implements Transformable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator="processInstanceInfoIdSeq")
@@ -68,6 +65,7 @@ public class ProcessInstanceInfo{
 
     @ElementCollection
     @CollectionTable(name="EventTypes", joinColumns=@JoinColumn(name="InstanceId"))
+    @Column(name="element")
     private Set<String>                       eventTypes         = new HashSet<String>();
     
     @Transient
@@ -135,7 +133,12 @@ public class ProcessInstanceInfo{
     }
 
     public void updateLastReadDate() {
-        lastReadDate = new Date();
+    	Date updateTo = new Date();
+    	if (lastReadDate == null || lastReadDate.compareTo(updateTo) < 0) {
+    		lastReadDate = updateTo;
+    	} else {
+    		lastReadDate = new Date(lastReadDate.getTime() + 1);
+    	}
     }
 
     public int getState() {
@@ -151,11 +154,11 @@ public class ProcessInstanceInfo{
                                               Environment env,
                                               boolean readOnly) {
         this.env = env;
-        if ( processInstance == null ) {
+        if ( processInstance == null ) {        	
             try {
                 ByteArrayInputStream bais = new ByteArrayInputStream( processInstanceByteArray );
                 MarshallerReaderContext context = new MarshallerReaderContext( bais,
-                                                                               (InternalRuleBase) ((InternalKnowledgeBase) kruntime.getKieBase()).getRuleBase(),
+                                                                               (InternalKnowledgeBase) kruntime.getKieBase(),
                                                                                null,
                                                                                null,
                                                                                ProtobufMarshaller.TIMER_READERS,
@@ -164,6 +167,7 @@ public class ProcessInstanceInfo{
                 ProcessInstanceMarshaller marshaller = getMarshallerFromContext( context );
             	context.wm = ((StatefulKnowledgeSessionImpl) kruntime).getInternalWorkingMemory();
                 processInstance = marshaller.readProcessInstance(context);
+                ((WorkflowProcessInstanceImpl) processInstance).setPersisted(false);
                 if (readOnly) {
                     ((WorkflowProcessInstanceImpl) processInstance).disconnect();
                 }
@@ -191,22 +195,10 @@ public class ProcessInstanceInfo{
         stream.writeUTF( processInstanceType );
     }
 
-    /**
-     * Adding @PrePersist breaks things, because: <ul>
-     * <li>We retrieve/generate the marshaller (see below).</li> 
-     * <li>..and the marshaller retrieves the context instance</li>
-     * <li>..which actually (re)sets all variables in {@link VariableScopeInstance}.setContextInstanceContainer(...)</li>
-     * <li>This of course causes {@link ProcessEventSupport}.fireBeforeVariableChanged(...) to fire.</li>
-     * <li>Then the {@link org.jbpm.process.audit.JPAWorkingMemoryDbLogger} ends up logging a variable change 
-	 * -- but the associated process instance hasn't been persisted yet.</li> 
-     * <li>So the variable instance change is associated with process instance "0"</li>
-     * <li>...and can never be retrieved, because "0" is not a valid id.</li>
-     * </ul>
-     * </p>
-     * Normally, the variable change is logged after the following method has completed. 
-     */
-    @PreUpdate
-    public void update() {
+    public void transform() {
+//    	if (processInstance == null) {
+//    		return;
+//    	}
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         boolean variablesChanged = false;
         try {
@@ -231,7 +223,8 @@ public class ProcessInstanceInfo{
             }
             context.close();
         } catch ( IOException e ) {
-            throw new IllegalArgumentException( "IOException while storing process instance " + processInstance.getId() + ": " + e.getMessage() );
+            throw new IllegalArgumentException( "IOException while storing process instance "
+        		+ processInstance.getId() + ": " + e.getMessage(), e );
         }
         byte[] newByteArray = baos.toByteArray();
         if ( variablesChanged || !Arrays.equals( newByteArray,
@@ -244,6 +237,10 @@ public class ProcessInstanceInfo{
                 eventTypes.add( type );
             }
         }
+        if (!processInstance.getProcessId().equals(this.processId)) {
+    		this.processId = processInstance.getProcessId();
+    	}
+        ((WorkflowProcessInstanceImpl) processInstance).setPersisted(true);
     }
 
 

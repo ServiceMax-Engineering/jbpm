@@ -1,45 +1,56 @@
 package org.jbpm.persistence.session;
 
-import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
-import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
-import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
-import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.jbpm.persistence.util.PersistenceUtil.*;
+import static org.junit.Assert.*;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.naming.InitialContext;
 import javax.transaction.UserTransaction;
 
 import org.jbpm.persistence.processinstance.JPAProcessInstanceManager;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.Environment;
 import org.kie.internal.KnowledgeBase;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
-import org.kie.api.io.ResourceType;
 import org.kie.internal.persistence.jpa.JPAKnowledgeService;
-import org.kie.api.runtime.Environment;
+import org.kie.internal.runtime.StatefulKnowledgeSession;
 
 /**
  * This test looks at the behavior of the  {@link JPAProcessInstanceManager} 
  * with regards to created (but not started) process instances 
  * and whether the process instances are available or not after creation.
  */
-public class GetProcessInstancesTest {
+@RunWith(Parameterized.class)
+public class GetProcessInstancesTest extends AbstractBaseTest {
     
     private HashMap<String, Object> context;
     
     private Environment env;
     private KnowledgeBase kbase;
-    private int sessionId;
-
+    private long sessionId;
+    
+    public GetProcessInstancesTest(boolean locking) { 
+       this.useLocking = locking; 
+    }
+    
+    @Parameters
+    public static Collection<Object[]> persistence() {
+        Object[][] data = new Object[][] { { false }, { true } };
+        return Arrays.asList(data);
+    };
+    
     @Before
     public void setUp() throws Exception {
         context = setupWithPoolingDataSource(JBPM_PERSISTENCE_UNIT_NAME);
@@ -47,7 +58,7 @@ public class GetProcessInstancesTest {
 
         kbase = createBase();
         StatefulKnowledgeSession ksession = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, null, env);
-        sessionId = ksession.getId();
+        sessionId = ksession.getIdentifier();
         ksession.dispose();
     }
 

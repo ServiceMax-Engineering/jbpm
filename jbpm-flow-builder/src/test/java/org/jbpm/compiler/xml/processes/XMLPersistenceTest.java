@@ -16,18 +16,31 @@
 
 package org.jbpm.compiler.xml.processes;
 
+import static org.junit.Assert.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.StringReader;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.custommonkey.xmlunit.ComparisonController;
+import org.custommonkey.xmlunit.Diff;
+import org.custommonkey.xmlunit.Difference;
+import org.custommonkey.xmlunit.DifferenceEngine;
+import org.custommonkey.xmlunit.DifferenceListener;
+import org.custommonkey.xmlunit.ElementNameAndAttributeQualifier;
+import org.custommonkey.xmlunit.ElementNameQualifier;
+import org.custommonkey.xmlunit.XMLTestCase;
+import org.custommonkey.xmlunit.XMLUnit;
 import org.drools.core.process.core.ParameterDefinition;
 import org.drools.core.process.core.Work;
 import org.drools.core.process.core.datatype.impl.type.IntegerDataType;
@@ -48,7 +61,9 @@ import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.process.core.timer.Timer;
+import org.jbpm.process.instance.impl.util.LoggingPrintStream;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
+import org.jbpm.test.util.AbstractBaseTest;
 import org.jbpm.workflow.core.Connection;
 import org.jbpm.workflow.core.Constraint;
 import org.jbpm.workflow.core.DroolsAction;
@@ -76,10 +91,26 @@ import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.core.node.TimerNode;
 import org.jbpm.workflow.core.node.WorkItemNode;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.kie.api.definition.process.Process;
+import org.w3c.dom.Document;
 
-public class XMLPersistenceTest extends TestCase {
+public class XMLPersistenceTest extends XMLTestCase {
+   
+    @BeforeClass
+    public static void configure() { 
+        LoggingPrintStream.interceptSysOutSysErr();
+    }
     
+    @AfterClass
+    public static void reset() { 
+        LoggingPrintStream.resetInterceptSysOutSysErr();
+    }
+    
+    @Test
     public void testPersistenceOfEmptyNodes() throws Exception {
         RuleFlowProcess process = new RuleFlowProcess() {
             private static final long serialVersionUID = 510l;
@@ -111,9 +142,7 @@ public class XMLPersistenceTest extends TestCase {
         if (xml == null) {
             throw new IllegalArgumentException("Failed to persist empty nodes!");
         }
-        
-        System.out.println(xml);
-        System.out.println("-------------------");
+
         
         SemanticModules modules = new SemanticModules();
         modules.addSemanticModule(new ProcessSemanticModule());
@@ -131,12 +160,12 @@ public class XMLPersistenceTest extends TestCase {
         if (xml2 == null) {
             throw new IllegalArgumentException("Failed to persist empty nodes!");
         }
-        
-        System.out.println(xml2);
-        
+       
+        assertXMLEqual(xml, xml2);
 //        assertEquals(xml, xml2);
     }
 
+    @Test
     public void testPersistenceOfFullNodes() throws Exception {
         RuleFlowProcess process = new RuleFlowProcess() {
             private static final long serialVersionUID = 510l;
@@ -543,7 +572,6 @@ public class XMLPersistenceTest extends TestCase {
             throw new IllegalArgumentException("Failed to persist full nodes!");
         }
         
-        System.out.println(xml);
         
         SemanticModules modules = new SemanticModules();
         modules.addSemanticModule(new ProcessSemanticModule());
@@ -563,22 +591,23 @@ public class XMLPersistenceTest extends TestCase {
         assertEquals(2, process.getSwimlaneContext().getSwimlanes().size());
         assertEquals(2, process.getExceptionScope().getExceptionHandlers().size());
         
-        System.out.println("************************************");
         
         String xml2 = XmlRuleFlowProcessDumper.INSTANCE.dump(process, true);
         if (xml2 == null) {
             throw new IllegalArgumentException("Failed to persist empty nodes!");
-        }
-        
-        System.out.println(xml2);
-        
-        assertEquals(xml, xml2);
-        
-        // test serialization of process elements
-        new ObjectOutputStream(new ByteArrayOutputStream()).writeObject(process);
-    }
+        }       
     
+        Document control = XMLUnit.buildDocument(XMLUnit.newControlParser(), new StringReader(xml));
+        Document test = XMLUnit.buildDocument(XMLUnit.newTestParser(), new StringReader(xml2));
+        Diff diff = new Diff(control, test, null, new ElementNameAndAttributeQualifier("name"));
+    
+        assertTrue( diff.toString(), diff.similar() );
+        // test serialization of process elements
+        
+    }
+   
     public void testSpecialCharacters() {
         // TODO
     }
+    
 }

@@ -23,9 +23,9 @@ import org.kie.api.runtime.process.ProcessInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ResourceTest extends JbpmTestCase {
+public class ResourceTest extends JbpmBpmn2TestCase {
 
-    private Logger logger = LoggerFactory.getLogger(ResourceTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ResourceTest.class);
 
     private StatefulKnowledgeSession ksession;
 
@@ -42,7 +42,7 @@ public class ResourceTest extends JbpmTestCase {
 
     @Test
     public void testMultipleProcessInOneFile() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-MultipleProcessInOneFile.bpmn2");
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultipleProcessInOneFile.bpmn2");
         ksession = createKnowledgeSession(kbase);
         ProcessInstance processInstance = ksession.startProcess("Evaluation");
         assertNotNull(processInstance);

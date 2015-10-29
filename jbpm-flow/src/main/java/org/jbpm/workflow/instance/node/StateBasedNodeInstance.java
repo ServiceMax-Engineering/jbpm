@@ -16,13 +16,22 @@
 
 package org.jbpm.workflow.instance.node;
 
-import org.drools.core.RuntimeDroolsException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.drools.core.common.InternalAgenda;
 import org.drools.core.common.InternalFactHandle;
 import org.drools.core.impl.StatefulKnowledgeSessionImpl;
 import org.drools.core.rule.Declaration;
-import org.drools.core.runtime.rule.impl.InternalAgenda;
 import org.drools.core.spi.Activation;
 import org.drools.core.time.TimeUtils;
+import org.drools.core.time.impl.CronExpression;
+import org.drools.core.util.MVELSafeHelper;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.core.timer.BusinessCalendar;
 import org.jbpm.process.core.timer.DateTimeUtils;
@@ -38,24 +47,20 @@ import org.jbpm.workflow.core.node.StateBasedNode;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
 import org.jbpm.workflow.instance.impl.ExtendedNodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
+import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.kie.api.event.rule.MatchCreatedEvent;
-import org.kie.internal.runtime.KnowledgeRuntime;
 import org.kie.api.runtime.process.EventListener;
 import org.kie.api.runtime.process.NodeInstance;
-import org.mvel2.MVEL;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.kie.internal.runtime.KnowledgeRuntime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl implements EventBasedNodeInstanceInterface, EventListener {
 	
 	private static final long serialVersionUID = 510l;
     protected static final Pattern PARAMETER_MATCHER = Pattern.compile("#\\{([\\S&&[^\\}]]+)\\}", Pattern.DOTALL);
+    
+    private static final Logger logger = LoggerFactory.getLogger(StateBasedNodeInstance.class);
 
 	private List<Long> timerInstances;
 
@@ -65,6 +70,10 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
     
 	public void internalTrigger(NodeInstance from, String type) {
 		super.internalTrigger(from, type);
+		// if node instance was cancelled, abort
+		if (getNodeInstanceContainer().getNodeInstance(getId()) == null) {
+			return;
+		}
 		// activate timers
 		Map<Timer, DroolsAction> timers = getEventBasedNode().getTimers();
 		if (timers != null) {
@@ -94,7 +103,7 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
                 }
 		    }
 		}
-
+		((WorkflowProcessInstanceImpl) getProcessInstance()).addActivatingNodeId((String) getNode().getMetaData().get("UniqueId"));
 	}
 	
     protected TimerInstance createTimerInstance(Timer timer) {
@@ -102,17 +111,57 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
     	KnowledgeRuntime kruntime = getProcessInstance().getKnowledgeRuntime();
     	if (kruntime != null && kruntime.getEnvironment().get("jbpm.business.calendar") != null){
         	BusinessCalendar businessCalendar = (BusinessCalendar) kruntime.getEnvironment().get("jbpm.business.calendar");
-        	
-        	String delay = resolveVariable(timer.getDelay());
-        	
-        	timerInstance.setDelay(businessCalendar.calculateBusinessTimeAsDuration(delay));
-        	
-        	if (timer.getPeriod() == null) {
-                timerInstance.setPeriod(0);
-            } else {
-                String period = resolveVariable(timer.getPeriod());
-                timerInstance.setPeriod(businessCalendar.calculateBusinessTimeAsDuration(period));
+        	String delay = null;
+        	switch (timer.getTimeType()) {
+            case Timer.TIME_CYCLE:
+            	
+            	if (CronExpression.isValidExpression(timer.getDelay())) {
+            		timerInstance.setCronExpression(timer.getDelay());
+            	} else {
+            	
+	            	String tempDelay = resolveVariable(timer.getDelay());
+	            	String tempPeriod = resolveVariable(timer.getPeriod());
+	            	if (DateTimeUtils.isRepeatable(tempDelay)) {
+	            		String[] values = DateTimeUtils.parseISORepeatable(tempDelay);
+	            		String tempRepeatLimit = values[0];
+	            		tempDelay = values[1];
+	            		tempPeriod = values[2];
+	            		
+	            		if (!tempRepeatLimit.isEmpty()) {
+	            			try {
+	            				int repeatLimit = Integer.parseInt(tempRepeatLimit);
+	            				if (repeatLimit > -1) {
+	            					timerInstance.setRepeatLimit(repeatLimit+1);
+	            				}
+	            			} catch (NumberFormatException e) {
+	            				// ignore
+	            			}
+	            		}
+	            	}
+	            	
+	            	
+	            	timerInstance.setDelay(businessCalendar.calculateBusinessTimeAsDuration(tempDelay));
+	            	
+	            	if (tempPeriod == null) {
+	                    timerInstance.setPeriod(0);
+	                } else {
+	                    timerInstance.setPeriod(businessCalendar.calculateBusinessTimeAsDuration(tempPeriod));
+	                }
+            	}
+                break;
+            case Timer.TIME_DURATION:
+            	delay = resolveVariable(timer.getDelay());
+            	
+            	timerInstance.setDelay(businessCalendar.calculateBusinessTimeAsDuration(delay));
+            	timerInstance.setPeriod(0);
+            	break;
+            case Timer.TIME_DATE:
+            	// even though calendar is available concrete date was provided so it shall be used
+            	configureTimerInstance(timer, timerInstance);
+            default:
+                break;
             }
+        	
     	} else {
     	    configureTimerInstance(timer, timerInstance);
     	}
@@ -133,36 +182,41 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
                     timerInstance.setPeriod(resolveValue(timer.getPeriod()));
                 }
             } else {
-                // when using ISO date/time period is not set
-                long[] repeatValues = null;
-                try {
-                    repeatValues = DateTimeUtils.parseRepeatableDateTime(timer.getDelay());
-                } catch (RuntimeDroolsException e) {
-                    // cannot parse delay, trying to interpret it
-                    s = resolveVariable(timer.getDelay());
-                    repeatValues = DateTimeUtils.parseRepeatableDateTime(s);
-                }
-                if (repeatValues.length == 3) {
-                    int parsedReapedCount = (int)repeatValues[0];
-                    if (parsedReapedCount > -1) {
-                        timerInstance.setRepeatLimit(parsedReapedCount+1);
-                    }
-                    timerInstance.setDelay(repeatValues[1]);
-                    timerInstance.setPeriod(repeatValues[2]);
-                }else if (repeatValues.length == 2) {
-                    timerInstance.setDelay(repeatValues[0]);
-                    timerInstance.setPeriod(repeatValues[1]);
-                } else {
-                    timerInstance.setDelay(repeatValues[0]);
-                    timerInstance.setPeriod(0);
-                }
+            	if (CronExpression.isValidExpression(timer.getDelay())) {
+            		timerInstance.setCronExpression(timer.getDelay());
+            	} else {
+            	
+	                // when using ISO date/time period is not set
+	                long[] repeatValues = null;
+	                try {
+	                    repeatValues = DateTimeUtils.parseRepeatableDateTime(timer.getDelay());
+	                } catch (RuntimeException e) {
+	                    // cannot parse delay, trying to interpret it
+	                    s = resolveVariable(timer.getDelay());
+	                    repeatValues = DateTimeUtils.parseRepeatableDateTime(s);
+	                }
+	                if (repeatValues.length == 3) {
+	                    int parsedReapedCount = (int)repeatValues[0];
+	                    if (parsedReapedCount > -1) {
+	                        timerInstance.setRepeatLimit(parsedReapedCount+1);
+	                    }
+	                    timerInstance.setDelay(repeatValues[1]);
+	                    timerInstance.setPeriod(repeatValues[2]);
+	                }else if (repeatValues.length == 2) {
+	                    timerInstance.setDelay(repeatValues[0]);
+	                    timerInstance.setPeriod(repeatValues[1]);
+	                } else {
+	                    timerInstance.setDelay(repeatValues[0]);
+	                    timerInstance.setPeriod(0);
+	                }
+            	}
             }
             break;
         case Timer.TIME_DURATION:
 
             try {
                 duration = DateTimeUtils.parseDuration(timer.getDelay());
-            } catch (RuntimeDroolsException e) {
+            } catch (RuntimeException e) {
                 // cannot parse delay, trying to interpret it
                 s = resolveVariable(timer.getDelay());
                 duration = DateTimeUtils.parseDuration(s);
@@ -173,7 +227,7 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
         case Timer.TIME_DATE:
             try {
                 duration = DateTimeUtils.parseDateAsDuration(timer.getDate());
-            } catch (RuntimeDroolsException e) {
+            } catch (RuntimeException e) {
                 // cannot parse delay, trying to interpret it
                 s = resolveVariable(timer.getDate());
                 duration = DateTimeUtils.parseDateAsDuration(s);
@@ -191,13 +245,16 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
     private long resolveValue(String s) {
     	try {
     		return TimeUtils.parseTimeString(s);
-    	} catch (RuntimeDroolsException e) {
+    	} catch (RuntimeException e) {
     		s = resolveVariable(s);
             return TimeUtils.parseTimeString(s);
     	}
     }
     
     private String resolveVariable(String s) {
+    	if (s == null) {
+    		return null;
+    	}
     	// cannot parse delay, trying to interpret it
 		Map<String, String> replacements = new HashMap<String, String>();
 		Matcher matcher = PARAMETER_MATCHER.matcher(s);
@@ -212,13 +269,13 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
 	                replacements.put(paramName, variableValueString);
                 } else {
                 	try {
-                		Object variableValue = MVEL.eval(paramName, new NodeInstanceResolverFactory(this));
+                		Object variableValue = MVELSafeHelper.getEvaluator().eval(paramName, new NodeInstanceResolverFactory(this));
 	                	String variableValueString = variableValue == null ? "" : variableValue.toString();
 	                	replacements.put(paramName, variableValueString);
                 	} catch (Throwable t) {
-	                    System.err.println("Could not find variable scope for variable " + paramName);
-	                    System.err.println("when trying to replace variable in processId for sub process " + getNodeName());
-	                    System.err.println("Continuing without setting process id.");
+                	    logger.error("Could not find variable scope for variable {}", paramName);
+                	    logger.error("when trying to replace variable in processId for sub process {}", getNodeName());
+                	    logger.error("Continuing without setting process id.");
                 	}
                 }
         	}
@@ -259,7 +316,7 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
     	return new String[] { "timerTriggered", getActivationType()};
     }
     
-    public void triggerCompleted() {
+    public void triggerCompleted() {        
         triggerCompleted(org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, true);
     }
     
@@ -271,13 +328,16 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
     
     protected void addTimerListener() {
     	((WorkflowProcessInstance) getProcessInstance()).addEventListener("timerTriggered", this, false);
+    	((WorkflowProcessInstance) getProcessInstance()).addEventListener("timer", this, true);
     }
     
     public void removeEventListeners() {
     	((WorkflowProcessInstance) getProcessInstance()).removeEventListener("timerTriggered", this, false);
+    	((WorkflowProcessInstance) getProcessInstance()).removeEventListener("timer", this, true);
     }
 
 	protected void triggerCompleted(String type, boolean remove) {
+	    ((org.jbpm.workflow.instance.NodeInstanceContainer)getNodeInstanceContainer()).setCurrentLevel(getLevel());
 		cancelTimers();
 		removeActivationListener();
 		super.triggerCompleted(type, remove);
@@ -328,7 +388,7 @@ public abstract class StateBasedNodeInstance extends ExtendedNodeInstanceImpl im
             if ("processInstance".equals(declaration.getIdentifier())
             		|| "org.kie.api.runtime.process.WorkflowProcessInstance".equals(declaration.getTypeName())) {
                 Object value = declaration.getValue(
-                    ((StatefulKnowledgeSessionImpl) getProcessInstance().getKnowledgeRuntime()).session,
+                    ((StatefulKnowledgeSessionImpl) getProcessInstance().getKnowledgeRuntime()).getInternalWorkingMemory(),
                     ((InternalFactHandle) activation.getTuple().get(declaration)).getObject());
                 if (value instanceof ProcessInstance) {
                     return ((ProcessInstance) value).getId() == getProcessInstance().getId();

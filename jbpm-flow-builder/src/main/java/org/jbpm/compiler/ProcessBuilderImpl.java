@@ -15,27 +15,20 @@
  */
 package org.jbpm.compiler;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.FactoryConfigurationError;
-
-import org.drools.core.RuntimeDroolsException;
+import org.drools.compiler.builder.impl.KnowledgeBuilderConfigurationImpl;
+import org.drools.compiler.builder.impl.KnowledgeBuilderImpl;
+import org.drools.compiler.compiler.BaseKnowledgeBuilderResultImpl;
 import org.drools.compiler.compiler.Dialect;
 import org.drools.compiler.compiler.DialectCompiletimeRegistry;
-import org.drools.compiler.compiler.*;
-import org.drools.compiler.compiler.PackageBuilder;
+import org.drools.compiler.compiler.DroolsParserException;
+import org.drools.compiler.compiler.DuplicateProcess;
 import org.drools.compiler.compiler.PackageRegistry;
 import org.drools.compiler.compiler.ParserError;
 import org.drools.compiler.compiler.ProcessLoadError;
 import org.drools.compiler.lang.descr.ActionDescr;
 import org.drools.compiler.lang.descr.ProcessDescr;
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
+import org.drools.core.definitions.InternalKnowledgePackage;
 import org.jbpm.compiler.xml.ProcessSemanticModule;
 import org.jbpm.compiler.xml.XmlProcessReader;
 import org.jbpm.compiler.xml.processes.RuleFlowMigrator;
@@ -52,8 +45,7 @@ import org.jbpm.process.core.context.exception.ExceptionScope;
 import org.jbpm.process.core.impl.ProcessImpl;
 import org.jbpm.process.core.validation.ProcessValidationError;
 import org.jbpm.process.core.validation.ProcessValidator;
-import org.jbpm.ruleflow.core.RuleFlowProcess;
-import org.jbpm.ruleflow.core.validation.RuleFlowProcessValidator;
+import org.jbpm.process.core.validation.ProcessValidatorRegistry;
 import org.jbpm.workflow.core.Constraint;
 import org.jbpm.workflow.core.impl.ConnectionRef;
 import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
@@ -74,6 +66,17 @@ import org.kie.api.definition.process.NodeContainer;
 import org.kie.api.definition.process.Process;
 import org.kie.api.definition.process.WorkflowProcess;
 import org.kie.api.io.Resource;
+import org.kie.internal.builder.KnowledgeBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.parsers.FactoryConfigurationError;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A ProcessBuilder can be used to build processes based on XML files
@@ -81,37 +84,36 @@ import org.kie.api.io.Resource;
  */
 public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessBuilder {
 
-    private PackageBuilder                packageBuilder;
-    private final List<DroolsError>       errors                         = new ArrayList<DroolsError>();
-    private Map<String, ProcessValidator> processValidators              = new HashMap<String, ProcessValidator>();
+    private static final Logger logger = LoggerFactory.getLogger(ProcessBuilderImpl.class);
+    
+    private KnowledgeBuilderImpl knowledgeBuilder;
+    private final List<BaseKnowledgeBuilderResultImpl> errors = new ArrayList<BaseKnowledgeBuilderResultImpl>();
 
-    public ProcessBuilderImpl(PackageBuilder packageBuilder) {
-        this.packageBuilder = packageBuilder;
+    public ProcessBuilderImpl(KnowledgeBuilderImpl packageBuilder) {
+        this.knowledgeBuilder = packageBuilder;
         configurePackageBuilder(packageBuilder);
-        this.processValidators.put( RuleFlowProcess.RULEFLOW_TYPE,
-                                    RuleFlowProcessValidator.getInstance() );
     }
     
-    public void configurePackageBuilder(PackageBuilder packageBuilder) {
-        PackageBuilderConfiguration conf = packageBuilder.getPackageBuilderConfiguration();
+    public void configurePackageBuilder(KnowledgeBuilder packageBuilder) {
+        KnowledgeBuilderConfigurationImpl conf = ((KnowledgeBuilderImpl) packageBuilder).getBuilderConfiguration();
         if (conf.getSemanticModules().getSemanticModule(ProcessSemanticModule.URI) == null) {
         	conf.addSemanticModule(new ProcessSemanticModule());
         }
     }
 
-    public List<DroolsError> getErrors() {
+    public List<BaseKnowledgeBuilderResultImpl> getErrors() {
         return errors;
     }
 
     public void buildProcess(final Process process, Resource resource) {
-//        if ( resource != null && ((InternalResource)resource).hasURL() ) {
-//            ((org.jbpm.process.core.Process) process).setResource( resource );
-//        }
+        if ( resource != null ) {
+            ((org.jbpm.process.core.Process) process).setResource(resource);
+        }
         boolean hasErrors = false;
-        ProcessValidator validator = processValidators.get(((Process)process).getType());
+        ProcessValidator validator = ProcessValidatorRegistry.getInstance().getValidator(process, resource);
         if (validator == null) {
-            System.out.println("Could not find validator for process " + ((Process)process).getType() + ".");
-            System.out.println("Continuing without validation of the process " + process.getName() + "[" + process.getId() + "]");
+            logger.warn("Could not find validator for process {}.", ((Process)process).getType());
+            logger.warn("Continuing without validation of the process {} [{}]", process.getName(), process.getId());
         } else {
             ProcessValidationError[] errors = validator.validateProcess( (WorkflowProcess) process );
             if ( errors.length != 0 ) {
@@ -125,54 +127,78 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
             }
         }
         if ( !hasErrors ) {
+        	
             // generate and add rule for process
-            String rules = generateRules( process );
-//            System.out.println(rules);
+            String rules = "package " + process.getPackageName() + "\n";
+            // NPE for validator
+            if (validator != null && validator.compilationSupported()) {
+            	rules = generateRules( process );
+            }
             try {
-                packageBuilder.addPackageFromDrl( new StringReader( rules ), resource );
+                knowledgeBuilder.addPackageFromDrl( new StringReader( rules ), resource );
             } catch ( IOException e ) {
                 // should never occur
-                e.printStackTrace( System.err );
+                logger.error("IOException during addPackageFromDRL", e);
             } catch ( DroolsParserException e ) {
                 // should never occur
-                e.printStackTrace( System.err );
+                logger.error("DroolsParserException during addPackageFromDRL", e);
             }
             
-            PackageRegistry pkgRegistry = this.packageBuilder.getPackageRegistry(process.getPackageName());
+            PackageRegistry pkgRegistry = this.knowledgeBuilder.getPackageRegistry(process.getPackageName());
 			if (pkgRegistry != null) {
-				org.drools.core.rule.Package p = pkgRegistry.getPackage();
+				InternalKnowledgePackage p = pkgRegistry.getPackage();
             
-	            if (p != null) {
-	            
-		            ProcessDescr processDescr = new ProcessDescr();
-		            processDescr.setName(process.getPackageName() + "." + process.getName());
-		            processDescr.setResource( resource );
-		            processDescr.setProcessId( process.getId() );
-		            DialectCompiletimeRegistry dialectRegistry = pkgRegistry.getDialectCompiletimeRegistry();
-		            Dialect dialect = dialectRegistry.getDialect( "java" );
-		            dialect.init(processDescr);
-		
-		            ProcessBuildContext buildContext = new ProcessBuildContext(
-		        		this.packageBuilder,
-		                p,
-		                process,
-		                processDescr,
-		                dialectRegistry,
-		                dialect);
-		
-		            buildContexts( ( ContextContainer ) process, buildContext );
-		            if (process instanceof WorkflowProcess) {
-		            	buildNodes( (WorkflowProcess) process, buildContext );
-		            }
-		            p.addProcess( process );
-		
-		            pkgRegistry.compileAll();                
-		            pkgRegistry.getDialectRuntimeRegistry().onBeforeExecute();
-	            }
+				if (p != null) {
+				    if( validator != null ) { 
+				        // NPE for validator
+				        if (validator.compilationSupported()) {
+				            ProcessDescr processDescr = new ProcessDescr();
+				            processDescr.setName(process.getPackageName() + "." + process.getName());
+				            processDescr.setResource( resource );
+				            processDescr.setProcessId( process.getId() );
+				            DialectCompiletimeRegistry dialectRegistry = pkgRegistry.getDialectCompiletimeRegistry();
+				            Dialect dialect = dialectRegistry.getDialect( "java" );
+				            dialect.init(processDescr);
+
+				            ProcessBuildContext buildContext = new ProcessBuildContext(
+				                    this.knowledgeBuilder,
+				                    p,
+				                    process,
+				                    processDescr,
+				                    dialectRegistry,
+				                    dialect);
+
+				            buildContexts( ( ContextContainer ) process, buildContext );
+				            if (process instanceof WorkflowProcess) {
+				                buildNodes( (WorkflowProcess) process, buildContext );
+				            }
+				        }
+				        Process duplicateProcess = p.getRuleFlows().get(process.getId());
+				        if (duplicateProcess != null) {
+				            Resource duplicatedResource = duplicateProcess.getResource();
+				            if (resource == null || duplicatedResource == null || duplicatedResource.getSourcePath() == null ||
+				                    duplicatedResource.getSourcePath().equals(resource.getSourcePath())) {
+				                this.errors.add(new DuplicateProcess(process,
+				                        this.knowledgeBuilder.getBuilderConfiguration()));
+				            } else {
+				                this.errors.add( new ParserError( resource,
+				                        "Process with same id already exists: " + process.getId(),
+				                        -1,
+				                        -1 ) );
+				            }
+				        }
+				        p.addProcess( process );
+				        // NPE for validator
+				        if (validator.compilationSupported()) {
+				            pkgRegistry.compileAll();                
+				            pkgRegistry.getDialectRuntimeRegistry().onBeforeExecute();
+				        }
+				    }
+				}
 	        } else {
 				// invalid package registry..there is an issue with the package
 				// name of the process
-				throw new RuntimeDroolsException("invalid package name");
+				throw new RuntimeException("invalid package name");
 			}
         }
     }
@@ -181,6 +207,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
     	List<Context> exceptionScopes = contextContainer.getContexts(ExceptionScope.EXCEPTION_SCOPE);
     	if (exceptionScopes != null) {
     		for (Context context: exceptionScopes) {
+    		    // TODO: OCRAM: add compensation scope to process builder????
     			ExceptionScope exceptionScope = (ExceptionScope) context;
     			for (ExceptionHandler exceptionHandler: exceptionScope.getExceptionHandlers().values()) {
     				if (exceptionHandler instanceof ActionExceptionHandler) {
@@ -196,8 +223,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
     	}
     }
     
-    @SuppressWarnings("unchecked")
-	public void buildNodes(WorkflowProcess process, ProcessBuildContext context) {
+    public void buildNodes(WorkflowProcess process, ProcessBuildContext context) {
         processNodes(process.getNodes(), process, context.getProcessDescr(), context);
         if ( !context.getErrors().isEmpty() ) {
             this.errors.addAll( context.getErrors() );
@@ -228,7 +254,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
                                context );
             }
             
-            if (System.getProperty("jbpm.enable.multi.con") != null) {
+            if ("true".equals(System.getProperty("jbpm.enable.multi.con"))) {
             	builder = ProcessNodeBuilderRegistry.INSTANCE.getNodeBuilder( NodeImpl.class );
             	if (builder != null) {
             		builder.build(process, processDescr, context, node);
@@ -237,15 +263,14 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
         }
     }
 
-    public List<DroolsError> addProcessFromXml(final Resource resource) throws IOException {
+    public List<Process> addProcessFromXml(final Resource resource) throws IOException {
     	Reader reader = resource.getReader();
-        PackageBuilderConfiguration configuration = packageBuilder.getPackageBuilderConfiguration();
-        XmlProcessReader xmlReader = new XmlProcessReader( configuration.getSemanticModules(), packageBuilder.getRootClassLoader() );
-        
-        final ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
-        final ClassLoader newLoader = this.getClass().getClassLoader();
+        KnowledgeBuilderConfigurationImpl configuration = knowledgeBuilder.getBuilderConfiguration();
+        XmlProcessReader xmlReader = new XmlProcessReader( configuration.getSemanticModules(), knowledgeBuilder.getRootClassLoader() );
+
+        List<Process> processes = null;
+
         try {
-            Thread.currentThread().setContextClassLoader( newLoader );
             String portRuleFlow = System.getProperty( "drools.ruleflow.port", "false" );
             Reader portedReader = null;
             if ( portRuleFlow.equalsIgnoreCase( "true" ) ) {
@@ -253,7 +278,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
             } else {
                 portedReader = reader;
             }
-            List<Process> processes = xmlReader.read(portedReader);
+            processes = xmlReader.read(portedReader);
             if (processes != null) {
                 // it is possible an xml file could not be parsed, so we need to
                 // stop null pointers
@@ -270,10 +295,10 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
         	e2.printStackTrace();
             this.errors.add( new ProcessLoadError( resource, "unable to parse xml", e2 ) );
         } finally {
-            Thread.currentThread().setContextClassLoader( oldLoader );
+            reader.close();
         }
-        reader.close();
-        return this.errors;
+
+        return processes;
     }
                                    
   
@@ -388,7 +413,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
         	"rule \"RuleFlow-Split-" + process.getId() + "-" +
         		((org.jbpm.workflow.core.Node) connection.getFrom()).getUniqueId() + "-" + 
         		((org.jbpm.workflow.core.Node) connection.getTo()).getUniqueId() + "-" +
-        		connection.getToType() + "\" \n" +
+        		connection.getToType() + "\"  @Propagation(EAGER) \n" +
         	"      ruleflow-group \"DROOLS_SYSTEM\" \n" + 
         	"    when \n" + 
         	"      " + constraint + "\n" + 
@@ -399,7 +424,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
     private String createMilestoneRule(Process process,
                                        MilestoneNode milestone) {
         return 
-        	"rule \"RuleFlow-Milestone-" + process.getId() + "-" + milestone.getUniqueId() + "\" \n" + 
+        	"rule \"RuleFlow-Milestone-" + process.getId() + "-" + milestone.getUniqueId() + "\" @Propagation(EAGER) \n" +
         	"      ruleflow-group \"DROOLS_SYSTEM\" \n" + 
         	"    when \n" + 
         	"      " + milestone.getConstraint() + "\n" + 
@@ -414,7 +439,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
     	} else {
 	        return 
 	        	"rule \"RuleFlowStateNode-" + process.getId() + "-" + state.getUniqueId() + "-" + 
-	        		key.getNodeId() + "-" + key.getToType() + "\" \n" + 
+	        		key.getNodeId() + "-" + key.getToType() + "\" @Propagation(EAGER) \n" +
 	    		"      ruleflow-group \"DROOLS_SYSTEM\" \n" + 
 	    		"    when \n" + 
 	    		"      " + state.getConstraints().get(key).getConstraint() + "\n" + 
@@ -432,7 +457,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
         } else {
             return 
                 "rule \"RuleFlowStateEvent-" + process.getId() + "-" + event.getUniqueId() + "-" + 
-                    attachedTo + "\" \n" + 
+                    attachedTo + "\" @Propagation(EAGER) \n" +
                 "      ruleflow-group \"DROOLS_SYSTEM\" \n" + 
                 "    when \n" + 
                 "      " + condition + "\n" + 
@@ -449,7 +474,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
             return "";
         } else {
             return 
-                "rule \"RuleFlowStateEventSubProcess-" + process.getId() + "-" + compositeNode.getUniqueId() + "\" \n" + 
+                "rule \"RuleFlowStateEventSubProcess-" + process.getId() + "-" + compositeNode.getUniqueId() + "\" @Propagation(EAGER) \n" +
                 "      ruleflow-group \"DROOLS_SYSTEM\" \n" + 
                 "    when \n" + 
                 "      " + condition + "\n" + 
@@ -473,7 +498,7 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
         }
         
         String result = 
-        	"rule \"RuleFlow-Start-" + process.getId() + "\" \n" + 
+        	"rule \"RuleFlow-Start-" + process.getId() + "\" @Propagation(EAGER) \n" +
         	(trigger.getHeader() == null ? "" : "        " + trigger.getHeader() + " \n") + 
         	"    when\n" + 
         	"        " + trigger.getConstraint() + "\n" + 
@@ -484,9 +509,9 @@ public class ProcessBuilderImpl implements org.drools.compiler.compiler.ProcessB
             for ( Map.Entry<String, String> entry : inMappings.entrySet() ) {
                 result += "        params.put(\"" + entry.getKey() + "\", " + entry.getValue() + ");\n";
             }
-            result += "        kcontext.getKnowledgeRuntime().startProcess(\"" + process.getId() + "\", params);\n" + "end\n\n";
+            result += "        ((org.jbpm.process.instance.ProcessRuntimeImpl)((org.drools.core.common.InternalKnowledgeRuntime)kcontext.getKnowledgeRuntime()).getProcessRuntime()).startProcess(\"" + process.getId() + "\", params, \"conditional\");\n" + "end\n\n";
         } else {
-            result += "        kcontext.getKnowledgeRuntime().startProcess(\"" + process.getId() + "\");\n" + "end\n\n";
+            result += "        ((org.jbpm.process.instance.ProcessRuntimeImpl)((org.drools.core.common.InternalKnowledgeRuntime)kcontext.getKnowledgeRuntime()).getProcessRuntime()).startProcess(\"" + process.getId() + "\", null, \"conditional\");\n" + "end\n\n";
         }
         return result;
     }

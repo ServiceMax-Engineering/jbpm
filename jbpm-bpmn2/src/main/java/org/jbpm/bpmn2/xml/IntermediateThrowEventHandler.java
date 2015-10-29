@@ -16,15 +16,19 @@
 
 package org.jbpm.bpmn2.xml;
 
+import static org.jbpm.bpmn2.xml.ProcessHandler.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.drools.core.rule.builder.dialect.asm.GeneratorHelper.GetMethodBytecodeMethod;
 import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Escalation;
 import org.jbpm.bpmn2.core.IntermediateLink;
 import org.jbpm.bpmn2.core.Message;
 import org.jbpm.compiler.xml.ProcessBuildData;
+import org.jbpm.process.core.impl.DataTransformerRegistry;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
@@ -32,12 +36,16 @@ import org.jbpm.workflow.core.impl.DroolsConsequenceAction;
 import org.jbpm.workflow.core.node.ActionNode;
 import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.ThrowLinkNode;
+import org.jbpm.workflow.core.node.Transformation;
+import org.kie.api.runtime.process.DataTransformer;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 public class IntermediateThrowEventHandler extends AbstractNodeHandler {
+	
+	private DataTransformerRegistry transformerRegistry = DataTransformerRegistry.get();
 
 	public static final String LINK_NAME = "linkName";
 	public static final String LINK_SOURCE = "source";
@@ -75,7 +83,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 				break;
 			} else if ("compensateEventDefinition".equals(nodeName)) {
 				// reuse already created ActionNode
-				handleCompensationNode(node, element, uri, localName, parser);
+				handleThrowCompensationEventNode(node, element, uri, localName, parser);
 				break;
 			} else if ("linkEventDefinition".equals(nodeName)) {
 				ThrowLinkNode linkNode = new ThrowLinkNode();
@@ -177,7 +185,11 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();
-			if ("dataInputAssociation".equals(nodeName)) {
+			if ("dataInput".equals(nodeName)) {
+                String id = ((Element) xmlNode).getAttribute("id");
+                String inputName = ((Element) xmlNode).getAttribute("name");
+                dataInputs.put(id, inputName);
+            } else if ("dataInputAssociation".equals(nodeName)) {
 				readDataInputAssociation(xmlNode, actionNode);
 			} else if ("signalEventDefinition".equals(nodeName)) {
 				String signalName = ((Element) xmlNode)
@@ -186,12 +198,18 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 						.getMetaData("MappingVariable");
 				actionNode
 						.setAction(new DroolsConsequenceAction(
-								"mvel",
-								"kcontext.getKnowledgeRuntime().signalEvent(\""
+								"java",
+								" Object tVariable = "+ (variable == null ? "null" : variable)+";"
+								+ "org.jbpm.workflow.core.node.Transformation transformation = (org.jbpm.workflow.core.node.Transformation)kcontext.getNodeInstance().getNode().getMetaData().get(\"Transformation\");"
+								+ "if (transformation != null) {"
+								+ "  tVariable = new org.jbpm.process.core.event.EventTransformerImpl(transformation)"
+								+ "  .transformEvent("+(variable == null ? "null" : variable)+");"
+								+ "}"+
+								RUNTIME_SIGNAL_EVENT 
 										+ signalName
 										+ "\", "
-										+ (variable == null ? "null" : variable)
-										+ ")"));
+										+ "tVariable"
+										+ ");"));
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
@@ -205,7 +223,11 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();
-			if ("dataInputAssociation".equals(nodeName)) {
+			if ("dataInput".equals(nodeName)) {
+                String id = ((Element) xmlNode).getAttribute("id");
+                String inputName = ((Element) xmlNode).getAttribute("name");
+                dataInputs.put(id, inputName);
+            } else if ("dataInputAssociation".equals(nodeName)) {
 				readDataInputAssociation(xmlNode, actionNode);
 			} else if ("messageEventDefinition".equals(nodeName)) {
 				String messageRef = ((Element) xmlNode)
@@ -226,17 +248,28 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 				actionNode
 						.setAction(new DroolsConsequenceAction(
 								"java",
-								"org.drools.core.process.instance.impl.WorkItemImpl workItem = new org.drools.core.process.instance.impl.WorkItemImpl();"
+								" Object tVariable = "+ (variable == null ? "null" : variable)+";"
+								+ "org.jbpm.workflow.core.node.Transformation transformation = (org.jbpm.workflow.core.node.Transformation)kcontext.getNodeInstance().getNode().getMetaData().get(\"Transformation\");"
+								+ "if (transformation != null) {"
+								+ "  tVariable = new org.jbpm.process.core.event.EventTransformerImpl(transformation)"
+								+ "  .transformEvent("+(variable == null ? "null" : variable)+");"
+								+ "}"
+								+ "org.drools.core.process.instance.impl.WorkItemImpl workItem = new org.drools.core.process.instance.impl.WorkItemImpl();"
 										+ EOL
 										+ "workItem.setName(\"Send Task\");"
+										+ EOL
+										+ "workItem.setProcessInstanceId(kcontext.getProcessInstance().getId());"
 										+ EOL
 										+ "workItem.setParameter(\"MessageType\", \""
 										+ message.getType()
 										+ "\");"
 										+ EOL
+										+ "workItem.setNodeInstanceId(kcontext.getNodeInstance().getId());"
+										+ EOL
+										+ "workItem.setNodeId(kcontext.getNodeInstance().getNodeId());"
+										+ EOL
 										+ (variable == null ? ""
-												: "workItem.setParameter(\"Message\", "
-														+ variable + ");" + EOL)
+												: "workItem.setParameter(\"Message\", tVariable);" + EOL)
 										+ "((org.drools.core.process.instance.WorkItemManager) kcontext.getKnowledgeRuntime().getWorkItemManager()).internalExecuteWorkItem(workItem);"));
 			}
 			xmlNode = xmlNode.getNextSibling();
@@ -258,7 +291,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 						.getAttribute("escalationRef");
 				if (escalationRef != null && escalationRef.trim().length() > 0) {
 					Map<String, Escalation> escalations = (Map<String, Escalation>) ((ProcessBuildData) parser
-							.getData()).getMetaData("Escalations");
+							.getData()).getMetaData(ProcessHandler.ESCALATIONS);
 					if (escalations == null) {
 						throw new IllegalArgumentException(
 								"No escalations found");
@@ -269,6 +302,7 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 								"Could not find escalation " + escalationRef);
 					}
 					String faultName = escalation.getEscalationCode();
+					String variable = (String) actionNode.getMetaData("MappingVariable");
 					actionNode
 							.setAction(new DroolsConsequenceAction(
 									"java",
@@ -277,43 +311,24 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 											+ "\");"
 											+ EOL
 											+ "if (scopeInstance != null) {"
-											+ EOL
+											+ EOL 
+											+ " Object tVariable = "+ (variable == null ? "null" : variable)+";"
+											+ "org.jbpm.workflow.core.node.Transformation transformation = (org.jbpm.workflow.core.node.Transformation)kcontext.getNodeInstance().getNode().getMetaData().get(\"Transformation\");"
+											+ "if (transformation != null) {"
+											+ "  tVariable = new org.jbpm.process.core.event.EventTransformerImpl(transformation)"
+											+ "  .transformEvent("+(variable == null ? "null" : variable)+");"
+											+ "}"
 											+ "  scopeInstance.handleException(\""
 											+ faultName
-											+ "\", null);"
+											+ "\", tVariable);"
 											+ EOL
 											+ "} else {"
 											+ EOL
 											+ "    ((org.jbpm.process.instance.ProcessInstance) kcontext.getProcessInstance()).setState(org.jbpm.process.instance.ProcessInstance.STATE_ABORTED);"
 											+ EOL + "}"));
+				} else { 
+				    throw new IllegalArgumentException("General escalation is not yet supported");
 				}
-			}
-			xmlNode = xmlNode.getNextSibling();
-		}
-	}
-
-	public void handleCompensationNode(final Node node, final Element element,
-			final String uri, final String localName,
-			final ExtensibleXmlParser parser) throws SAXException {
-		ActionNode actionNode = (ActionNode) node;
-		org.w3c.dom.Node xmlNode = element.getFirstChild();
-		while (xmlNode != null) {
-			String nodeName = xmlNode.getNodeName();
-			if ("compensateEventDefinition".equals(nodeName)) {
-				String activityRef = ((Element) xmlNode)
-						.getAttribute("activityRef");
-				if (activityRef != null && activityRef.trim().length() > 0) {
-					actionNode.setMetaData("Compensate", activityRef);
-					actionNode.setAction(new DroolsConsequenceAction("java",
-							"kcontext.getProcessInstance().signalEvent(\"Compensate-"
-									+ activityRef + "\", null);"));
-				}
-				// boolean waitForCompletion = true;
-				// String waitForCompletionString = ((Element)
-				// xmlNode).getAttribute("waitForCompletion");
-				// if ("false".equals(waitForCompletionString)) {
-				// waitForCompletion = false;
-				// }
 			}
 			xmlNode = xmlNode.getNextSibling();
 		}
@@ -324,6 +339,24 @@ public class IntermediateThrowEventHandler extends AbstractNodeHandler {
 		// sourceRef
 		org.w3c.dom.Node subNode = xmlNode.getFirstChild();
 		String eventVariable = subNode.getTextContent();
+		// targetRef
+		subNode = subNode.getNextSibling();
+		String target = subNode.getTextContent();
+		// transformation
+		Transformation transformation = null;
+		subNode = subNode.getNextSibling();
+		if (subNode != null && "transformation".equals(subNode.getNodeName())) {
+			String lang = subNode.getAttributes().getNamedItem("language").getNodeValue();
+			String expression = subNode.getTextContent();
+			
+			DataTransformer transformer = transformerRegistry.find(lang);
+			if (transformer == null) {
+				throw new IllegalArgumentException("No transformer registered for language " + lang);
+			}    			
+			transformation = new Transformation(lang, expression, dataInputs.get(target));
+			actionNode.setMetaData("Transformation", transformation);		
+		}
+		
 		if (eventVariable != null && eventVariable.trim().length() > 0) {
 			actionNode.setMetaData("MappingVariable", eventVariable);
 		}

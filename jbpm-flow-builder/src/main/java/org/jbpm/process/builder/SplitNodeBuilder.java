@@ -49,19 +49,23 @@ public class SplitNodeBuilder implements ProcessNodeBuilder {
             }
             if (constraint == null && splitNode.isDefault(outgoingConnection)) {
                 // do nothing since conditions are ignored for default sequence flow
-            } else if ( "rule".equals( constraint.getType() )) {
+            } else if (constraint != null && "rule".equals( constraint.getType() )) {
                 RuleConstraintEvaluator ruleConstraint = new RuleConstraintEvaluator();
                 ruleConstraint.setDialect( constraint.getDialect() );
                 ruleConstraint.setName( constraint.getName() );
                 ruleConstraint.setPriority( constraint.getPriority() );
                 ruleConstraint.setDefault( constraint.isDefault() );
+                ruleConstraint.setType(constraint.getType());
+                ruleConstraint.setConstraint(constraint.getConstraint());
                 splitNode.setConstraint( outgoingConnection, ruleConstraint );
-            } else if ( "code".equals( constraint.getType() ) ) {
+            } else if (constraint != null && "code".equals( constraint.getType() ) ) {
                 ReturnValueConstraintEvaluator returnValueConstraint = new ReturnValueConstraintEvaluator();
                 returnValueConstraint.setDialect( constraint.getDialect() );
                 returnValueConstraint.setName( constraint.getName() );
                 returnValueConstraint.setPriority( constraint.getPriority() );
                 returnValueConstraint.setDefault( constraint.isDefault() );
+                returnValueConstraint.setType(constraint.getType());
+                returnValueConstraint.setConstraint(constraint.getConstraint());
                 splitNode.setConstraint( outgoingConnection, returnValueConstraint );            
                 
                 ReturnValueDescr returnValueDescr = new ReturnValueDescr();
