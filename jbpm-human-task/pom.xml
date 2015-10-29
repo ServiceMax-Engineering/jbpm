@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jbpm</groupId>
     <artifactId>jbpm</artifactId>
-    <version>6.2.0.007</version>
+    <version>6.2.0.008</version>
   </parent>
 
   <artifactId>jbpm-human-task</artifactId>
@@ -43,7 +43,7 @@
     <maven.btm.maxPoolSize>16</maven.btm.maxPoolSize>
      <!-- 
     <maven.tx.type>RESOURCE_LOCAL</maven.tx.type>
-    <maven.data.source/>
+    <maven.data.source />
     -->
     <maven.tx.type>JTA</maven.tx.type>
     <maven.data.source>&lt;jta-data-source&gt;jdbc/jbpm-ds&lt;/jta-data-source&gt;</maven.data.source>
@@ -54,14 +54,14 @@
     <maven.hibernate.dialect>org.hibernate.dialect.H2Dialect</maven.hibernate.dialect>
     <maven.datasource.classname>bitronix.tm.resource.jdbc.lrc.LrcXADataSource</maven.datasource.classname>
     <maven.jdbc.driver.class>org.h2.Driver</maven.jdbc.driver.class>
-    <maven.jdbc.db.name/>
-    <maven.jdbc.db.port/>
-    <maven.jdbc.db.server/> 
+    <maven.jdbc.db.name />
+    <maven.jdbc.db.port />
+    <maven.jdbc.db.server /> 
     <!--     
     <maven.jdbc.username>sa</maven.jdbc.username>
     <maven.jdbc.password>sasa</maven.jdbc.password>
     <maven.jdbc.url>jdbc:h2:mem:test;MVCC=true</maven.jdbc.url>
-    <maven.jdbc.schema/>
+    <maven.jdbc.schema />
      -->
     <maven.jdbc.url>jdbc:h2:mem:jbpm-db;MVCC=true</maven.jdbc.url>
   </properties>

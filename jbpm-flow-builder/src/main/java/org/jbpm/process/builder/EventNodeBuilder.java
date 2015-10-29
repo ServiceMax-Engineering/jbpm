@@ -50,7 +50,9 @@ public class EventNodeBuilder implements ProcessNodeBuilder {
         ActionDescr actionDescr = new ActionDescr();
         actionDescr.setText( action.getConsequence() );   
         ProcessDialect dialect = ProcessDialectRegistry.getDialect( action.getDialect() );            
-    	dialect.getActionBuilder().build( context, action, actionDescr, node);
+        if (actionDescr.getText() != null) {
+    	  dialect.getActionBuilder().build( context, action, actionDescr, node);
+        }
     }
 
 }
