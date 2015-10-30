@@ -242,15 +242,16 @@ public class TaskHandler extends AbstractNodeHandler {
 			String nodeName = xmlNode.getNodeName();
 			if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
 				// create new timerNode
-				ForEachNode forEachNode = new ForEachNode();
-				forEachNode.setId(node.getId());
+				long id = node.getId();
+				ForEachNode forEachNode = new ForEachNode(node);
+				forEachNode.setId(id);
+				forEachNode.setName(node.getName());
 				String uniqueId = (String) node.getMetaData().get("UniqueId");
 				forEachNode.setMetaData("UniqueId", uniqueId);
 				node.setMetaData("UniqueId", uniqueId + ":" + uniqueIdGen++);
-				node.setMetaData("hidden", true);
 				forEachNode.addNode(node);
-				forEachNode.linkIncomingConnections(NodeImpl.CONNECTION_DEFAULT_TYPE, node.getId(), NodeImpl.CONNECTION_DEFAULT_TYPE);
-				forEachNode.linkOutgoingConnections(node.getId(), NodeImpl.CONNECTION_DEFAULT_TYPE, NodeImpl.CONNECTION_DEFAULT_TYPE);
+				forEachNode.setInMapping(((WorkItemNode) node).getInAssociations());
+				forEachNode.setOutMapping(((WorkItemNode) node).getOutAssociations());
 				node = forEachNode;
 				handleForEachNode(node, element, uri, localName, parser);
 				found = true;

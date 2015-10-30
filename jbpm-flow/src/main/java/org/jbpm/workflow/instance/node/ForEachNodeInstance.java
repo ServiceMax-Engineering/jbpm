@@ -239,6 +239,8 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
             		}
             	}
             	_instance.trigger(this, org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+            } else {
+            	((NodeInstanceContainer) getNodeInstanceContainer()).removeNodeInstance(this);
             }
         }
         
