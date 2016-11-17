@@ -163,7 +163,7 @@ public abstract class SubTasksBaseTest extends HumanTaskServicesBaseTest{
     
     /**
      * Loop and create 500 tasks.  The reason to do so, is Java cache's Long objects for small numbers
-     * (http://stackoverflow.com/questions/3130311/weird-integer-boxing-in-java), so the ProcessSubTaskCommand was passing
+     * so the ProcessSubTaskCommand was passing
      * the test, even when failing once there were a sufficient number of tasks in the system.
      * 
      * @throws Exception
