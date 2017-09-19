@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package org.jbpm.runtime.manager.impl.factory;
 
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
-import org.drools.persistence.SingleSessionCommandService;
+import org.drools.persistence.PersistableRunner;
 import org.drools.persistence.jpa.OptimisticLockRetryInterceptor;
 import org.drools.persistence.jta.TransactionLockInterceptor;
+import org.jbpm.runtime.manager.impl.error.ExecutionErrorHandlerInterceptor;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.persistence.jpa.JPAKnowledgeService;
@@ -62,12 +63,18 @@ public class JPASessionFactory implements SessionFactory {
     }
     
     protected void addInterceptors(KieSession ksession) {
-        
-        SingleSessionCommandService sscs = (SingleSessionCommandService)
-                ((CommandBasedStatefulKnowledgeSession) ksession).getCommandService();
-        sscs.addInterceptor(new OptimisticLockRetryInterceptor());
+
+        PersistableRunner runner = (PersistableRunner)
+                ((CommandBasedStatefulKnowledgeSession) ksession).getRunner();        
+        runner.addInterceptor(new OptimisticLockRetryInterceptor());
         // even though it's added always TransactionLockInterceptor is by default disabled so won't do anything
-        sscs.addInterceptor(new TransactionLockInterceptor(ksession.getEnvironment()));
+        runner.addInterceptor(new TransactionLockInterceptor(ksession.getEnvironment()));
+        runner.addInterceptor(new ExecutionErrorHandlerInterceptor(ksession.getEnvironment()));
+    }
+
+    @Override
+    public void onDispose(Long sessionId) {
+        // no op
     }
     
 }

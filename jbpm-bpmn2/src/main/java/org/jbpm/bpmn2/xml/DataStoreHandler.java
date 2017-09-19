@@ -20,8 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.core.process.core.datatype.DataType;
-import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+import org.jbpm.process.core.datatype.DataType;
+import org.jbpm.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.core.xml.BaseAbstractHandler;
 import org.drools.core.xml.ExtensibleXmlParser;
 import org.drools.core.xml.Handler;
@@ -32,9 +32,6 @@ import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-/**
- * @author <a href="mailto:atoulme@intalio.com">Antoine Toulme</a>
- */
 public class DataStoreHandler extends BaseAbstractHandler implements Handler {
 
 	@SuppressWarnings("rawtypes")
@@ -77,7 +74,7 @@ public class DataStoreHandler extends BaseAbstractHandler implements Handler {
 		if (itemDefinitions != null) {
 			ItemDefinition itemDefinition = itemDefinitions.get(localItemSubjectRef);
 			if (itemDefinition != null) {
-				dataType = new ObjectDataType(itemDefinition.getStructureRef());
+				dataType = new ObjectDataType(itemDefinition.getStructureRef(), parser.getClassLoader());
 			}
 		}
 		store.setType(dataType);

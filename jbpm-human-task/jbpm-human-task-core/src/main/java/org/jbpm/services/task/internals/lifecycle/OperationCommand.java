@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class OperationCommand {
     private boolean       userIsExplicitPotentialOwner;
     private boolean       addTargetUserToPotentialOwners;
     private boolean       removeUserFromPotentialOwners;
+    private boolean       groupTargetEntityAllowed = true;
     private boolean       skipable;
     private Operation     exec;
     
@@ -115,6 +116,12 @@ public class OperationCommand {
     }
     public void setExec(Operation exec) {
         this.exec = exec;
+    }
+    public boolean isGroupTargetEntityAllowed() {
+        return groupTargetEntityAllowed;
+    }    
+    public void setGroupTargetEntityAllowed(boolean groupTargetEntityAllowed) {
+        this.groupTargetEntityAllowed = groupTargetEntityAllowed;
     }
     
     

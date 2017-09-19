@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,8 @@
 
 package org.jbpm.process.instance.timer;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.drools.core.common.InternalKnowledgeRuntime;
+import org.drools.core.common.InternalWorkingMemory;
 import org.drools.core.marshalling.impl.MarshallerReaderContext;
 import org.drools.core.marshalling.impl.MarshallerWriteContext;
 import org.drools.core.marshalling.impl.ProtobufInputMarshaller;
@@ -45,16 +39,21 @@ import org.jbpm.process.core.timer.impl.RegisteredTimerServiceDelegate;
 import org.jbpm.process.instance.InternalProcessRuntime;
 import org.jbpm.process.instance.ProcessInstance;
 import org.jbpm.process.instance.ProcessRuntimeImpl;
-import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.time.SessionClock;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 
- * @author <a href="mailto:kris_verlaenen@hotmail.com">Kris Verlaenen</a>
  */
 public class TimerManager {
 
@@ -77,9 +76,7 @@ public class TimerManager {
         try {
         	kruntime.getEnvironment().set("dirty", true);
             kruntime.startOperation();
-            if (!kruntime.getActionQueue().isEmpty()) {
-                kruntime.executeQueuedActions();
-            }
+
             timer.setId(++timerId);
             timer.setProcessInstanceId(processInstance.getId());
             timer.setSessionId(((KieSession) kruntime).getIdentifier());
@@ -110,9 +107,7 @@ public class TimerManager {
     public void registerTimer(final TimerInstance timer, String processId, Map<String, Object> params) {
         try {
             kruntime.startOperation();
-            if (!kruntime.getActionQueue().isEmpty()) {
-                kruntime.executeQueuedActions();
-            }
+
             timer.setId(++timerId);
             timer.setProcessInstanceId(-1l);
             timer.setSessionId(((StatefulKnowledgeSession) kruntime).getIdentifier());
@@ -170,9 +165,7 @@ public class TimerManager {
     public void cancelTimer(long timerId) {
 		try {
 			kruntime.startOperation();
-			if (!kruntime.getActionQueue().isEmpty()) {
-				kruntime.executeQueuedActions();
-			}
+
 			TimerInstance timer = timers.remove(timerId);
 			if (timer != null) {
 				timerService.removeJob(timer.getJobHandle());
@@ -187,6 +180,7 @@ public class TimerManager {
         // timerService.removeJob( timer.getJobHandle() );
         // }
         if (timerService instanceof RegisteredTimerServiceDelegate) {
+            timers.clear();
             return;
         }
         for (Iterator<TimerInstance> it = timers.values().iterator(); it.hasNext();) {
@@ -244,29 +238,29 @@ public class TimerManager {
 
     public static class ProcessTimerInputMarshaller implements TimersInputMarshaller {
 
-        public void deserialize(MarshallerReaderContext inCtx, Timer _timer) throws ClassNotFoundException {
-            JBPMMessages.ProcessTimer _ptimer = _timer.getExtension(JBPMMessages.procTimer);
+        public void deserialize(MarshallerReaderContext inCtx, Timer timer) throws ClassNotFoundException {
+            JBPMMessages.ProcessTimer ptimer = timer.getExtension(JBPMMessages.procTimer);
 
             TimerService ts = inCtx.wm.getTimerService();
 
-            long processInstanceId = _ptimer.getTimer().getProcessInstanceId();
+            long processInstanceId = ptimer.getTimer().getProcessInstanceId();
 
-            Trigger trigger = ProtobufInputMarshaller.readTrigger(inCtx, _ptimer.getTrigger());
+            Trigger trigger = ProtobufInputMarshaller.readTrigger(inCtx, ptimer.getTrigger());
 
-            TimerInstance timerInstance = ProtobufProcessMarshaller.readTimer(inCtx, _ptimer.getTimer());
+            TimerInstance timerInstance = ProtobufProcessMarshaller.readTimer(inCtx, ptimer.getTimer());
 
             TimerManager tm = ((InternalProcessRuntime) inCtx.wm.getProcessRuntime()).getTimerManager();
 
             // check if the timer instance is not already registered to avoid duplicated timers
             if (!tm.getTimerMap().containsKey(timerInstance.getId())) {
                 ProcessJobContext pctx = new ProcessJobContext(timerInstance, trigger, processInstanceId,
-                        inCtx.wm.getKnowledgeRuntime());
+                        inCtx.wm.getKnowledgeRuntime(), false);
                 Date date = trigger.hasNextFireTime();
 
                 if (date != null) {
                     long then = date.getTime();
                     long now = pctx.getKnowledgeRuntime().getSessionClock().getCurrentTime();
-                    // overdue timer
+                    // overdue timer                    
                     if (then < now) {
                         trigger = new OverdueTrigger(trigger, pctx.getKnowledgeRuntime());
                     }
@@ -291,6 +285,7 @@ public class TimerManager {
             Long processInstanceId = ctx.getProcessInstanceId();
             InternalKnowledgeRuntime kruntime = ctx.getKnowledgeRuntime();
             try {
+                kruntime.startOperation();
                 if (processInstanceId == null) {
                     throw new IllegalArgumentException("Could not find process instance for timer ");
                 }
@@ -298,10 +293,12 @@ public class TimerManager {
                 ctx.getTimer().setLastTriggered(
                         new Date(ctx.getKnowledgeRuntime().<SessionClock> getSessionClock().getCurrentTime()));
 
+                
                 // if there is no more trigger reset period on timer so its node instance can be removed
                 if (ctx.getTrigger().hasNextFireTime() == null) {
                     ctx.getTimer().setPeriod(0);
                 }
+                
                 ((InternalProcessRuntime) kruntime.getProcessRuntime()).getSignalManager().signalEvent(processInstanceId,
                         "timerTriggered", ctx.getTimer());
 
@@ -314,11 +311,9 @@ public class TimerManager {
 
             } catch (Throwable e) {
                 logger.error("Error when executing timer job", e);
-                WorkflowProcessInstanceImpl processInstance = (WorkflowProcessInstanceImpl) kruntime
-                        .getProcessInstance(processInstanceId);
-                if (processInstance != null && ctx.getTimer().getPeriod() == 0) {
-                    processInstance.setState(ProcessInstance.STATE_ABORTED);
-                }
+                throw new RuntimeException(e);
+            } finally {
+                kruntime.endOperation();
             }
         }
 
@@ -333,8 +328,18 @@ public class TimerManager {
             StartProcessJobContext ctx = (StartProcessJobContext) c;
 
             InternalKnowledgeRuntime kruntime = ctx.getKnowledgeRuntime();
+            InternalProcessRuntime processRuntime = ((InternalProcessRuntime) ctx.getKnowledgeRuntime().getProcessRuntime());
+            TimerManager tm = processRuntime.getTimerManager();
+            
+            if (!((ProcessRuntimeImpl) processRuntime).isActive()) {
+                logger.debug("Timer for starting process {} is ignored as the deployment is in deactivated state", ctx.getProcessId());
+                tm.getTimerMap().remove(ctx.getTimer().getId());
+                tm.getTimerService().removeJob(ctx.getJobHandle());
+                
+                return;
+            }
             try {
-
+                kruntime.startOperation();
                 ctx.getTimer().setLastTriggered(
                         new Date(ctx.getKnowledgeRuntime().<SessionClock> getSessionClock().getCurrentTime()));
 
@@ -344,8 +349,6 @@ public class TimerManager {
                 }
                 ((ProcessRuntimeImpl)kruntime.getProcessRuntime()).startProcess(ctx.getProcessId(), ctx.getParamaeters(), "timer");
 
-                TimerManager tm = ((InternalProcessRuntime) ctx.getKnowledgeRuntime().getProcessRuntime()).getTimerManager();
-
                 if (ctx.getTimer().getPeriod() == 0) {
                     tm.getTimerMap().remove(ctx.getTimer().getId());
                     tm.getTimerService().removeJob(ctx.getJobHandle());
@@ -354,6 +357,8 @@ public class TimerManager {
             } catch (Throwable e) {
                 logger.error("Error when executing start process " + ctx.getProcessId() + " timer job", e);
 
+            } finally {
+                kruntime.endOperation();
             }
         }
 
@@ -369,6 +374,8 @@ public class TimerManager {
 
         private JobHandle jobHandle;
         private Long sessionId;
+        
+        private boolean newTimer;
 
         public ProcessJobContext(final TimerInstance timer, final Trigger trigger, final Long processInstanceId,
                 final InternalKnowledgeRuntime kruntime) {
@@ -377,6 +384,17 @@ public class TimerManager {
             this.processInstanceId = processInstanceId;
             this.kruntime = kruntime;
             this.sessionId = timer.getSessionId();
+            this.newTimer = true;
+        }
+        
+        public ProcessJobContext(final TimerInstance timer, final Trigger trigger, final Long processInstanceId,
+                final InternalKnowledgeRuntime kruntime, boolean newTimer) {
+            this.timer = timer;
+            this.trigger = trigger;
+            this.processInstanceId = processInstanceId;
+            this.kruntime = kruntime;
+            this.sessionId = timer.getSessionId();
+            this.newTimer = newTimer;
         }
 
         public Long getProcessInstanceId() {
@@ -411,6 +429,14 @@ public class TimerManager {
             this.kruntime = kruntime;
         }
 
+        @Override
+        public InternalWorkingMemory getWorkingMemory() {
+            return kruntime instanceof InternalWorkingMemory ? (InternalWorkingMemory)kruntime : null;
+        }
+        
+        public boolean isNewTimer() {
+            return newTimer;
+        }
     }
 
     public static class StartProcessJobContext extends ProcessJobContext {

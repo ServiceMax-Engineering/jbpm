@@ -1,27 +1,28 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.runtime.manager.concurrent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
-
-import javax.naming.InitialContext;
-import javax.persistence.OptimisticLockException;
-import javax.transaction.UserTransaction;
-
+import org.drools.core.command.SingleSessionCommandService;
 import org.drools.core.command.impl.CommandBasedStatefulKnowledgeSession;
-import org.drools.persistence.SingleSessionCommandService;
 import org.hibernate.StaleObjectStateException;
 import org.jbpm.runtime.manager.util.TestUtil;
 import org.jbpm.services.task.exception.PermissionDeniedException;
 import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
 import org.jbpm.test.util.AbstractBaseTest;
+import org.jbpm.test.util.PoolingDataSource;
 import org.jbpm.workflow.instance.node.HumanTaskNodeInstance;
 import org.junit.After;
 import org.junit.Before;
@@ -49,7 +50,16 @@ import org.kie.internal.runtime.manager.context.EmptyContext;
 import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
 import org.kie.internal.task.api.UserGroupCallback;
 
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import javax.naming.InitialContext;
+import javax.persistence.OptimisticLockException;
+import javax.transaction.UserTransaction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
+
+import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class SessionTest extends AbstractBaseTest {
@@ -541,7 +551,7 @@ public class SessionTest extends AbstractBaseTest {
 	private void testStartProcess(RuntimeEngine runtime) throws Exception {
 		
 		long taskId; 
-		synchronized((SingleSessionCommandService) ((CommandBasedStatefulKnowledgeSession) runtime.getKieSession()).getCommandService()) {
+		synchronized((SingleSessionCommandService) ((CommandBasedStatefulKnowledgeSession) runtime.getKieSession()).getRunner()) {
 			UserTransaction ut = (UserTransaction) new InitialContext().lookup( "java:comp/UserTransaction" );
 			ut.begin();
 			logger.debug("Starting process on ksession {}", runtime.getKieSession().getIdentifier());
@@ -678,7 +688,32 @@ public class SessionTest extends AbstractBaseTest {
 				while (i < nbInvocations) {
 				    RuntimeEngine runtime = manager.getRuntimeEngine(EmptyContext.get());
 					boolean success = testCompleteTask(runtime);
-					manager.disposeRuntimeEngine(runtime);
+					int retry = 10;
+					while (retry > 0) {
+						try {
+							manager.disposeRuntimeEngine(runtime);
+							retry = 0;
+						} catch (Throwable t) {
+							// This can happen so we need to re-attempt the dispose
+//						java.lang.RuntimeException: java.lang.IllegalStateException: java.lang.reflect.InvocationTargetException
+//						at org.jbpm.runtime.manager.impl.PerRequestRuntimeManager.disposeRuntimeEngine(PerRequestRuntimeManager.java:156)
+//						at org.jbpm.runtime.manager.concurrent.SessionTest$CompleteTaskRunnable.run(SessionTest.java:692)
+//	SNIP
+//						Caused by: javax.persistence.OptimisticLockException: Batch update returned unexpected row count from update [0]; actual row count: 0; expected: 1
+//						at org.hibernate.jpa.spi.AbstractEntityManagerImpl.wrapStaleStateException(AbstractEntityManagerImpl.java:1729)
+//						at org.hibernate.jpa.spi.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1634)
+//						at org.hibernate.jpa.spi.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1602)
+//						at org.hibernate.jpa.spi.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1608)
+//						at org.hibernate.jpa.spi.AbstractEntityManagerImpl.flush(AbstractEntityManagerImpl.java:1303)
+//	SNIP
+//						Caused by: org.hibernate.StaleStateException: Batch update returned unexpected row count from update [0]; actual row count: 0; expected: 1
+//						at org.hibernate.jdbc.Expectations$BasicExpectation.checkBatched(Expectations.java:67)
+//						at org.hibernate.jdbc.Expectations$BasicExpectation.verifyOutcome(Expectations.java:54)
+//						at org.hibernate.engine.jdbc.batch.internal.NonBatchingBatch.addToBatch(NonBatchingBatch.java:46)
+							t.printStackTrace();
+							retry--;
+						}
+					}
 					if (success) {
 						i++;
 					}

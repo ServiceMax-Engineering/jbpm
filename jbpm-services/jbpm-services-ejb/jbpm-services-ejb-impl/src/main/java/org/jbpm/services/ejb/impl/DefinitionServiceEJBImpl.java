@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jbpm.services.api.DeploymentEventListener;
 import org.jbpm.services.api.model.ProcessDefinition;
 import org.jbpm.services.ejb.api.DefinitionServiceEJBLocal;
 import org.jbpm.services.ejb.api.DefinitionServiceEJBRemote;
+import org.kie.api.runtime.KieContainer;
 
 @Singleton
 @ConcurrencyManagement(ConcurrencyManagementType.CONTAINER)
@@ -37,8 +38,8 @@ public class DefinitionServiceEJBImpl extends BPMN2DataServiceImpl implements De
 
 	@Lock(LockType.WRITE)
 	@Override
-	public ProcessDefinition buildProcessDefinition(String deploymentId, String bpmn2Content, ClassLoader classLoader, boolean cache) throws IllegalArgumentException {
-		return super.buildProcessDefinition(deploymentId, bpmn2Content, classLoader, cache);
+	public ProcessDefinition buildProcessDefinition(String deploymentId, String bpmn2Content, KieContainer kieContainer, boolean cache) throws IllegalArgumentException {
+		return super.buildProcessDefinition(deploymentId, bpmn2Content, kieContainer, cache);
 	}
 	
 	@Lock(LockType.WRITE)

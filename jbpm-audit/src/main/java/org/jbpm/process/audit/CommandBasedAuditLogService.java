@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.process.audit;
 
 import java.util.List;
@@ -19,8 +34,8 @@ import org.jbpm.process.audit.query.ProcInstLogQueryBuilderImpl;
 import org.jbpm.process.audit.query.ProcessInstanceLogDeleteBuilderImpl;
 import org.jbpm.process.audit.query.VarInstLogQueryBuilderImpl;
 import org.jbpm.process.audit.query.VarInstanceLogDeleteBuilderImpl;
+import org.jbpm.query.jpa.data.QueryWhere;
 import org.kie.api.runtime.CommandExecutor;
-import org.kie.internal.query.data.QueryData;
 import org.kie.internal.runtime.manager.audit.query.NodeInstanceLogDeleteBuilder;
 import org.kie.internal.runtime.manager.audit.query.NodeInstanceLogQueryBuilder;
 import org.kie.internal.runtime.manager.audit.query.ProcessInstanceLogDeleteBuilder;
@@ -127,18 +142,18 @@ public class CommandBasedAuditLogService implements AuditLogService {
 	}
 
     @Override
-    public List<org.kie.api.runtime.manager.audit.NodeInstanceLog> queryNodeInstanceLogs( QueryData queryData ) {
-        return executor.execute(new AuditNodeInstanceLogQueryCommand(queryData));
-    }
-
-    @Override
-    public List<org.kie.api.runtime.manager.audit.VariableInstanceLog> queryVariableInstanceLogs( QueryData queryData ) {
-        return executor.execute(new AuditVariableInstanceLogQueryCommand(queryData));
-    }
-
-    @Override
-    public List<org.kie.api.runtime.manager.audit.ProcessInstanceLog> queryProcessInstanceLogs( QueryData queryData ) {
-        return executor.execute(new AuditProcessInstanceLogQueryCommand(queryData));
+    @SuppressWarnings("unchecked")
+    public <T, R> List<R> queryLogs( QueryWhere queryWhere, Class<T> queryClass, Class<R> resultClass ) {
+        if( queryClass.equals(NodeInstanceLog.class) ) { 
+            return (List<R>) executor.execute(new AuditNodeInstanceLogQueryCommand(queryWhere));
+        } else if( queryClass.equals(ProcessInstanceLog.class) ) { 
+            return (List<R>) executor.execute(new AuditProcessInstanceLogQueryCommand(queryWhere));
+        } else if( queryClass.equals(VariableInstanceLog.class) ) { 
+            return (List<R>) executor.execute(new AuditVariableInstanceLogQueryCommand(queryWhere));
+        } else { 
+            String type = queryClass == null ? "null" : queryClass.getName();
+            throw new IllegalArgumentException("Unknown type for query:" + type );
+        }
     }
 
     @Override

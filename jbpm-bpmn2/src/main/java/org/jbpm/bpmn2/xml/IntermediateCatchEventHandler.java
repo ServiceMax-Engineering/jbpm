@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 public class IntermediateCatchEventHandler extends AbstractNodeHandler {
-	
+
 	private DataTransformerRegistry transformerRegistry = DataTransformerRegistry.get();
 
     public static final String LINK_NAME = "LinkName";
@@ -108,6 +108,7 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
         }
         NodeContainer nodeContainer = (NodeContainer) parser.getParent();
         nodeContainer.addNode(node);
+        ((ProcessBuildData) parser.getData()).addNode(node);
         return node;
     }
 
@@ -184,18 +185,9 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
             } else if ("signalEventDefinition".equals(nodeName)) {
                 String type = ((Element) xmlNode).getAttribute("signalRef");
                 if (type != null && type.trim().length() > 0) {
-                	
-                	Map<String, Signal> signals = (Map<String, Signal>) ((ProcessBuildData) parser
-                            .getData()).getMetaData("Signals");
-                	
-                	if (signals != null && signals.containsKey(type)) {
-                		Signal signal = signals.get(type);                		
-                		type = signal.getName();
-                		if (type == null) {
-                			throw new IllegalArgumentException("Signal definition must have a name attribute");
-                		}
-                	}
-                	
+
+                    type = checkSignalAndConvertToRealSignalNam(parser, type);
+
                     List<EventFilter> eventFilters = new ArrayList<EventFilter>();
                     EventTypeFilter eventFilter = new EventTypeFilter();
                     eventFilter.setType(type);
@@ -331,10 +323,10 @@ public class IntermediateCatchEventHandler extends AbstractNodeHandler {
   			DataTransformer transformer = transformerRegistry.find(lang);
   			if (transformer == null) {
   				throw new IllegalArgumentException("No transformer registered for language " + lang);
-  			}    			
+  			}
   			transformation = new Transformation(lang, expression, dataOutputs.get(from));
   			eventNode.setMetaData("Transformation", transformation);
-  			
+
   			eventNode.setEventTransformer(new EventTransformerImpl(transformation));
   		}
     }

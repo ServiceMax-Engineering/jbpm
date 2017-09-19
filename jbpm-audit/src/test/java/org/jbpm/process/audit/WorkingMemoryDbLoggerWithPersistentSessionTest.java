@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,11 @@ package org.jbpm.process.audit;
 import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
 import static org.jbpm.process.audit.AbstractAuditLogServiceTest.createKieSession;
 
-import org.drools.core.impl.KnowledgeBaseImpl;
 import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
 import org.kie.api.KieBase;
 import org.kie.api.runtime.Environment;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.internal.KnowledgeBase;
 
 /**
  * This class tests the following classes: 

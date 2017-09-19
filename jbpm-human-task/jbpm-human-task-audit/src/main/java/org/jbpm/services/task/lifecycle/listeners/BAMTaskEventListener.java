@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss by Red Hat.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package org.jbpm.services.task.lifecycle.listeners;
 import java.util.Comparator;
 import java.util.Date;
 
+import javax.persistence.EntityManagerFactory;
+
 import org.jbpm.services.task.audit.impl.model.BAMTaskSummaryImpl;
+import org.jbpm.services.task.persistence.PersistableEventListener;
 import org.kie.api.task.TaskEvent;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
@@ -60,12 +63,17 @@ import org.slf4j.LoggerFactory;
  *     <li>Obsolete - Error</li>
  * </ul>
  */
-public class BAMTaskEventListener implements org.kie.api.task.TaskLifeCycleEventListener {
+public class BAMTaskEventListener extends PersistableEventListener  {
 
     /** Class logger. */
     private static final Logger logger = LoggerFactory.getLogger(BAMTaskEventListener.class);
 
     public BAMTaskEventListener(boolean flag) {
+    	super(null);
+    }
+    
+    public BAMTaskEventListener(EntityManagerFactory emf) {
+    	super(emf);
     }
 
     public void afterTaskStartedEvent(TaskEvent event) {
@@ -123,13 +131,8 @@ public class BAMTaskEventListener implements org.kie.api.task.TaskLifeCycleEvent
         createOrUpdateTask(event, Status.Exited);
     }
 
-    /**
-     * When a task is stopped, the status for dashbuilder integration task must be Exited.
-     *
-     * @param ti The task.
-     */
     public void afterTaskStoppedEvent(TaskEvent event) {
-        createOrUpdateTask(event, Status.Exited);
+        updateTask(event);
     }
 
     /**
@@ -223,58 +226,65 @@ public class BAMTaskEventListener implements org.kie.api.task.TaskLifeCycleEvent
     protected BAMTaskSummaryImpl createTask(TaskEvent event, Status newStatus, BAMTaskWorker worker) {
         BAMTaskSummaryImpl result = null;
         Task ti = event.getTask();
-        TaskPersistenceContext persistenceContext = ((TaskContext)event.getTaskContext()).getPersistenceContext();
-
-        if (ti == null) {
-            logger.error("The task instance does not exist.");
-            return result;
+        TaskPersistenceContext persistenceContext = getPersistenceContext(((TaskContext)event.getTaskContext()).getPersistenceContext());
+        try {
+	        if (ti == null) {
+	            logger.error("The task instance does not exist.");
+	            return result;
+	        }
+	
+	        Status status = newStatus != null ? newStatus : ti.getTaskData().getStatus();
+	
+	        String actualOwner = "";
+	        if (ti.getTaskData().getActualOwner() != null) {
+	            actualOwner = ti.getTaskData().getActualOwner().getId();
+	        }
+	
+	        result = new BAMTaskSummaryImpl(ti.getId(), ti.getName(), status.toString(), new Date(), actualOwner, ti.getTaskData().getProcessInstanceId());
+	        if (worker != null) worker.createTask(result, ti);
+	        persistenceContext.persist(result);
+	    
+	
+	        return result;
+        } finally {
+        	cleanup(persistenceContext);
         }
-
-        Status status = newStatus != null ? newStatus : ti.getTaskData().getStatus();
-
-        String actualOwner = "";
-        if (ti.getTaskData().getActualOwner() != null) {
-            actualOwner = ti.getTaskData().getActualOwner().getId();
-        }
-
-        result = new BAMTaskSummaryImpl(ti.getId(), ti.getName(), status.toString(), new Date(), actualOwner, ti.getTaskData().getProcessInstanceId());
-        if (worker != null) worker.createTask(result, ti);
-        persistenceContext.persist(result);
-    
-
-        return result;
     }
     
     protected BAMTaskSummaryImpl updateTask(TaskEvent event, Status newStatus, BAMTaskWorker worker) {
         BAMTaskSummaryImpl result = null;
         Task ti = event.getTask();
-        TaskPersistenceContext persistenceContext = ((TaskContext)event.getTaskContext()).getPersistenceContext();
+        TaskPersistenceContext persistenceContext = getPersistenceContext(((TaskContext)event.getTaskContext()).getPersistenceContext());
+        try {
 
-        if (ti == null) {
-            logger.error("The task instance does not exist.");
-            return result;
-        }
-
-        Status status = newStatus != null ? newStatus : ti.getTaskData().getStatus();
-
-        result = persistenceContext.queryStringWithParametersInTransaction("select bts from BAMTaskSummaryImpl bts where bts.taskId=:taskId", true,
-        												persistenceContext.addParametersToMap("taskId", ti.getId()), 
-        												BAMTaskSummaryImpl.class);
-        
-        if (result == null) {
-        	logger.warn("Unable find bam task entry for task id {} '{}', skipping bam task update", ti.getId(), ti.getName());
-        	return null;
-        }
-        	
-        result.setStatus(status.toString());
-        if (ti.getTaskData().getActualOwner() != null) {
-            result.setUserId(ti.getTaskData().getActualOwner().getId());
-        }
-        if (worker != null) worker.updateTask(result, ti);
-        persistenceContext.merge(result);
+	        if (ti == null) {
+	            logger.error("The task instance does not exist.");
+	            return result;
+	        }
+	
+	        Status status = newStatus != null ? newStatus : ti.getTaskData().getStatus();
+	
+	        result = persistenceContext.queryStringWithParametersInTransaction("select bts from BAMTaskSummaryImpl bts where bts.taskId=:taskId", true,
+	        												persistenceContext.addParametersToMap("taskId", ti.getId()), 
+	        												BAMTaskSummaryImpl.class);
+	        
+	        if (result == null) {
+	        	logger.warn("Unable find bam task entry for task id {} '{}', skipping bam task update", ti.getId(), ti.getName());
+	        	return null;
+	        }
+	        	
+	        result.setStatus(status.toString());
+	        if (ti.getTaskData().getActualOwner() != null) {
+	            result.setUserId(ti.getTaskData().getActualOwner().getId());
+	        }
+	        if (worker != null) worker.updateTask(result, ti);
+	        persistenceContext.merge(result);
 
       
-        return result;
+	        return result;
+        } finally {
+        	cleanup(persistenceContext);
+        }
     }
 
     /**

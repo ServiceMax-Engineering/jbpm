@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 
 package org.jbpm.services.ejb.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.kie.scanner.MavenRepository.getMavenRepository;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import javax.ejb.EJB;
 
 import org.drools.compiler.kie.builder.impl.InternalKieModule;
@@ -47,7 +41,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.api.KieServices;
 import org.kie.api.builder.ReleaseId;
-import org.kie.scanner.MavenRepository;
+import org.kie.scanner.KieMavenRepository;
+
+import static org.junit.Assert.*;
+import static org.kie.scanner.KieMavenRepository.getKieMavenRepository;
 
 @RunWith(Arquillian.class)
 public class DefinitionServiceEJBIntegrationTest extends AbstractTestSupport {
@@ -89,8 +86,8 @@ public class DefinitionServiceEJBIntegrationTest extends AbstractTestSupport {
         } catch (Exception e) {
             
         }
-        MavenRepository repository = getMavenRepository();
-        repository.deployArtifact(releaseId, kJar1, pom);
+        KieMavenRepository repository = getKieMavenRepository();
+        repository.installArtifact(releaseId, kJar1, pom);
 	}
 	
 	private List<DeploymentUnit> units = new ArrayList<DeploymentUnit>();
@@ -170,10 +167,18 @@ public class DefinitionServiceEJBIntegrationTest extends AbstractTestSupport {
         Map<String, String> taskInputMappings = bpmn2Service.getTaskInputMappings(deploymentUnit.getIdentifier(), processId, "HR Interview" );
         
         assertEquals(4, taskInputMappings.keySet().size());
+        assertEquals("java.lang.String", taskInputMappings.get("TaskName"));
+        assertEquals("Object", taskInputMappings.get("GroupId"));
+        assertEquals("Object", taskInputMappings.get("Comment"));
+        assertEquals("String", taskInputMappings.get("in_name"));
         
         Map<String, String> taskOutputMappings = bpmn2Service.getTaskOutputMappings(deploymentUnit.getIdentifier(), processId, "HR Interview" );
         
         assertEquals(4, taskOutputMappings.keySet().size());
+        assertEquals("String", taskOutputMappings.get("out_name"));
+        assertEquals("Integer", taskOutputMappings.get("out_age"));
+        assertEquals("String", taskOutputMappings.get("out_mail"));
+        assertEquals("Integer", taskOutputMappings.get("out_score"));
         
         Map<String, Collection<String>> associatedEntities = bpmn2Service.getAssociatedEntities(deploymentUnit.getIdentifier(), processId);
         

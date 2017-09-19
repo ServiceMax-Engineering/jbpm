@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jbpm.process.audit;
 
 import java.util.List;
 
+import org.jbpm.query.jpa.data.QueryWhere;
 import org.kie.api.runtime.manager.audit.AuditService;
-import org.kie.internal.query.data.QueryData;
 import org.kie.internal.runtime.manager.audit.query.NodeInstanceLogDeleteBuilder;
 import org.kie.internal.runtime.manager.audit.query.NodeInstanceLogQueryBuilder;
 import org.kie.internal.runtime.manager.audit.query.ProcessInstanceLogDeleteBuilder;
@@ -91,10 +91,8 @@ public interface AuditLogService extends AuditService {
     public NodeInstanceLogDeleteBuilder nodeInstanceLogDelete();
     
     public VariableInstanceLogDeleteBuilder variableInstanceLogDelete();
-   
-    public List<org.kie.api.runtime.manager.audit.NodeInstanceLog> queryNodeInstanceLogs(QueryData queryData);
+  
+    // The query methods should not be available in any public API's
+    public <T,R> List<R> queryLogs(QueryWhere queryWhere, Class<T> queryType, Class<R> resultType);
 
-    public List<org.kie.api.runtime.manager.audit.VariableInstanceLog> queryVariableInstanceLogs(QueryData queryData);
-    
-    public List<org.kie.api.runtime.manager.audit.ProcessInstanceLog> queryProcessInstanceLogs(QueryData queryData);
 }

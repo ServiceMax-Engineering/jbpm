@@ -1,5 +1,5 @@
 /**
- * Copyright 2005 JBoss Inc
+ * Copyright 2005 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.kie.api.definition.process.Process;
  * It contains all the runtime status information about the running process.
  * A process can have multiple instances.
  * 
- * @author <a href="mailto:kris_verlaenen@hotmail.com">Kris Verlaenen</a>
  */
 public interface ProcessInstance extends org.kie.api.runtime.process.ProcessInstance, ContextInstanceContainer, ContextableInstance {
 
@@ -57,5 +56,13 @@ public interface ProcessInstance extends org.kie.api.runtime.process.ProcessInst
     Map<String, Object> getMetaData();
 
 	Object getFaultData();
+	
+	void setSignalCompletion(boolean signalCompletion);
+	
+	boolean isSignalCompletion();
+	
+	String getDeploymentId();
+	
+	void setDeploymentId(String deploymentId);
     
 }

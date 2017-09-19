@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 
 package org.jbpm.services.ejb.test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.kie.scanner.MavenRepository.getMavenRepository;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,12 +51,17 @@ import org.junit.runner.RunWith;
 import org.kie.api.KieServices;
 import org.kie.api.builder.ReleaseId;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.query.QueryContext;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.internal.query.QueryContext;
+import org.kie.internal.KieInternalServices;
+import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.query.QueryFilter;
 import org.kie.internal.runtime.conf.DeploymentDescriptor;
-import org.kie.scanner.MavenRepository;
+import org.kie.scanner.KieMavenRepository;
+
+import static org.junit.Assert.*;
+import static org.kie.scanner.KieMavenRepository.getKieMavenRepository;
 
 @RunWith(Arquillian.class)
 public class RuntimeDataServiceImplSecurityTest extends AbstractTestSupport {
@@ -122,8 +122,8 @@ public class RuntimeDataServiceImplSecurityTest extends AbstractTestSupport {
         } catch (Exception e) {
             
         }
-        MavenRepository repository = getMavenRepository();
-        repository.deployArtifact(releaseId, kJar1, pom);
+		KieMavenRepository repository = getKieMavenRepository();
+        repository.installArtifact(releaseId, kJar1, pom);
 	}
 	
 	private List<DeploymentUnit> units = new ArrayList<DeploymentUnit>();
@@ -589,5 +589,161 @@ public class RuntimeDataServiceImplSecurityTest extends AbstractTestSupport {
     	assertEquals(0, instances.size());
     }
     
+    @Test
+    public void testGetProcessInstanceByCorrelationKey() {
+        Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(0, instances.size());
+        
+        CorrelationKey key = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey("my business key");
+        
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", key);
+        assertNotNull(processInstanceId);
+        
+        ProcessInstanceDesc instance = runtimeDataService.getProcessInstanceByCorrelationKey(key);
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("my business key", instance.getCorrelationKey());
+        
+        List<UserTaskInstanceDesc> tasks = instance.getActiveTasks();
+        assertNotNull(tasks);
+        assertEquals(1, tasks.size());
+        
+        UserTaskInstanceDesc activeTask = tasks.get(0);
+        assertNotNull(activeTask);
+        assertEquals(Status.Reserved.name(), activeTask.getStatus());
+        assertEquals(instance.getId(), activeTask.getProcessInstanceId());
+        assertEquals(instance.getProcessId(), activeTask.getProcessId());
+        assertEquals("Write a Document", activeTask.getName());
+        assertEquals("salaboy", activeTask.getActualOwner());
+        assertEquals(deploymentUnit.getIdentifier(), activeTask.getDeploymentId());
+        
+        processService.abortProcessInstance(processInstanceId);
+                
+        instance = runtimeDataService.getProcessInstanceByCorrelationKey(key);
+        processInstanceId = null;
+        assertNull(instance);
+        
+    }
+    
+    @Test
+    public void testGetProcessInstancesByCorrelationKey() {
+        // let's grant managers role so process can be started
+        List<String> roles = new ArrayList<String>();
+        roles.add("managers");
+        identityProvider.setRoles(roles);
+        Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(0, instances.size());
+        
+        CorrelationKey key = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey("my business key");
+        
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", key);
+        assertNotNull(processInstanceId);
+        
+        Collection<ProcessInstanceDesc> keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(key, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+        
+        ProcessInstanceDesc instance = keyedInstances.iterator().next();
+        
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("my business key", instance.getCorrelationKey());
+        
+        List<UserTaskInstanceDesc> tasks = instance.getActiveTasks();
+        assertNull(tasks);
+        
+        processService.abortProcessInstance(processInstanceId);
+                
+        instance = runtimeDataService.getProcessInstanceByCorrelationKey(key);
+        processInstanceId = null;
+        assertNull(instance);
+        
+        keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(key, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+        
+        instance = keyedInstances.iterator().next();
+        assertEquals(3, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("my business key", instance.getCorrelationKey());
+        
+    }
+    
+    @Test
+    public void testGetProcessInstancesByPartialCorrelationKey() {
+        // let's grant managers role so process can be started
+        List<String> roles = new ArrayList<String>();
+        roles.add("managers");
+        identityProvider.setRoles(roles);
+        Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(0, instances.size());
+        
+        List<String> props = new ArrayList<String>();
+        props.add("first");
+        props.add("second");
+        props.add("third");
+        
+        List<String> partial1props = new ArrayList<String>();
+        partial1props.add("first");
+        partial1props.add("second");
+        
+        List<String> partial2props = new ArrayList<String>();
+        partial2props.add("first");        
+        
+        
+        CorrelationKey key = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey(props);
+        CorrelationKey partialKey1 = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey(partial1props);
+        CorrelationKey partialKey2 = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey(partial2props);
+        
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", key);
+        assertNotNull(processInstanceId);
+        
+        Collection<ProcessInstanceDesc> keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(key, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+        
+        ProcessInstanceDesc instance = keyedInstances.iterator().next();
+        
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("first:second:third", instance.getCorrelationKey());
+        
+        List<UserTaskInstanceDesc> tasks = instance.getActiveTasks();
+        assertNull(tasks);
+        // search by partial key 1
+        keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(partialKey1, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+        
+        instance = keyedInstances.iterator().next();
+        
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("first:second:third", instance.getCorrelationKey());
+        
+        // search by partial key 2
+        keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(partialKey2, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+        
+        instance = keyedInstances.iterator().next();
+        
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("first:second:third", instance.getCorrelationKey());
+        
+        
+        processService.abortProcessInstance(processInstanceId);
+        processInstanceId = null;
+        
+    }
  
 }

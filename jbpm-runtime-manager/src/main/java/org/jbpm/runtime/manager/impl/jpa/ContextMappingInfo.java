@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,16 @@ import javax.persistence.Version;
                 @NamedQuery(name="FindContextMapingByKSessionId", 
                 query="from ContextMappingInfo where ksessionId = :ksessionId"
                 		+ " and ownerId = :ownerId"),
-    @NamedQuery(name="FindKSessionToInit", 
+                @NamedQuery(name="FindKSessionToInit", 
                 query="select cmInfo.ksessionId from ContextMappingInfo cmInfo, "
                 		+ "ProcessInstanceInfo processInstanceInfo join processInstanceInfo.eventTypes eventTypes"
                 		+ " where eventTypes = 'timer' and cmInfo.contextId = cast(processInstanceInfo.processInstanceId as string)"
-                		+ " and cmInfo.ownerId = :ownerId")})
+                		+ " and cmInfo.ownerId = :ownerId"),
+        		@NamedQuery(name="FindProcessInstanceWaitingForEvent", 
+                query="select cmInfo.contextId from ContextMappingInfo cmInfo, "
+                        + "ProcessInstanceInfo processInstanceInfo join processInstanceInfo.eventTypes eventTypes"
+                        + " where eventTypes = :eventType and cmInfo.contextId = cast(processInstanceInfo.processInstanceId as string)"
+                        + " and cmInfo.ownerId = :ownerId")})
 public class ContextMappingInfo implements Serializable {
 
     private static final long serialVersionUID = 533985957655465840L;

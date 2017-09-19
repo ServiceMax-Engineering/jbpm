@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jbpm</groupId>
     <artifactId>jbpm-services-ejb</artifactId>
-    <version>6.2.0.009</version>
+    <version>7.3.0.001</version>
   </parent>
   <artifactId>jbpm-services-ejb-client</artifactId>
   <name>jBPM :: EJB Services Client</name>
@@ -29,7 +29,6 @@
       <type>pom</type>
     </dependency>
     -->
-    
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-kie-services</artifactId>
@@ -41,9 +40,10 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+
      <dependency>
-      <groupId>org.codehaus.btm</groupId>
-      <artifactId>btm</artifactId>
+      <groupId>org.jboss.narayana.jta</groupId>
+      <artifactId>narayana-jta</artifactId>
       <scope>test</scope>
     </dependency>   
   </dependencies>
@@ -62,4 +62,5 @@
       </plugin>
     </plugins>
   </build>
+  <version>7.3.0.001</version>
 </project>

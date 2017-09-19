@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss Inc
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,8 +86,7 @@ public class DBUserGroupCallbackImpl extends AbstractUserGroupInfo implements Us
 		return checkExistence(this.config.getProperty(ROLES_QUERY), groupId);
 	}
 
-	public List<String> getGroupsForUser(String userId, List<String> groupIds,
-			List<String> allExistingGroupIds) {
+	public List<String> getGroupsForUser(String userId) {
 		
 		if (userId == null) {
 			throw new IllegalArgumentException("UserId cannot be null");

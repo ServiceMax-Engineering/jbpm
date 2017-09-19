@@ -1,5 +1,5 @@
 /*
-Copyright 2013 JBoss Inc
+Copyright 2013 Red Hat, Inc. and/or its affiliates.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.drools.core.audit.event.LogEvent;
 import org.drools.core.audit.event.RuleFlowLogEvent;
 import org.drools.core.audit.event.RuleFlowNodeLogEvent;
 import org.drools.core.impl.EnvironmentFactory;
+import org.drools.core.impl.KnowledgeBaseFactory;
 import org.drools.core.util.DroolsStreamUtils;
 import org.drools.core.util.MVELSafeHelper;
 import org.h2.tools.DeleteDbFiles;
@@ -70,6 +71,7 @@ import org.jbpm.process.instance.event.DefaultSignalManagerFactory;
 import org.jbpm.process.instance.impl.DefaultProcessInstanceManagerFactory;
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.test.util.AbstractBaseTest;
+import org.jbpm.test.util.PoolingDataSource;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -79,6 +81,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
+import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
@@ -99,7 +102,6 @@ import org.kie.api.runtime.process.NodeInstance;
 import org.kie.api.runtime.process.NodeInstanceContainer;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkflowProcessInstance;
-import org.kie.internal.KnowledgeBaseFactory;
 import org.kie.internal.builder.KnowledgeBuilderConfiguration;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
 import org.kie.internal.io.ResourceFactory;
@@ -111,9 +113,6 @@ import org.mvel2.ParserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 /**
  * Base test case for the jbpm-bpmn2 module.
@@ -141,8 +140,13 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
 
     private RequireLocking testReqLocking;
     private RequirePersistence testReqPersistence;
+
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(30);
+
     @Rule
     public TestRule watcher = new TestWatcher() {
+        @Override
         protected void starting(Description description) {
             log.info(" >>> {} <<<", description.getMethodName());
 
@@ -160,6 +164,7 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
             }
         };
 
+        @Override
         protected void finished(Description description) {
             log.info("Finished {}", description);
         };
@@ -251,6 +256,35 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (setupDataSource) {
+            String runningTransactionStatus = null;
+
+            // Clean up possible transactions
+            Transaction tx = com.arjuna.ats.jta.TransactionManager.transactionManager()
+                    .getTransaction();
+            if (tx != null) {
+                int testTxState = tx.getStatus();
+                if (testTxState != Status.STATUS_NO_TRANSACTION
+                        && testTxState != Status.STATUS_ROLLEDBACK
+                        && testTxState != Status.STATUS_COMMITTED) {
+                    try {
+                        tx.rollback();
+                    } catch (Throwable t) {
+                        // do nothing..
+                    }
+                    runningTransactionStatus = txStateName[testTxState];
+                }
+            }
+
+            if (emf != null) {
+                try {
+                    emf.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+                emf = null;
+            }
+
+            // If everything is closed, close data source and stop server.
             if (ds != null) {
                 try {
                     ds.close();
@@ -262,32 +296,10 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
             server.stop();
             DeleteDbFiles.execute("~", "jbpm-db", true);
 
-            // Clean up possible transactions
-            Transaction tx = TransactionManagerServices.getTransactionManager()
-                    .getCurrentTransaction();
-            if (tx != null) {
-                int testTxState = tx.getStatus();
-                if (testTxState != Status.STATUS_NO_TRANSACTION
-                        && testTxState != Status.STATUS_ROLLEDBACK
-                        && testTxState != Status.STATUS_COMMITTED) {
-                    try {
-                        tx.rollback();
-                    } catch (Throwable t) {
-                        // do nothing..
-                    }
-                    Assert.fail("Transaction had status "
-                            + txStateName[testTxState]
-                            + " at the end of the test.");
-                }
-            }
-            
-            if (emf != null) {
-                try {
-                    emf.close();
-                } catch (Exception ex) {
-                    // ignore
-                }
-                emf = null;
+            if (runningTransactionStatus != null) {
+                Assert.fail("Transaction had status "
+                        + runningTransactionStatus
+                        + " at the end of the test.");
             }
         }
     }
@@ -459,7 +471,7 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
                     DefaultSignalManagerFactory.class.getName());
             defaultProps.setProperty("drools.processInstanceManagerFactory",
                     DefaultProcessInstanceManagerFactory.class.getName());
-            conf = new SessionConfiguration(defaultProps);
+            conf = SessionConfiguration.newInstance(defaultProps);
             conf.setOption(ForceEagerActivationOption.YES);
             result = (StatefulKnowledgeSession) kbase.newKieSession(conf, env);
             logger = new WorkingMemoryInMemoryLogger(result);
@@ -509,7 +521,7 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
         Environment env = EnvironmentFactory.newEnvironment();
         env.set(ENTITY_MANAGER_FACTORY, emf);
         env.set(TRANSACTION_MANAGER,
-                TransactionManagerServices.getTransactionManager());
+                com.arjuna.ats.jta.TransactionManager.transactionManager());
         if (sessionPersistence) {
             ObjectMarshallingStrategy[] strategies = (ObjectMarshallingStrategy[]) env.get(OBJECT_MARSHALLING_STRATEGIES);        
             
@@ -548,7 +560,24 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
         ProcessInstance processInstance = ksession
                 .getProcessInstance(processInstanceId);
         if (processInstance instanceof WorkflowProcessInstance) {
-            assertNodeActive((WorkflowProcessInstance) processInstance, names);
+            if (sessionPersistence) {
+                List<? extends NodeInstanceLog> logs = logService.findNodeInstances(processInstanceId); // ENTER -> EXIT is correctly ordered
+                if (logs != null) {
+                    List<String> activeNodes = new ArrayList<String>();
+                    for (NodeInstanceLog l : logs) {
+                        String nodeName = l.getNodeName();
+                        if (l.getType() == NodeInstanceLog.TYPE_ENTER && names.contains(nodeName)) {
+                            activeNodes.add(nodeName);
+                        }
+                        if (l.getType() == NodeInstanceLog.TYPE_EXIT && names.contains(nodeName)) {
+                            activeNodes.remove(nodeName);
+                        }
+                    }
+                    names.removeAll(activeNodes);
+                }
+            } else {
+                assertNodeActive((WorkflowProcessInstance) processInstance, names);
+            }
         }
         if (!names.isEmpty()) {
             String s = names.get(0);
@@ -717,6 +746,17 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
                 logger.clear();
             }
         }
+    }
+    
+    protected void abortProcessInstances(KieSession ksession) {
+        if (sessionPersistence) {
+            try {
+                logService.findActiveProcessInstances().forEach(pi -> ksession.abortProcessInstance(pi.getId()));
+                
+            } catch(Exception e) {
+                
+            }
+        } 
     }
 
     public void assertProcessVarExists(ProcessInstance process,
@@ -903,6 +943,7 @@ public abstract class JbpmBpmn2TestCase extends AbstractBaseTest {
             }
         }
 
+        @Override
         public synchronized void finalize() throws Throwable {
             stop();
             super.finalize();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss by Red Hat.
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ public class TaskRuleServiceImpl implements TaskRuleService {
                 session.insert(params);
             }
             session.fireAllRules();
+            session.dispose();
 
             if (!request.isAllowed()) {
                 StringBuilder error = new StringBuilder("Cannot perform operation " + scope + " :\n");

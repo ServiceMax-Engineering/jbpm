@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss Inc
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,13 +77,16 @@ public class DeploymentSynchronizer implements DeploymentEventListener {
 			Collection<DeploymentUnit> disabledSet = new HashSet<DeploymentUnit>();
 			Collection<DeploymentUnit> activatedSet = new HashSet<DeploymentUnit>();
 			Collection<DeploymentUnit> deactivatedSet = new HashSet<DeploymentUnit>();
+			Date timeOfSync = new Date();
 			if (lastSync == null) {
 				// initial load
 				enabledSet = deploymentStore.getEnabledDeploymentUnits();
-				deactivatedSet = deploymentStore.getDeactivatedDeploymentUnits();
-			} else {
+				deactivatedSet = deploymentStore.getDeactivatedDeploymentUnits();				
+			} else {				
 				deploymentStore.getDeploymentUnitsByDate(lastSync, enabledSet, disabledSet, activatedSet, deactivatedSet);
 			}
+			// update last sync date with time taken just before the query time
+			this.lastSync = timeOfSync;
 
 			logger.debug("About to synchronize deployment units, found new enabled {}, found new disabled {}", enabledSet, disabledSet);
 			if (enabledSet != null) {
@@ -137,9 +140,7 @@ public class DeploymentSynchronizer implements DeploymentEventListener {
 			}
 		} catch (Throwable e) {
 			logger.error("Error while synchronizing deployments: {}", e.getMessage(), e);
-		}
-		// update last sync date
-		this.lastSync = new Date();
+		}		
 	}
 
 	@Override
@@ -148,7 +149,7 @@ public class DeploymentSynchronizer implements DeploymentEventListener {
 			return;
 		}
 		DeploymentUnit unit = event.getDeployedUnit().getDeploymentUnit();
-		if (!entries.containsKey(unit.getIdentifier())) {
+		if (!entries.containsKey(unit.getIdentifier()) && event.getDeployedUnit().isActive()) {
 
 			try {
 				deploymentStore.enableDeploymentUnit(unit);
@@ -215,4 +216,7 @@ public class DeploymentSynchronizer implements DeploymentEventListener {
         return false;
     }
 
+    public void clear() {
+        this.entries.clear();
+    }
 }

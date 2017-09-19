@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,22 @@ public class RuntimeManagerFactoryImpl implements RuntimeManagerFactory {
         TaskServiceFactory taskServiceFactory = getTaskServiceFactory(environment);
 
         RuntimeManager manager = new PerProcessInstanceRuntimeManager(environment, factory, taskServiceFactory, identifier);
+        initTimerService(environment, manager);
+        ((AbstractRuntimeManager) manager).init();
+        return manager;
+    }
+    
+    @Override
+    public RuntimeManager newPerCaseRuntimeManager(RuntimeEnvironment environment) {
+
+        return newPerCaseRuntimeManager(environment, "default-per-case");
+    }
+    
+    public RuntimeManager newPerCaseRuntimeManager(RuntimeEnvironment environment, String identifier) {
+        SessionFactory factory = getSessionFactory(environment);
+        TaskServiceFactory taskServiceFactory = getTaskServiceFactory(environment);
+
+        RuntimeManager manager = new PerCaseRuntimeManager(environment, factory, taskServiceFactory, identifier);
         initTimerService(environment, manager);
         ((AbstractRuntimeManager) manager).init();
         return manager;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 
 package org.jbpm.services.task.impl.model;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.kie.internal.task.api.model.AccessType;
 
@@ -50,6 +53,13 @@ public class ContentDataImpl implements org.kie.internal.task.api.model.ContentD
 
 	public void setContent(byte[] content) {
 		this.content = content;
+	}
+	
+	public Object getContentObject() {
+		return null;
+	}
+	
+	public void setContentObject(Object object) {
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {

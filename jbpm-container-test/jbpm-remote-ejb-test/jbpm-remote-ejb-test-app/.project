@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+  <name>jbpm-remote-ejb-test-app</name>
+  <comment>Test suite for jBPM Remote EJB. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
+  <projects>
+    <project>jbpm-remote-ejb-test-domain</project>
+    <project>jbpm-services-api</project>
+    <project>jbpm-services-ejb-api</project>
+    <project>jbpm-services-ejb-impl</project>
+    <project>jbpm-audit</project>
+    <project>jbpm-flow</project>
+    <project>jbpm-services-ejb-timer</project>
+    <project>jbpm-persistence-jpa</project>
+    <project>jbpm-persistence-api</project>
+    <project>jbpm-runtime-manager</project>
+    <project>jbpm-bpmn2</project>
+    <project>jbpm-flow-builder</project>
+    <project>jbpm-human-task-core</project>
+    <project>jbpm-human-task-workitems</project>
+    <project>jbpm-human-task-audit</project>
+    <project>jbpm-human-task-jpa</project>
+    <project>jbpm-executor</project>
+    <project>jbpm-kie-services</project>
+    <project>jbpm-shared-services</project>
+    <project>jbpm-workitems-core</project>
+    <project>jbpm-workitems-rest</project>
+    <project>jbpm-workitems-webservice</project>
+    <project>jbpm-workitems-bpmn2</project>
+  </projects>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
+</projectDescription>

@@ -1,11 +1,11 @@
-/**
- * Copyright 2010 JBoss Inc
+/*
+ * Copyright 2017 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 
 package org.jbpm.bpmn2.xml;
 
@@ -37,6 +38,9 @@ import org.xml.sax.SAXException;
 
 public class BusinessRuleTaskHandler extends AbstractNodeHandler {
 	
+    private static final String NAMESPACE_PROP = "namespace";
+    private static final String MODEL_PROP = "model";
+    private static final String DECISION_PROP = "decision";
 	private DataTransformerRegistry transformerRegistry = DataTransformerRegistry.get();
     
     protected Node createNode(Attributes attrs) {
@@ -56,6 +60,12 @@ public class BusinessRuleTaskHandler extends AbstractNodeHandler {
 		if (ruleFlowGroup != null) {
 			ruleSetNode.setRuleFlowGroup(ruleFlowGroup);
 		}
+		String language = element.getAttribute("implementation");
+		if (language == null || language.equalsIgnoreCase("##unspecified") || language.isEmpty()) {
+		    language = RuleSetNode.DRL_LANG;
+		}
+		ruleSetNode.setLanguage(language);
+		
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
             String nodeName = xmlNode.getNodeName();
@@ -68,6 +78,9 @@ public class BusinessRuleTaskHandler extends AbstractNodeHandler {
             }
             xmlNode = xmlNode.getNextSibling();
         }
+		ruleSetNode.setNamespace((String) ruleSetNode.removeParameter(NAMESPACE_PROP));
+		ruleSetNode.setModel((String) ruleSetNode.removeParameter(MODEL_PROP));
+		ruleSetNode.setDecision((String) ruleSetNode.removeParameter(DECISION_PROP));
 		
         handleScript(ruleSetNode, element, "onEntry");
         handleScript(ruleSetNode, element, "onExit");
@@ -77,8 +90,11 @@ public class BusinessRuleTaskHandler extends AbstractNodeHandler {
 		RuleSetNode ruleSetNode = (RuleSetNode) node;
 		writeNode("businessRuleTask", ruleSetNode, xmlDump, metaDataType);
 		if (ruleSetNode.getRuleFlowGroup() != null) {
-			xmlDump.append("g:ruleFlowGroup=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(ruleSetNode.getRuleFlowGroup()) + "\" >" + EOL);
+			xmlDump.append("g:ruleFlowGroup=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(ruleSetNode.getRuleFlowGroup()) + "\" " + EOL);
 		}
+		
+        xmlDump.append(" implementation=\"" + XmlBPMNProcessDumper.replaceIllegalCharsAttribute(ruleSetNode.getLanguage()) + "\" >" + EOL);        
+		
 		writeExtensionElements(ruleSetNode, xmlDump);
 		writeIO(ruleSetNode, xmlDump);
 		endNode("businessRuleTask", xmlDump);

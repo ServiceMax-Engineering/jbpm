@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
+import org.jbpm.kie.services.impl.FormManagerService;
 import org.jbpm.kie.services.impl.KModuleDeploymentService;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.process.audit.event.AuditEventBuilder;
@@ -44,6 +45,7 @@ import org.jbpm.services.cdi.impl.manager.InjectableRegisterableItemsFactory;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.manager.RegisterableItemsFactory;
 import org.kie.api.runtime.manager.RuntimeManagerFactory;
+import org.kie.api.executor.ExecutorService;
 import org.kie.internal.identity.IdentityProvider;
 
 @ApplicationScoped
@@ -143,8 +145,21 @@ public class DeploymentServiceCDIImpl extends KModuleDeploymentService {
 
 		super.setIdentityProvider(new IdentityProviderCDIWrapper(identityProvider, backupProviders));
 	}
-	
+        
+    @Inject
 	@Override
+	public void setFormManagerService(FormManagerService formManagerService) {
+		super.setFormManagerService(formManagerService);
+	}
+	
+    @Inject	
+    public void setExecutorService(Instance<ExecutorService> executorService) {
+        if (!executorService.isUnsatisfied()) {
+            super.setExecutorService(executorService.get());
+        }
+    }
+
+    @Override
 	protected RegisterableItemsFactory getRegisterableItemsFactory(AuditEventBuilder auditLoggerBuilder, KieContainer kieContainer,
 			KModuleDeploymentUnit unit) {
         

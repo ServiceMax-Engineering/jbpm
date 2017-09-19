@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.marshalling.impl;
 
 import java.io.IOException;
@@ -36,6 +51,12 @@ import com.google.protobuf.ExtensionRegistry;
 public class ProtobufProcessMarshaller
         implements
         ProcessMarshaller {
+	
+	private static boolean persistWorkItemVars = Boolean.parseBoolean(System.getProperty("org.jbpm.wi.variable.persist", "true"));
+	// mainly for testability as the setting is global
+	public static void setWorkItemVarsPersistence(boolean turnOn) {
+		persistWorkItemVars = turnOn;
+	}
 
     public void writeProcessInstances(MarshallerWriteContext context) throws IOException {
         ProtobufMessages.ProcessData.Builder _pdata = (ProtobufMessages.ProcessData.Builder) context.parameterObject;
@@ -335,7 +356,7 @@ public class ProtobufProcessMarshaller
     @Override
     public void writeWorkItem(MarshallerWriteContext context, org.drools.core.process.instance.WorkItem workItem) {
         try {
-            JBPMMessages.WorkItem _workItem = writeWorkItem(context, workItem, true);        
+            JBPMMessages.WorkItem _workItem = writeWorkItem(context, workItem, persistWorkItemVars);        
             PersisterHelper.writeToStreamWithHeader( context, _workItem );
         } catch (IOException e) {
             throw new IllegalArgumentException( "IOException while storing work item instance "
@@ -349,7 +370,7 @@ public class ProtobufProcessMarshaller
             ExtensionRegistry registry = PersisterHelper.buildRegistry(context, null);
             Header _header = PersisterHelper.readFromStreamWithHeaderPreloaded(context, registry);
             JBPMMessages.WorkItem _workItem = JBPMMessages.WorkItem.parseFrom(_header.getPayload(), registry); 
-            return (org.drools.core.process.instance.WorkItem) readWorkItem(context, _workItem, true);
+            return (org.drools.core.process.instance.WorkItem) readWorkItem(context, _workItem, persistWorkItemVars);
         } catch (IOException e) {
             throw new IllegalArgumentException( "IOException while fetching work item instance : " + e.getMessage(), e );
         } catch (ClassNotFoundException e) {

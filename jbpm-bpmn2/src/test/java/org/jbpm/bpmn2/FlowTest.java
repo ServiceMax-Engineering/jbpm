@@ -1,5 +1,5 @@
 /*
-Copyright 2013 JBoss Inc
+Copyright 2013 Red Hat, Inc. and/or its affiliates.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,23 +15,13 @@ limitations under the License.*/
 
 package org.jbpm.bpmn2;
 
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.drools.core.command.impl.GenericCommand;
-import org.drools.core.command.impl.KnowledgeCommandContext;
+import org.drools.core.command.impl.ExecutableCommand;
+import org.drools.core.command.impl.RegistryContext;
 import org.jbpm.bpmn2.objects.TestWorkItemHandler;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
+import org.jbpm.test.util.CountDownProcessEventListener;
 import org.jbpm.workflow.instance.impl.NodeInstanceImpl;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.jbpm.workflow.instance.node.CompositeContextNodeInstance;
@@ -53,12 +43,22 @@ import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.process.WorkItemManager;
 import org.kie.api.runtime.process.WorkflowProcessInstance;
-import org.kie.internal.command.Context;
+import org.kie.api.runtime.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(Parameterized.class)
 public class FlowTest extends JbpmBpmn2TestCase {
@@ -80,6 +80,7 @@ public class FlowTest extends JbpmBpmn2TestCase {
     @BeforeClass
     public static void setup() throws Exception {
         setUpDataSource();
+        VariableScope.setVariableStrictOption(true);
     }
 
     @After
@@ -454,10 +455,12 @@ public class FlowTest extends JbpmBpmn2TestCase {
 
     }
 
-    @Test
+    @Test(timeout=10000)
     public void testInclusiveSplitAndJoinWithTimer() throws Exception {
+        CountDownProcessEventListener countDownListener = new CountDownProcessEventListener("timer", 2);
         KieBase kbase = createKnowledgeBase("BPMN2-InclusiveSplitAndJoinWithTimer.bpmn2");
         ksession = createKnowledgeSession(kbase);
+        ksession.addEventListener(countDownListener);
         TestWorkItemHandler workItemHandler = new TestWorkItemHandler();
         ksession.getWorkItemManager().registerWorkItemHandler("Human Task",
                 workItemHandler);
@@ -471,7 +474,8 @@ public class FlowTest extends JbpmBpmn2TestCase {
         assertEquals(1, activeWorkItems.size());
         ksession.getWorkItemManager().completeWorkItem(
                 activeWorkItems.get(0).getId(), null);
-        Thread.sleep(3000);
+        
+        countDownListener.waitTillCompleted();
         assertProcessInstanceActive(processInstance);
 
         activeWorkItems = workItemHandler.getWorkItems();
@@ -1117,9 +1121,45 @@ public class FlowTest extends JbpmBpmn2TestCase {
         ProcessInstance processInstance = ksession.startProcess(
                 "MultiInstanceLoopCharacteristicsProcess", params);
         assertProcessInstanceCompleted(processInstance);
-
     }
     
+    @Test
+    public void testMultiInstanceLoopNumberTest() throws Exception {
+        KieBase kbase = createKnowledgeBase("BPMN2-MultiInstanceLoop-Numbering.bpmn2");
+        ksession = createKnowledgeSession(kbase);
+        Map<String, Object> params = new HashMap<String, Object>();
+        
+        final Map<String, String> nodeIdNodeNameMap = new HashMap<String, String>();
+        ksession.addEventListener(new DefaultProcessEventListener() {
+
+            @Override
+            public void beforeNodeTriggered(ProcessNodeTriggeredEvent event) {
+                NodeInstance nodeInstance = event.getNodeInstance();
+                String uniqId = ((NodeInstanceImpl) nodeInstance).getUniqueId();
+                String nodeName = ((NodeInstanceImpl) nodeInstance).getNode().getName();
+                
+                String prevNodeName = nodeIdNodeNameMap.put( uniqId, nodeName );
+                if( prevNodeName != null ) { 
+                    assertEquals(uniqId + " is used for more than one node instance: ", prevNodeName, nodeName);
+                }
+            }
+
+        });
+        
+        TestWorkItemHandler handler = new TestWorkItemHandler();
+        ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
+        
+        ProcessInstance processInstance = ksession.startProcess("Test.MultipleInstancesBug", params);
+       
+        List<WorkItem> workItems = handler.getWorkItems();
+        logger.debug( "COMPLETING TASKS.");
+        ksession.getWorkItemManager().completeWorkItem(workItems.remove(0).getId(), null);
+        ksession.getWorkItemManager().completeWorkItem(workItems.remove(0).getId(), null);
+        
+        assertProcessInstanceCompleted(processInstance);
+
+    }
+
     @Test
     public void testMultiInstanceLoopCharacteristicsProcess2() throws Exception {
         KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultiInstanceProcessWithOutputOnTask.bpmn2");
@@ -1186,6 +1226,26 @@ public class FlowTest extends JbpmBpmn2TestCase {
     }
     
     @Test
+    public void testMultiInstanceLoopCharacteristicsProcessWithOutputCompletionCondition()
+            throws Exception {
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultiInstanceLoopCharacteristicsProcessWithOutputCmpCond.bpmn2");
+        ksession = createKnowledgeSession(kbase);
+        Map<String, Object> params = new HashMap<String, Object>();
+        List<String> myList = new ArrayList<String>();
+        List<String> myListOut = new ArrayList<String>();
+        myList.add("First Item");
+        myList.add("Second Item");
+        params.put("list", myList);
+        params.put("listOut", myListOut);
+        assertEquals(0, myListOut.size());
+        ProcessInstance processInstance = ksession.startProcess(
+                "MultiInstanceLoopCharacteristicsProcessWithOutput", params);
+        assertProcessInstanceCompleted(processInstance);
+        assertEquals(1, myListOut.size());
+
+    }
+    
+    @Test
     public void testMultiInstanceLoopCharacteristicsProcessWithOutputAndScripts()
             throws Exception {
         KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultiInstanceLoopCharacteristicsProcessWithOutputAndScripts.bpmn2");
@@ -1228,6 +1288,55 @@ public class FlowTest extends JbpmBpmn2TestCase {
         assertEquals(2, myListOut.size());
 
     }
+    
+    @Test
+    public void testMultiInstanceLoopCharacteristicsTaskWithOutputCompletionCondition()
+            throws Exception {
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultiInstanceLoopCharacteristicsTaskWithOutputCmpCond.bpmn2");
+        ksession = createKnowledgeSession(kbase);
+        ksession.getWorkItemManager().registerWorkItemHandler("Human Task",
+                new SystemOutWorkItemHandler());
+        Map<String, Object> params = new HashMap<String, Object>();
+        List<String> myList = new ArrayList<String>();
+        List<String> myListOut = new ArrayList<String>();
+        myList.add("First Item");
+        myList.add("Second Item");
+        params.put("list", myList);
+        params.put("listOut", myListOut);
+        assertEquals(0, myListOut.size());
+        ProcessInstance processInstance = ksession.startProcess(
+                "MultiInstanceLoopCharacteristicsTask", params);
+        assertProcessInstanceCompleted(processInstance);
+        assertEquals(1, myListOut.size());
+
+    }
+    
+    @Test
+    public void testMultiInstanceLoopCharacteristicsTaskWithOutputCompletionCondition2()
+            throws Exception {
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultiInstanceLoopCharacteristicsTaskWithOutputCmpCond2.bpmn2");
+        ksession = createKnowledgeSession(kbase);
+        ksession.getWorkItemManager().registerWorkItemHandler("Human Task",
+                new SystemOutWorkItemHandler());
+        Map<String, Object> params = new HashMap<String, Object>();
+        List<String> myList = new ArrayList<String>();
+        List<String> myListOut = new ArrayList<String>();
+        myList.add("approved");
+        myList.add("rejected");
+        myList.add("approved");
+        myList.add("approved");
+        myList.add("rejected");
+        params.put("list", myList);
+        params.put("listOut", myListOut);
+        assertEquals(0, myListOut.size());
+        ProcessInstance processInstance = ksession.startProcess(
+                "MultiInstanceLoopCharacteristicsTask", params);
+        assertProcessInstanceCompleted(processInstance);
+        // only two approved outcomes are required to complete multiinstance and since there was reject in between we should have
+        // three elements in the list
+        assertEquals(3, myListOut.size());
+
+    }
 
     @Test
     public void testMultiInstanceLoopCharacteristicsTask() throws Exception {
@@ -1248,21 +1357,21 @@ public class FlowTest extends JbpmBpmn2TestCase {
 
     @Test
     public void testMultipleInOutgoingSequenceFlows() throws Exception {
+        CountDownProcessEventListener countDownListener = new CountDownProcessEventListener("timer", 1);
         System.setProperty("jbpm.enable.multi.con", "true");
         KieBase kbase = createKnowledgeBase("BPMN2-MultipleInOutgoingSequenceFlows.bpmn2");
         ksession = createKnowledgeSession(kbase);
-
+        ksession.addEventListener(countDownListener);
         final List<Long> list = new ArrayList<Long>();
         ksession.addEventListener(new DefaultProcessEventListener() {
-            public void afterProcessStarted(ProcessStartedEvent event) {
+            public void beforeProcessStarted(ProcessStartedEvent event) {
                 list.add(event.getProcessInstance().getId());
             }
         });
 
         assertEquals(0, list.size());
 
-        
-        Thread.sleep(1500);
+        countDownListener.waitTillCompleted();
 
         assertEquals(1, list.size());
         System.clearProperty("jbpm.enable.multi.con");
@@ -1407,9 +1516,10 @@ public class FlowTest extends JbpmBpmn2TestCase {
     
     @Test
     public void testTimerAndGateway() throws Exception {
-        
+        CountDownProcessEventListener countDownListener = new CountDownProcessEventListener("timer", 1);
         KieBase kbase = createKnowledgeBase("timer/BPMN2-ParallelSplitWithTimerProcess.bpmn2");
         ksession = createKnowledgeSession(kbase);
+        ksession.addEventListener(countDownListener);
         
         TestWorkItemHandler handler1 = new TestWorkItemHandler();
         TestWorkItemHandler handler2 = new TestWorkItemHandler();
@@ -1427,10 +1537,11 @@ public class FlowTest extends JbpmBpmn2TestCase {
         ksession.getWorkItemManager().completeWorkItem(workItem1.getId(), null);        
         
         ksession = restoreSession(ksession, true);
+        ksession.addEventListener(countDownListener);
         ksession.getWorkItemManager().registerWorkItemHandler("task1", handler1);
         ksession.getWorkItemManager().registerWorkItemHandler("task2", handler2);
         //second safe state: timer completed, waiting on task2
-        Thread.sleep(3000);
+        countDownListener.waitTillCompleted();
 
         WorkItem workItem2 = handler2.getWorkItem();
                 //Both sides of the join are completed. But on the process instance, there are two
@@ -1444,7 +1555,7 @@ public class FlowTest extends JbpmBpmn2TestCase {
         assertProcessInstanceCompleted(instance);
     }
 
-    private static class GetProcessVariableCommand implements GenericCommand<Object> {
+    private static class GetProcessVariableCommand implements ExecutableCommand<Object> {
 
         private long processInstanceId;
         private String variableName;
@@ -1456,9 +1567,8 @@ public class FlowTest extends JbpmBpmn2TestCase {
         }
 
 
-        @Override
         public Object execute(Context context) {
-            KieSession ksession = ((KnowledgeCommandContext) context).getKieSession();
+            KieSession ksession = ((RegistryContext) context).lookup( KieSession.class );
 
             org.jbpm.process.instance.ProcessInstance processInstance = 
                     (org.jbpm.process.instance.ProcessInstance) ksession.getProcessInstance(processInstanceId);

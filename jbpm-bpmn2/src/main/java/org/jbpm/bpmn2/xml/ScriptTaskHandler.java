@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ public class ScriptTaskHandler extends AbstractNodeHandler {
 		String language = element.getAttribute("scriptFormat");
 		if (XmlBPMNProcessDumper.JAVA_LANGUAGE.equals(language)) {
 			action.setDialect(JavaDialect.ID);
+		} else if (XmlBPMNProcessDumper.JAVASCRIPT_LANGUAGE.equals(language)) {
+		    action.setDialect("JavaScript");
 		}
 		action.setConsequence("");
         org.w3c.dom.Node xmlNode = element.getFirstChild();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss by Red Hat.
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import java.util.TreeSet;
 
 import javax.persistence.EntityManagerFactory;
 
-import org.drools.core.command.Interceptor;
 import org.drools.core.impl.EnvironmentFactory;
+import org.drools.core.runtime.ChainableRunner;
+import org.jbpm.services.task.assignment.AssignmentServiceProvider;
+import org.jbpm.services.task.assignment.impl.AssignmentTaskEventListener;
 import org.jbpm.services.task.commands.TaskCommandExecutorImpl;
 import org.jbpm.services.task.events.TaskEventSupport;
 import org.jbpm.services.task.identity.DefaultUserInfo;
@@ -62,6 +64,8 @@ public class HumanTaskConfigurator {
 	
 	private static final String DEFAULT_INTERCEPTOR = "org.jbpm.services.task.persistence.TaskTransactionInterceptor";
 	private static final String TX_LOCK_INTERCEPTOR = "org.drools.persistence.jta.TransactionLockInterceptor";
+	private static final String OPTIMISTIC_LOCK_INTERCEPTOR = "org.drools.persistence.jpa.OptimisticLockRetryInterceptor";
+	private static final String ERROR_HANDLING_INTERCEPTOR = "org.jbpm.runtime.manager.impl.error.ExecutionErrorHandlerInterceptor";
 
     private TaskService service;
     private TaskCommandExecutorImpl commandExecutor;
@@ -73,7 +77,7 @@ public class HumanTaskConfigurator {
     private Set<PriorityInterceptor> interceptors = new TreeSet<PriorityInterceptor>();
     private Set<TaskLifeCycleEventListener> listeners = new HashSet<TaskLifeCycleEventListener>();
     
-    public HumanTaskConfigurator interceptor(int priority, Interceptor interceptor) {
+    public HumanTaskConfigurator interceptor(int priority, ChainableRunner interceptor ) {
     	if (interceptor == null) {
             return this;
         }
@@ -138,9 +142,11 @@ public class HumanTaskConfigurator {
         	if (userInfo == null) {
         		userInfo = new DefaultUserInfo(true);
         	}
-        	environment.set(EnvironmentName.TASK_USER_INFO, userInfo);
-        	addDefaultInterceptor();
+        	environment.set(EnvironmentName.TASK_USER_INFO, userInfo);        	
+        	addDefaultInterceptor();        	
         	addTransactionLockInterceptor();
+        	addOptimisticLockInterceptor();
+        	addErrorHandlingInterceptor();
         	for (PriorityInterceptor pInterceptor : interceptors) {
         		this.commandExecutor.addInterceptor(pInterceptor.getInterceptor());
         	}        	
@@ -150,6 +156,10 @@ public class HumanTaskConfigurator {
             for (TaskLifeCycleEventListener listener : listeners) {
             	((EventService<TaskLifeCycleEventListener>) service).registerTaskEventListener(listener);
             }
+            if (AssignmentServiceProvider.get().isEnabled()) {
+                ((EventService<TaskLifeCycleEventListener>) service).registerTaskEventListener(new AssignmentTaskEventListener());
+            }
+            
             // initialize deadline service with command executor for processing
             if (TaskDeadlinesServiceImpl.getInstance() == null) {
             	TaskDeadlinesServiceImpl.initialize(commandExecutor);
@@ -162,10 +172,10 @@ public class HumanTaskConfigurator {
 	protected void addDefaultInterceptor() {
     	// add default interceptor if present
     	try {
-    		Class<Interceptor> defaultInterceptorClass = (Class<Interceptor>) Class.forName(DEFAULT_INTERCEPTOR);
-    		Constructor<Interceptor> constructor = defaultInterceptorClass.getConstructor(new Class[] {Environment.class});
-    		
-    		Interceptor defaultInterceptor = constructor.newInstance(this.environment);
+    		Class<ChainableRunner> defaultInterceptorClass = (Class<ChainableRunner>) Class.forName(DEFAULT_INTERCEPTOR);
+    		Constructor<ChainableRunner> constructor = defaultInterceptorClass.getConstructor(new Class[] {Environment.class});
+
+			ChainableRunner defaultInterceptor = constructor.newInstance(this.environment);
     		interceptor(5, defaultInterceptor);
     	} catch (Exception e) {
     		logger.warn("No default interceptor found of type {} might be mssing jbpm-human-task-jpa module on classpath (error {}",
@@ -177,22 +187,52 @@ public class HumanTaskConfigurator {
 	protected void addTransactionLockInterceptor() {
     	// add default interceptor if present
     	try {
-    		Class<Interceptor> defaultInterceptorClass = (Class<Interceptor>) Class.forName(TX_LOCK_INTERCEPTOR);
-    		Constructor<Interceptor> constructor = defaultInterceptorClass.getConstructor(new Class[] {Environment.class, String.class});
-    		
-    		Interceptor defaultInterceptor = constructor.newInstance(this.environment, "task-service-tx-unlock");
+    		Class<ChainableRunner> defaultInterceptorClass = (Class<ChainableRunner>) Class.forName(TX_LOCK_INTERCEPTOR);
+    		Constructor<ChainableRunner> constructor = defaultInterceptorClass.getConstructor(new Class[] {Environment.class, String.class});
+
+			ChainableRunner defaultInterceptor = constructor.newInstance(this.environment, "task-service-tx-unlock");
     		interceptor(6, defaultInterceptor);
     	} catch (Exception e) {
     		logger.warn("No tx lock interceptor found of type {} might be mssing drools-persistence-jpa module on classpath (error {}",
-    				DEFAULT_INTERCEPTOR, e.getMessage(), e);
+    				TX_LOCK_INTERCEPTOR, e.getMessage(), e);
     	}
+    }
+    
+    @SuppressWarnings("unchecked")
+	protected void addOptimisticLockInterceptor() {
+    	// add default interceptor if present
+    	try {
+    		Class<ChainableRunner> defaultInterceptorClass = (Class<ChainableRunner>) Class.forName(OPTIMISTIC_LOCK_INTERCEPTOR);
+    		Constructor<ChainableRunner> constructor = defaultInterceptorClass.getConstructor(new Class[] {});
+
+			ChainableRunner defaultInterceptor = constructor.newInstance();
+    		interceptor(7, defaultInterceptor);
+    	} catch (Exception e) {
+    		logger.warn("No optimistic lock interceptor found of type {} might be mssing drools-persistence-jpa module on classpath (error {}",
+    				OPTIMISTIC_LOCK_INTERCEPTOR, e.getMessage(), e);
+    	}
+    }
+    
+    @SuppressWarnings("unchecked")
+    protected void addErrorHandlingInterceptor() {
+        // add error handling interceptor if present
+        try {
+            Class<ChainableRunner> defaultInterceptorClass = (Class<ChainableRunner>) Class.forName(ERROR_HANDLING_INTERCEPTOR);
+            Constructor<ChainableRunner> constructor = defaultInterceptorClass.getConstructor(new Class[] {Environment.class});
+
+            ChainableRunner defaultInterceptor = constructor.newInstance(this.environment);
+            interceptor(8, defaultInterceptor);
+        } catch (Exception e) {
+            logger.debug("No error handling interceptor found of type {} might be missing jbpm-runtime-manager module on classpath (error {}",
+                    ERROR_HANDLING_INTERCEPTOR, e.getMessage(), e);
+        }
     }
    
     private static class PriorityInterceptor implements Comparable<PriorityInterceptor> {
     	private Integer priority;
-    	private Interceptor interceptor;
+    	private ChainableRunner interceptor;
     	
-    	PriorityInterceptor(Integer priority, Interceptor interceptor) {
+    	PriorityInterceptor(Integer priority, ChainableRunner interceptor) {
     		this.priority = priority;
     		this.interceptor = interceptor;
     	}
@@ -201,13 +241,19 @@ public class HumanTaskConfigurator {
 			return priority;
 		}
 
-		public Interceptor getInterceptor() {
+		public ChainableRunner getInterceptor() {
 			return interceptor;
 		}
 
 		@Override
 		public int compareTo(PriorityInterceptor other) {
 			return this.getPriority().compareTo(other.getPriority());
+		}
+
+		@Override
+		public String toString() {
+			return "PriorityInterceptor [priority=" + priority
+					+ ", interceptor=" + interceptor + "]";
 		}
     }
 }

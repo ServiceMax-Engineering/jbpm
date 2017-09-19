@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss by Red Hat.
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class ExecutorRunnable implements Runnable {
     		
     		this.availableJobsExecutor.executeJob();
     	} catch (Exception e) {
-    		logger.warn("Error while executing jobs due to {}", e.getMessage());
+    		logger.warn("Error while executing jobs due to {}", e.getMessage(), e);
     	}
     }
     

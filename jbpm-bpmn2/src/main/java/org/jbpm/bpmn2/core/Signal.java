@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,23 @@ package org.jbpm.bpmn2.core;
 import java.io.Serializable;
 
 public class Signal implements Serializable {
-    
+
 	private static final long serialVersionUID = 510l;
-	
+
     private String id;
     private String name;
     private String structureRef;
-    
+
     public Signal(String id, String structureRef) {
         this.id = id;
         this.structureRef = structureRef;
     }
-    
-    public Signal(String id, String structureRef, String name) {
-        this.id = id;
+
+    public Signal(String id, String name, String structureRef) {
+        this(id, structureRef);
         this.name = name;
-        this.structureRef = structureRef;
     }
-    
+
     public String getId() {
         return id;
     }

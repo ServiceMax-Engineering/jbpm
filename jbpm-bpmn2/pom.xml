@@ -5,18 +5,20 @@
   <parent>
     <groupId>org.jbpm</groupId>
     <artifactId>jbpm</artifactId>
-    <version>6.2.0.009</version>
+    <version>7.3.0.001</version>
   </parent>
 
   <artifactId>jbpm-bpmn2</artifactId>
+  <version>7.3.0.001</version>
   <packaging>bundle</packaging>
   <!-- bundle = jar + OSGi metadata -->
 
   <name>jBPM :: BPMN2</name>
   <description>jBPM BPMN2</description>
   
-  <properties>    
-    <maven.jdbc.url>jdbc:h2:tcp://localhost/target/jbpm-bpmn-db</maven.jdbc.url>
+  <properties>
+    <osgi.Bundle-SymbolicName>org.jbpm.bpmn2</osgi.Bundle-SymbolicName>
+    <maven.jdbc.url>jdbc:h2:tcp://localhost/target/jbpm-bpmn-db;MVCC=TRUE</maven.jdbc.url>
   </properties>
 
   <dependencies>
@@ -66,8 +68,14 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+ 
     
     <!-- Test -->
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-test-util</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -76,6 +84,11 @@
     <dependency>
       <groupId>xmlunit</groupId>
       <artifactId>xmlunit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-dmn-core</artifactId>
       <scope>test</scope>
     </dependency>
     
@@ -93,12 +106,12 @@
     </dependency>
     <dependency>
       <groupId>org.hibernate.javax.persistence</groupId>
-      <artifactId>hibernate-jpa-2.0-api</artifactId>
+      <artifactId>hibernate-jpa-2.1-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.jboss.spec.javax.transaction</groupId>
-      <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+      <artifactId>jboss-transaction-api_1.2_spec</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -112,13 +125,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.btm</groupId>
-      <artifactId>btm</artifactId>
+      <groupId>org.jboss.narayana.jta</groupId>
+      <artifactId>narayana-jta</artifactId>
       <scope>test</scope>
     </dependency>
     
     <!-- test other -->
-    <dependency>
+   <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-audit</artifactId>
       <scope>test</scope>
@@ -143,7 +156,6 @@
 
     
   <build>
-
     <resources>
       <resource>
         <directory>src/main/resources</directory>
@@ -171,11 +183,6 @@
         <configuration>
 <manifestLocation>META-INF</manifestLocation>
           <instructions>
-            <Import-Package>
-                org.drools.compiler.rule.builder.dialect.java,
-                *
-            </Import-Package>
-            <Bundle-SymbolicName>org.jbpm.bpmn2</Bundle-SymbolicName>
             <Bundle-Activator>org.jbpm.osgi.bpmn2.Activator</Bundle-Activator>
             <Import-Package>
               !org.jbpm.compiler
@@ -211,7 +218,7 @@
         <configuration>
           <systemProperties>
             <!-- enforce strict variable checking for the sake of tests -->
-            <org.jbpm.variable.strict>true </org.jbpm.variable.strict>
+            <org.jbpm.variable.strict>true</org.jbpm.variable.strict>
           </systemProperties>
         </configuration>
       </plugin>

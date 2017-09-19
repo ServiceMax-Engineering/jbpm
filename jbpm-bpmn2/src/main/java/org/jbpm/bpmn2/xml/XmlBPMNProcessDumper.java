@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import java.util.Set;
 
 import org.drools.compiler.compiler.xml.XmlDumper;
 import org.drools.compiler.rule.builder.dialect.java.JavaDialect;
-import org.drools.core.process.core.Work;
-import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+import org.jbpm.process.core.Work;
+import org.jbpm.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.core.xml.Handler;
 import org.drools.core.xml.SemanticModule;
 import org.drools.core.xml.SemanticModules;
@@ -37,7 +37,7 @@ import org.jbpm.bpmn2.core.DataStore;
 import org.jbpm.bpmn2.core.Definitions;
 import org.jbpm.bpmn2.core.Error;
 import org.jbpm.bpmn2.core.ItemDefinition;
-import org.jbpm.compiler.xml.ProcessBuildData;
+
 import org.jbpm.compiler.xml.XmlProcessReader;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.core.context.swimlane.Swimlane;
@@ -72,20 +72,20 @@ import org.kie.api.definition.process.Process;
 import org.kie.api.definition.process.WorkflowProcess;
 
 public class XmlBPMNProcessDumper implements XmlProcessDumper {
-	
+
 	public static final String JAVA_LANGUAGE = "http://www.java.com/java";
 	public static final String MVEL_LANGUAGE = "http://www.mvel.org/2.0";
 	public static final String RULE_LANGUAGE = "http://www.jboss.org/drools/rule";
     public static final String XPATH_LANGUAGE = "http://www.w3.org/1999/XPath";
-    public static final String ECMASCRIPT_DIALECT = "http://www.ecmascript.org";
-    
+    public static final String JAVASCRIPT_LANGUAGE = "http://www.javascript.com/javascript";
+
     public static final int NO_META_DATA = 0;
     public static final int META_DATA_AS_NODE_PROPERTY = 1;
     public static final int META_DATA_USING_DI = 2;
 
-    public static XmlBPMNProcessDumper INSTANCE = new XmlBPMNProcessDumper();
+	public static final XmlBPMNProcessDumper INSTANCE = new XmlBPMNProcessDumper();
 
-    private final static String EOL = System.getProperty("line.separator");
+    private final static String EOL = System.getProperty( "line.separator" );
 
     private SemanticModule semanticModule;
     private int metaDataType = META_DATA_USING_DI;
@@ -117,7 +117,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
     }
 
 	private Set<String> visitedVariables;
-	
+
 	protected void visitProcess(WorkflowProcess process, StringBuilder xmlDump, int metaDataType) {
         String targetNamespace = (String) process.getMetaData().get("TargetNamespace");
         if (targetNamespace == null) {
@@ -145,7 +145,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
     		((org.jbpm.process.core.Process) process).getDefaultContext(VariableScope.VARIABLE_SCOPE);
     	Set<String> dumpedItemDefs = new HashSet<String>();
     	Map<String, ItemDefinition> itemDefs = (Map<String, ItemDefinition>) process.getMetaData().get("ItemDefinitions");
-    	
+
     	if (itemDefs != null) {
     		for (ItemDefinition def : itemDefs.values()) {
     			xmlDump.append(
@@ -157,23 +157,23 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
                     dumpedItemDefs.add(def.getId().intern());
     		}
     	}
-    	
+
     	visitVariableScope(variableScope, "_", xmlDump, dumpedItemDefs);
     	visitSubVariableScopes(process.getNodes(), xmlDump, dumpedItemDefs);
-        
+
 	    visitInterfaces(process.getNodes(), xmlDump);
-	    
+
 	    visitEscalations(process.getNodes(), xmlDump, new ArrayList<String>());
     	Definitions def = (Definitions) process.getMetaData().get("Definitions");
 	    visitErrors(def, xmlDump);
-	       
+
 	    //data stores
     	if (def != null && def.getDataStores() != null) {
     		for (DataStore dataStore : def.getDataStores()) {
     			visitDataStore(dataStore, xmlDump);
     		}
     	}
-    	
+
 	    // the process itself
 		xmlDump.append("  <process processType=\"Private\" isExecutable=\"true\" ");
         if (process.getId() == null || process.getId().trim().length() == 0) {
@@ -212,12 +212,12 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         visitConnections(process.getNodes(), xmlDump, metaDataType);
         // add associations
         List<Association> associations = (List<Association>) process.getMetaData().get(ProcessHandler.ASSOCIATIONS);
-        if( associations != null ) {   
+        if( associations != null ) {
             for (Association association : associations ) {
                 visitAssociation(association, xmlDump);
             }
         }
-        
+
         xmlDump.append("  </process>" + EOL + EOL);
         if (metaDataType == META_DATA_USING_DI) {
             xmlDump.append("  <bpmndi:BPMNDiagram>"
@@ -241,13 +241,13 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
     		xmlDump.append("structureRef=\"" + XmlDumper.replaceIllegalChars(dataStore.getType().getStringType()) + "\" ");
     	}
     	xmlDump.append("/>" + EOL);
-    	
+
     	xmlDump.append("  <dataStore name=\"" + XmlDumper.replaceIllegalChars(dataStore.getName()) + "\"");
     	xmlDump.append(" id=\"" + XmlDumper.replaceIllegalChars(dataStore.getId()) + "\"");
     	xmlDump.append(" itemSubjectRef=\"" + XmlDumper.replaceIllegalChars(dataStore.getItemSubjectRef()) + "\"");
     	xmlDump.append("/>" + EOL);
 	}
-    
+
     public void visitAssociation(Association association, StringBuilder xmlDump) {
     	xmlDump.append("    <association id=\"" + association.getId() + "\" ");
     	xmlDump.append(" sourceRef=\"" + association.getSourceRef() + "\" ");
@@ -317,9 +317,8 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         }
     }
 
-    private void visitLane(NodeContainer container, String lane,
-            StringBuilder xmlDump) {
-        for (Node node : container.getNodes()) {
+    private void visitLane(NodeContainer container, String lane, StringBuilder xmlDump) {
+        for (Node node: container.getNodes()) {
             if (node instanceof HumanTaskNode) {
                 String swimlane = ((HumanTaskNode) node).getSwimlane();
                 if (lane.equals(swimlane)) {
@@ -340,10 +339,10 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
             }
         }
     }
-    
+
     protected void visitHeader(WorkflowProcess process, StringBuilder xmlDump, int metaDataType) {
         Map<String, Object> metaData = getMetaData(process.getMetaData());
-    	List<String> imports = ((org.jbpm.process.core.Process) process).getImports();
+    	Set<String> imports = ((org.jbpm.process.core.Process) process).getImports();
     	Map<String, String> globals = ((org.jbpm.process.core.Process) process).getGlobals();
     	if ((imports != null && !imports.isEmpty()) || (globals != null && globals.size() > 0) || !metaData.isEmpty()) {
     		xmlDump.append("    <extensionElements>" + EOL);
@@ -370,9 +369,8 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         visitLanes(process, xmlDump);
     }
 
-    public static void visitVariables(List<Variable> variables,
-            StringBuilder xmlDump) {
-        if (!variables.isEmpty()) {
+    public static void visitVariables(List<Variable> variables, StringBuilder xmlDump) {
+    	if (!variables.isEmpty()) {
             xmlDump.append("    <!-- process variables -->" + EOL);
             for (Variable variable : variables) {
                 if (variable.getMetaData("DataObject") == null) {
@@ -421,7 +419,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
             xmlDump.append(EOL);
         }
     }
-    
+
     public static Map<String, Object> getMetaData(Map<String, Object> input) {
     	Map<String, Object> metaData = new HashMap<String, Object>();
         for (Map.Entry<String, Object> entry: input.entrySet()) {
@@ -433,7 +431,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         }
         return metaData;
     }
-    
+
     public static void writeMetaData(Map<String, Object> metaData, final StringBuilder xmlDump) {
         if (!metaData.isEmpty()) {
             for (Map.Entry<String, Object> entry: metaData.entrySet()) {
@@ -443,7 +441,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
             }
         }
     }
-    
+
     protected void visitInterfaces(Node[] nodes, StringBuilder xmlDump) {
         for (Node node : nodes) {
             if (node instanceof WorkItemNode) {
@@ -631,9 +629,8 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         }
     }
 
-    protected void visitEscalations(Node[] nodes, StringBuilder xmlDump,
-            List<String> escalations) {
-        for (Node node : nodes) {
+    protected void visitEscalations(Node[] nodes, StringBuilder xmlDump, List<String> escalations) {
+        for (Node node: nodes) {
             if (node instanceof FaultNode) {
                 FaultNode faultNode = (FaultNode) node;
                 if (!faultNode.isTerminateParent()) {
@@ -686,7 +683,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
             }
         }
     }
-    
+
     protected void visitErrors(Definitions definitions, StringBuilder xmlDump) { 
         if( definitions == null ) { 
             return;
@@ -711,7 +708,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
             xmlDump.append("/>" + EOL );
         }
     }
-    
+
     public void visitNodes(List<org.jbpm.workflow.core.Node> nodes, StringBuilder xmlDump, int metaDataType) {
     	xmlDump.append("    <!-- nodes -->" + EOL);
         for (Node node: nodes) {
@@ -719,7 +716,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         }
         xmlDump.append(EOL);
     }
-    
+
     private void visitNode(Node node, StringBuilder xmlDump, int metaDataType) {
      	Handler handler = semanticModule.getHandlerByClass(node.getClass());
         if (handler != null) {
@@ -793,9 +790,8 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
 
     }
 
-    private void visitConnections(Node[] nodes, StringBuilder xmlDump,
-            int metaDataType) {
-        xmlDump.append("    <!-- connections -->" + EOL);
+    private void visitConnections(Node[] nodes, StringBuilder xmlDump, int metaDataType) {
+    	xmlDump.append("    <!-- connections -->" + EOL);
         List<Connection> connections = new ArrayList<Connection>();
         for (Node node : nodes) {
             for (List<Connection> connectionList : node
@@ -808,12 +804,12 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         }
         xmlDump.append(EOL);
     }
-    
+
     private boolean isConnectionRepresentingLinkEvent(Connection connection) {
         boolean bValue = connection.getMetaData().get("linkNodeHidden") != null;
         return bValue;
     }
-    
+
     public void visitConnection(Connection connection, StringBuilder xmlDump, int metaDataType) {
     	// if the connection was generated by a link event, don't dump.
         if (isConnectionRepresentingLinkEvent(connection)) {
@@ -824,7 +820,7 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         if( hidden != null && ((Boolean) hidden) ) { 
            return; 
         }
-    	
+
         xmlDump.append("    <sequenceFlow id=\"" +
     		getUniqueNodeId(connection.getFrom()) + "-" + 
     		getUniqueNodeId(connection.getTo()) + 
@@ -868,6 +864,8 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
                             xmlDump.append("language=\"" + JAVA_LANGUAGE + "\" ");
                         } else if ("XPath".equals(constraint.getDialect())) {
                             xmlDump.append("language=\"" + XPATH_LANGUAGE + "\" ");
+                        }  else if ("JavaScript".equals(constraint.getDialect())) {
+                            xmlDump.append("language=\"" + JAVASCRIPT_LANGUAGE + "\" ");
                         }
                     } else {
                         xmlDump.append("language=\"" + RULE_LANGUAGE + "\" ");
@@ -1024,5 +1022,4 @@ public class XmlBPMNProcessDumper implements XmlProcessDumper {
         	return null;
         }
 	}
-    
 }

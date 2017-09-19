@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package org.jbpm.process.audit;
 
-import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
+import org.drools.core.SessionConfiguration;
+import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
+import org.kie.api.KieBase;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.process.ProcessInstance;
 
 import java.util.Properties;
 
-import org.drools.core.SessionConfiguration;
-import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
-import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
+import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
 
 /**
  * This class tests the following classes:
@@ -34,19 +34,19 @@ import org.kie.internal.runtime.StatefulKnowledgeSession;
  */
 public class WorkingMemoryDbLoggerWithStatefulSessionTest extends AbstractWorkingMemoryDbLoggerTest {
 
-    private StatefulKnowledgeSession session = null;
+    private KieSession session = null;
 
     @Override
     public ProcessInstance startProcess(String processId) {
         if (session == null) {
             // load the process
-            KnowledgeBase kbase = createKnowledgeBase();
+            KieBase kbase = createKnowledgeBase();
             // create a new session
             Properties properties = new Properties();
             properties.put("drools.processInstanceManagerFactory", "org.jbpm.process.instance.impl.DefaultProcessInstanceManagerFactory");
             properties.put("drools.processSignalManagerFactory", "org.jbpm.process.instance.event.DefaultSignalManagerFactory");
-            SessionConfiguration config = new SessionConfiguration(properties);
-            session = kbase.newStatefulKnowledgeSession(config, createEnvironment(context));
+            SessionConfiguration config = SessionConfiguration.newInstance(properties);
+            session = kbase.newKieSession(config, createEnvironment(context));
             
             new JPAWorkingMemoryDbLogger(session);
             session.getWorkItemManager().registerWorkItemHandler("Human Task", new SystemOutWorkItemHandler());

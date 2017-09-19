@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss by Red Hat.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import java.util.Map;
 import org.drools.core.util.MVELSafeHelper;
 import org.jbpm.services.task.internals.lifecycle.Allowed;
 import org.jbpm.services.task.internals.lifecycle.OperationCommand;
-import org.jbpm.services.task.query.DeadlineSummaryImpl;
-import org.jbpm.services.task.query.TaskSummaryImpl;
 import org.kie.api.command.Command;
 import org.kie.api.task.model.OrganizationalEntity;
 import org.kie.api.task.model.Status;
@@ -92,8 +90,8 @@ public class MVELUtils {
                 inputs.put("OperationCommand", OperationCommand.class);
 
                 // org.drools.task.query
-                inputs.put("DeadlineSummary", DeadlineSummaryImpl.class);
-                inputs.put("TaskSummary", TaskSummaryImpl.class);
+                inputs.put("DeadlineSummary", factory.newDeadline().getClass());
+                inputs.put("TaskSummary", factory.newTaskSummary().getClass());
             }
             return inputs;
         }

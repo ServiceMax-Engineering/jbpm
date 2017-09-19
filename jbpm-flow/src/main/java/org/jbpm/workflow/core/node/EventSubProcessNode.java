@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss Inc
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jbpm.workflow.core.node;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.jbpm.process.core.event.EventTypeFilter;
 import org.jbpm.process.core.timer.Timer;
@@ -74,7 +75,21 @@ public class EventSubProcessNode extends CompositeContextNode {
                 return true;
             }
         }
-        return false;
+        return super.acceptsEvent(type, event);
+    }
+
+    @Override
+    public boolean acceptsEvent(String type, Object event, Function<String, String> resolver) {
+        if (resolver == null) {
+            return acceptsEvent(type, event);
+        }
+        
+        for( EventTypeFilter filter : this.eventTypeFilters ) { 
+            if( filter.acceptsEvent(type, event, resolver) ) { 
+                return true;
+            }
+        }
+        return super.acceptsEvent(type, event);
     }
     
 }

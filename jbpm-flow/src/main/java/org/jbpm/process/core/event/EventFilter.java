@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,12 @@
 
 package org.jbpm.process.core.event;
 
+import java.util.function.Function;
+
 public interface EventFilter {
 	
 	boolean acceptsEvent(String type, Object event);
+	
+	boolean acceptsEvent(String type, Object event, Function<String, String> resolver);     
 
 }

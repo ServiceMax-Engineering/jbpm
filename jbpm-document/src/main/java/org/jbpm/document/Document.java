@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 JBoss Inc
+ * Copyright (C) 2012 Red Hat, Inc. and/or its affiliates
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import java.util.Date;
 import java.util.Map;
 
 public interface Document extends Serializable {
+
+    public static final String DOCUMENT_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    public static final String PROPERTIES_SEPARATOR = "####";
 
     void setIdentifier(String identifier);
 

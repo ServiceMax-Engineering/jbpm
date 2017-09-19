@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package org.jbpm.kie.services.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,12 +41,13 @@ import org.jbpm.services.api.RuntimeDataService;
 import org.jbpm.services.api.model.DeployedUnit;
 import org.jbpm.services.api.model.DeploymentUnit;
 import org.jbpm.services.api.model.ProcessInstanceDesc;
+import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.manager.RuntimeEnvironment;
 import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.runtime.manager.RuntimeManagerFactory;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.query.QueryContext;
 import org.kie.internal.identity.IdentityProvider;
-import org.kie.internal.query.QueryContext;
 import org.kie.internal.runtime.conf.DeploymentDescriptor;
 import org.kie.internal.runtime.manager.InternalRuntimeManager;
 import org.slf4j.Logger;
@@ -61,7 +62,8 @@ public abstract class AbstractDeploymentService implements DeploymentService, Li
     protected EntityManagerFactory emf;    
     protected IdentityProvider identityProvider;
     
-    protected Set<DeploymentEventListener> listeners = new HashSet<DeploymentEventListener>();
+    protected Set<DeploymentEventListener> listeners = new LinkedHashSet<DeploymentEventListener>();
+    
     
     
     @Override
@@ -101,20 +103,20 @@ public abstract class AbstractDeploymentService implements DeploymentService, Li
     	}
     }
     
-    public void notifyOnActivate(DeploymentUnit unit, DeployedUnit deployedUnit){
-    	DeploymentEvent event = new DeploymentEvent(unit.getIdentifier(), deployedUnit);
+    public void notifyOnActivate(DeploymentUnit unit, DeployedUnit deployedUnit){               
+        DeploymentEvent event = new DeploymentEvent(unit.getIdentifier(), deployedUnit);
     	for (DeploymentEventListener listener : listeners) {
     		listener.onActivate(event);
     	}    
     }
     public void notifyOnDeactivate(DeploymentUnit unit, DeployedUnit deployedUnit){
-    	DeploymentEvent event = new DeploymentEvent(unit.getIdentifier(), deployedUnit);
+        DeploymentEvent event = new DeploymentEvent(unit.getIdentifier(), deployedUnit);
     	for (DeploymentEventListener listener : listeners) {
     		listener.onDeactivate(event);
-    	}
+    	}    	
     }
     
-    public void commonDeploy(DeploymentUnit unit, DeployedUnitImpl deployedUnit, RuntimeEnvironment environemnt) {
+    public void commonDeploy(DeploymentUnit unit, DeployedUnitImpl deployedUnit, RuntimeEnvironment environemnt, KieContainer kieContainer) {
 
         synchronized (this) {
         
@@ -126,6 +128,7 @@ public abstract class AbstractDeploymentService implements DeploymentService, Li
             RuntimeManager manager = null;
             deploymentsMap.put(unit.getIdentifier(), deployedUnit);
             ((SimpleRuntimeEnvironment) environemnt).addToEnvironment("IdentityProvider", identityProvider);
+            ((SimpleRuntimeEnvironment) environemnt).addToEnvironment("Active", deployedUnit.isActive());
             try {
                 switch (unit.getStrategy()) {
             
@@ -139,9 +142,18 @@ public abstract class AbstractDeploymentService implements DeploymentService, Li
                     case PER_PROCESS_INSTANCE:
                         manager = managerFactory.newPerProcessInstanceRuntimeManager(environemnt, unit.getIdentifier());
                         break;
+                    case PER_CASE:
+                        manager = managerFactory.newPerCaseRuntimeManager(environemnt, unit.getIdentifier());
+                        break;
                     default:
                         throw new IllegalArgumentException("Invalid strategy " + unit.getStrategy());
-                }            
+                }  
+                
+                if (!deployedUnit.isActive()) {
+                    ((InternalRuntimeManager)manager).deactivate();
+                }                
+                
+                ((InternalRuntimeManager)manager).setKieContainer(kieContainer);
                 deployedUnit.setRuntimeManager(manager);
                 DeploymentDescriptor descriptor = ((InternalRuntimeManager)manager).getDeploymentDescriptor();
                 List<String> requiredRoles = descriptor.getRequiredRoles(DeploymentDescriptor.TYPE_EXECUTE);
@@ -275,6 +287,7 @@ public abstract class AbstractDeploymentService implements DeploymentService, Li
     					deployed.getDeploymentUnit().getIdentifier(), e.getMessage());
     		}
     	}
+    	deploymentsMap.clear();
     }
 	
 }

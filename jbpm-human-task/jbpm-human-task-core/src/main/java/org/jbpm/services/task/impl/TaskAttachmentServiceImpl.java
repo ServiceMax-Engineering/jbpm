@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss by Red Hat.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.kie.api.task.model.Task;
 import org.kie.internal.task.api.TaskAttachmentService;
 import org.kie.internal.task.api.TaskPersistenceContext;
 import org.kie.internal.task.api.model.InternalAttachment;
-import org.kie.internal.task.api.model.InternalTaskData;
 
 /**
  *
@@ -49,17 +48,15 @@ public class TaskAttachmentServiceImpl implements TaskAttachmentService {
         persistenceContext.persistAttachment(attachment);
         persistenceContext.persistContent(content);
         ((InternalAttachment) attachment).setContent(content);
-        ((InternalTaskData) task.getTaskData()).addAttachment(attachment);
+        persistenceContext.addAttachmentToTask(attachment, task);
         return attachment.getId();
     }
 
     public void deleteAttachment(long taskId, long attachmentId) {
        Task task = persistenceContext.findTask(taskId);
-       Attachment attachment = ((InternalTaskData) task.getTaskData()).removeAttachment(attachmentId);
+       Attachment attachment = persistenceContext.removeAttachmentFromTask(task, attachmentId);
        Content content = persistenceContext.findContent(attachment.getAttachmentContentId());
-       
        persistenceContext.removeContent(content);
-       
     }
 
     public List<Attachment> getAllAttachmentsByTaskId(long taskId) {

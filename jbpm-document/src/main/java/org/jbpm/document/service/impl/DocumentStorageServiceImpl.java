@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 JBoss Inc
+ * Copyright (C) 2012 Red Hat, Inc. and/or its affiliates
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,23 @@
  */
 package org.jbpm.document.service.impl;
 
-import org.apache.commons.codec.binary.Base64;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jbpm.document.Document;
 import org.jbpm.document.service.DocumentStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
-import java.util.UUID;
 
 /**
  * This a Sample Implementation of the DocumentStorageService saves the uploaded files on the File System on a folder (by default /docs)
@@ -41,29 +46,47 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
     /**
      * This is the root folder where the files are going to be stored, please check that the user that is running the app has permissions to read/write inside
      */
-    private String storagePath = ".docs";
+    private String storagePath = System.getProperty("org.jbpm.document.storage", ".docs");
+    private File storageFile;
+
+    public DocumentStorageServiceImpl( String storagePath ) {
+        this.storagePath = storagePath;
+        this.storageFile = new File(storagePath);
+    }
+
+    public DocumentStorageServiceImpl() {
+        this.storageFile = new File(this.storagePath);
+    }
+
+    @Override
+    public Document buildDocument( String name, long size, Date lastModified, Map<String, String> params ) {
+        String identifier = generateUniquePath();
+
+        String appURL = params.get("app.url");
+
+        if (appURL == null) appURL = "";
+
+        if (!appURL.isEmpty() && !appURL.endsWith("/")) appURL += "/";
+
+        // Generating a default download link, don't use this donwloader in real environments use it as an example
+        String link = appURL + "Controller?_fb=fdch&_fp=download&content=" + identifier;
+
+        return new DocumentImpl( identifier, name, size, lastModified, link );
+    }
 
     @Override
     public Document saveDocument(Document document, byte[] content) {
-        if (document == null || !StringUtils.isEmpty(document.getIdentifier())) return document;
-        String destinationPath = generateUniquePath(document.getName());
-        File destination = new File(destinationPath);
+        
+        if (StringUtils.isEmpty(document.getIdentifier())) {
+            document.setIdentifier(generateUniquePath());
+        }
+
+        File destination = getFileByPath( document.getIdentifier() + File.separator + document.getName() );
 
         try {
             FileUtils.writeByteArrayToFile(destination, content);
-
-            document.setIdentifier(Base64.encodeBase64String(destinationPath.getBytes()));
-
-            String appURL = document.getAttribute("app.url");
-
-            if (appURL == null) appURL = "";
-
-            if (!appURL.isEmpty() && !appURL.endsWith("/")) appURL += "/";
-
-            // Generating a default download link, don't use this donwloader in real environments use it as an example
-            String link = appURL + "Controller?_fb=fdch&_fp=download&content=" + document.getIdentifier();
-            document.setLink(link);
-
+            destination.getParentFile().setLastModified(document.getLastModified().getTime());
+            destination.setLastModified(document.getLastModified().getTime());
         } catch (IOException e) {
             log.error("Error writing file {}: {}", document.getName(), e);
         }
@@ -73,12 +96,13 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
 
     @Override
     public Document getDocument(String id) {
-        File file = new File(new String(Base64.decodeBase64(id)));
+        File file = getFileByPath( id );
 
-        if (file.exists()) {
+        if (file.exists() && !file.isFile() && !ArrayUtils.isEmpty(file.listFiles())) {
             try {
-                Document doc = new DocumentImpl(id, file.getName(), file.length(), new Date(file.lastModified()));
-                doc.setContent(FileUtils.readFileToByteArray(file));
+                File destination = file.listFiles()[0];
+                Document doc = new DocumentImpl(id, destination.getName(), destination.length(), new Date(destination.lastModified()));
+                doc.setContent(FileUtils.readFileToByteArray(destination));
                 return doc;
             } catch (IOException e) {
                 log.error("Error loading document '{}': {}", id, e);
@@ -97,14 +121,16 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
     @Override
     public boolean deleteDocument(Document doc) {
         if (doc != null) {
-            return deleteFile(getDocumentContent(doc));
+            File rootDoc = getDocumentContent(doc);
+            if (!ArrayUtils.isEmpty( rootDoc.listFiles() )) return deleteFile( rootDoc.listFiles()[0] );
+            return deleteFile(rootDoc);
         }
         return true;
     }
 
     public File getDocumentContent(Document doc) {
         if (doc != null) {
-            return new File(doc.getIdentifier());
+            return getFileByPath( doc.getIdentifier() );
         }
         return null;
     }
@@ -134,15 +160,47 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
 
     /**
      * Generates a random path to store the file to avoid overwritting files with the same name
-     * @param fileName The fileName that is going to be stored
-     * @return A String
+     * @return A String containging the path where the document is going to be stored.
      */
-    protected String generateUniquePath(String fileName) {
-        String destinationPath = storagePath + "/";
+    protected String generateUniquePath() {
+        File parent;
+        String destinationPath;
+        do {
+            destinationPath = UUID.randomUUID().toString();
 
-        destinationPath += UUID.randomUUID().toString();
-        if (!destinationPath.endsWith("/")) destinationPath += "/";
+            parent = getFileByPath( destinationPath );
 
-        return destinationPath + fileName;
+        } while ( parent.exists() );
+
+        return destinationPath;
+    }
+
+    protected File getFileByPath( String path ) {
+        return new File( storagePath + File.separator + path );
+    }
+
+    @Override
+    public List<Document> listDocuments(Integer page, Integer pageSize) {
+        List<Document> listOfDocs = new ArrayList<Document>();
+        
+        int startIndex = page * pageSize;
+        int endIndex = startIndex + pageSize;
+        
+        File[] documents = storageFile.listFiles();
+        
+        // make sure the endIndex is not bigger then amount of files
+        if (documents.length < endIndex) {
+            endIndex = documents.length;
+        }
+        Arrays.sort(documents, new Comparator<File>() {
+            public int compare(File f1, File f2) {
+                return Long.compare(f1.lastModified(), f2.lastModified());
+            }
+        });
+        for (int i = startIndex; i < endIndex; i++) {
+            Document doc = getDocument(documents[i].getName());
+            listOfDocs.add(doc);
+        }
+        return listOfDocs;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -78,14 +77,6 @@ public class MvelUserGroupCallbackImpl implements UserGroupCallback {
         return false;
     }
 
-    public List<String> getGroupsForUser(String userId, List<String> groupIds) {
-        return getGroupsForUser(userId);
-    }
-
-    public List<String> getGroupsForUser(String userId, List<String> groupIds,
-            List<String> allExistingGroupIds) {
-        return getGroupsForUser(userId);
-    }
 
     public List<String> getGroupsForUser(String userId) {
         Iterator<User> iter = userGroupMapping.keySet().iterator();

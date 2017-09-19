@@ -1,5 +1,5 @@
 /**
- * Copyright 2005 JBoss Inc
+ * Copyright 2005 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,16 @@
 package org.jbpm.workflow.core.node;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-import org.kie.api.definition.process.Node;
-import org.drools.core.process.core.datatype.DataType;
 import org.jbpm.process.core.Context;
 import org.jbpm.process.core.context.AbstractContext;
 import org.jbpm.process.core.context.variable.Variable;
 import org.jbpm.process.core.context.variable.VariableScope;
+import org.jbpm.process.core.datatype.DataType;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
 import org.jbpm.workflow.core.impl.ExtendedNodeImpl;
+import org.kie.api.definition.process.Node;
 
 /**
  * A for each node.
@@ -36,7 +35,6 @@ import org.jbpm.workflow.core.impl.ExtendedNodeImpl;
  * The node continues if all activated the subflow has been completed for each
  * of the elements in the collection.
  * 
- * @author <a href="mailto:kris_verlaenen@hotmail.com">Kris Verlaenen</a>
  */
 public class ForEachNode extends CompositeContextNode {
     
@@ -46,6 +44,7 @@ public class ForEachNode extends CompositeContextNode {
     private String outputVariableName;
     private String collectionExpression;
     private String outputCollectionExpression;
+    private String completionConditionExpression;
     private boolean waitForCompletion = true;
     private boolean isParallel = true;
 
@@ -191,58 +190,72 @@ public class ForEachNode extends CompositeContextNode {
         return (ForEachJoinNode) super.getNode(3); 
     }
     
+    @Override
     public void addNode(Node node) {
     	getCompositeNode().addNode(node);
     }
     
+    @Override
     protected void internalAddNode(Node node) {
     	super.addNode(node);
     }
     
+    @Override
     public Node getNode(long id) {
     	return getCompositeNode().getNode(id);
     }
     
+    @Override
     public Node internalGetNode(long id) {
     	return super.getNode(id);
     }
     
+    @Override
     public Node[] getNodes() {
     	return getCompositeNode().getNodes();
     }
     
+    @Override
     public Node[] internalGetNodes() {
     	return super.getNodes();
     }
     
+    @Override
     public void removeNode(Node node) {
     	getCompositeNode().removeNode(node);
     }
     
+    @Override
     protected void internalRemoveNode(Node node) {
     	super.removeNode(node);
     }
     
+    @Override
     public void linkIncomingConnections(String inType, long inNodeId, String inNodeType) {
     	getCompositeNode().linkIncomingConnections(inType, inNodeId, inNodeType);
     }
 
+    @Override
     public void linkOutgoingConnections(long outNodeId, String outNodeType, String outType) {
     	getCompositeNode().linkOutgoingConnections(outNodeId, outNodeType, outType);
 	}
     
+    @Override
     public CompositeNode.NodeAndType getLinkedIncomingNode(String inType) {
     	return getCompositeNode().getLinkedIncomingNode(inType);
     }
 
+    @Override
     public CompositeNode.NodeAndType internalGetLinkedIncomingNode(String inType) {
         return super.getLinkedIncomingNode(inType);
     }
     
+    @Override
     public CompositeNode.NodeAndType getLinkedOutgoingNode(String inType) {
     	return getCompositeNode().getLinkedOutgoingNode(inType);
     }
 
+    @Override
     public CompositeNode.NodeAndType internalGetLinkedOutgoingNode(String inType) {
         return super.getLinkedOutgoingNode(inType);
     }
@@ -300,19 +313,19 @@ public class ForEachNode extends CompositeContextNode {
         this.waitForCompletion = waitForCompletion;
     }
 
-   public boolean isParallel() {
-		return isParallel;
-	}
+    public boolean isParallel() {
+        return isParallel;
+    }
 
-	public void setParallel(boolean isParallel) {
-		this.isParallel = isParallel;
-	}
+    public void setParallel(boolean isParallel) {
+        this.isParallel = isParallel;
+    }
 
-public class ForEachSplitNode extends ExtendedNodeImpl {
+   public static class ForEachSplitNode extends ExtendedNodeImpl {
         private static final long serialVersionUID = 510l;
     }
 
-    public class ForEachJoinNode extends ExtendedNodeImpl {
+    public static class ForEachJoinNode extends ExtendedNodeImpl {
         private static final long serialVersionUID = 510l;
     }
 
@@ -356,4 +369,13 @@ public class ForEachSplitNode extends ExtendedNodeImpl {
         
         return ctx;
     }
+
+	public String getCompletionConditionExpression() {
+		return completionConditionExpression;
+	}
+
+	public void setCompletionConditionExpression(
+			String completionConditionExpression) {
+		this.completionConditionExpression = completionConditionExpression;
+	}
 }

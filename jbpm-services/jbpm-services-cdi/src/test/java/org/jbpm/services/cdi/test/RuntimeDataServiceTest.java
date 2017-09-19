@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss by Red Hat.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,7 @@ import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jbpm.kie.services.impl.audit.ServicesAwareAuditEventBuilder;
-import org.jbpm.kie.services.test.TestIdentityProvider;
-import org.jbpm.kie.test.util.AbstractBaseTest;
+import org.jbpm.kie.test.util.AbstractKieServicesBaseTest;
 import org.jbpm.process.audit.AbstractAuditLogger;
 import org.jbpm.process.audit.AuditLoggerFactory;
 import org.jbpm.runtime.manager.util.TestUtil;
@@ -52,13 +51,13 @@ import org.kie.api.runtime.manager.RuntimeEnvironmentBuilder;
 import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.runtime.manager.RuntimeManagerFactory;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.query.QueryContext;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.query.QueryContext;
 import org.kie.internal.runtime.manager.context.EmptyContext;
 
 
 @RunWith(Arquillian.class)
-public class RuntimeDataServiceTest extends AbstractBaseTest {
+public class RuntimeDataServiceTest extends AbstractKieServicesBaseTest {
 
     @Deployment()
     public static Archive<?> createDeployment() {
@@ -83,6 +82,7 @@ public class RuntimeDataServiceTest extends AbstractBaseTest {
                 .addPackage("org.jbpm.services.task.subtask")
                 .addPackage("org.jbpm.services.task.rule")
                 .addPackage("org.jbpm.services.task.rule.impl")
+                .addPackage("org.jbpm.services.task.audit.service")
 
                 .addPackage("org.kie.internal.runtime.manager")
                 .addPackage("org.kie.internal.runtime.manager.context")
@@ -108,16 +108,24 @@ public class RuntimeDataServiceTest extends AbstractBaseTest {
                 .addPackage("org.jbpm.kie.services.impl.audit")
                 .addPackage("org.jbpm.kie.services.impl.form")
                 .addPackage("org.jbpm.kie.services.impl.form.provider")
+                .addPackage("org.jbpm.kie.services.impl.query")  
+                .addPackage("org.jbpm.kie.services.impl.query.mapper")  
+                .addPackage("org.jbpm.kie.services.impl.query.persistence")  
+                .addPackage("org.jbpm.kie.services.impl.query.preprocessor")  
                 
                 .addPackage("org.jbpm.services.cdi")
                 .addPackage("org.jbpm.services.cdi.impl")
                 .addPackage("org.jbpm.services.cdi.impl.form")
                 .addPackage("org.jbpm.services.cdi.impl.manager")
                 .addPackage("org.jbpm.services.cdi.producer")
+                .addPackage("org.jbpm.services.cdi.impl.security")
+                .addPackage("org.jbpm.services.cdi.impl.query")
                 
                 .addPackage("org.jbpm.kie.services.test")
                 .addPackage("org.jbpm.services.cdi.test") // Identity Provider Test Impl here
                 .addClass("org.jbpm.services.cdi.test.util.CDITestHelperNoTaskService")
+                .addClass("org.jbpm.services.cdi.test.util.CountDownDeploymentListenerCDIImpl")
+                .addClass("org.jbpm.kie.services.test.objects.CoundDownDeploymentListener")
                 .addAsResource("jndi.properties", "jndi.properties")
                 .addAsManifestResource("META-INF/persistence.xml", ArchivePaths.create("persistence.xml"))
                 .addAsManifestResource("META-INF/beans.xml", ArchivePaths.create("beans.xml"));
@@ -163,7 +171,7 @@ public class RuntimeDataServiceTest extends AbstractBaseTest {
         String id = "custom-manager";
         AbstractAuditLogger auditLogger = AuditLoggerFactory.newJPAInstance();
         ServicesAwareAuditEventBuilder auditEventBuilder = new ServicesAwareAuditEventBuilder();
-        auditEventBuilder.setIdentityProvider(new TestIdentityProvider());
+        auditEventBuilder.setIdentityProvider(new TestIdentifyProviderCDI());
         auditEventBuilder.setDeploymentUnitId(id);
         auditLogger.setBuilder(auditEventBuilder);
         RuntimeEnvironmentBuilder builder = RuntimeEnvironmentBuilder.Factory.get().newDefaultBuilder()
@@ -181,7 +189,7 @@ public class RuntimeDataServiceTest extends AbstractBaseTest {
         Collection<NodeInstanceDesc> nodeInstanceLogs = runtimeDataService.getProcessInstanceHistoryCompleted(
                 processInstance.getId(), new QueryContext());
 
-        // assert if logs are ordered by log.date DESC, log.id DESC
+        // assert if logs are ordered by log.id ASC
         Iterator<NodeInstanceDesc> iterator = nodeInstanceLogs.iterator();
         NodeInstanceDesc log0 = iterator.next();
         assertEquals("End", log0.getName());

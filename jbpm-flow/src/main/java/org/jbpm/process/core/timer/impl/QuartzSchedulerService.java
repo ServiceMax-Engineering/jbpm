@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss Inc
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,6 @@
  */
 package org.jbpm.process.core.timer.impl;
 
-import java.io.NotSerializableException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.drools.core.time.AcceptsTimerJobFactoryManager;
 import org.drools.core.time.InternalSchedulerService;
 import org.drools.core.time.Job;
 import org.drools.core.time.JobContext;
@@ -53,6 +45,14 @@ import org.quartz.spi.JobStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.NotSerializableException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Quartz based <code>GlobalSchedulerService</code> that is configured according
  * to Quartz rules and allows to store jobs in data base. With that it survives 
@@ -65,6 +65,10 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
     private static final Logger logger = LoggerFactory.getLogger(QuartzSchedulerService.class);
     
     private static final Integer START_DELAY = Integer.parseInt(System.getProperty("org.jbpm.timer.delay", "2"));
+    private static final Integer FAILED_JOB_RETRIES = Integer.parseInt(System.getProperty("org.jbpm.timer.quartz.retries", "5"));
+    private static final Integer FAILED_JOB_DELAY = Integer.parseInt(System.getProperty("org.jbpm.timer.quartz.delay", "1000"));
+
+    private static final Integer RESCHEDULE_DELAY = Integer.parseInt(System.getProperty("org.jbpm.timer.quartz.reschedule.delay", "500"));
 
     private AtomicLong idCounter = new AtomicLong();
     private TimerService globalTimerService;
@@ -108,7 +112,7 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
             
         }
         GlobalQuartzJobHandle quartzJobHandle = new GlobalQuartzJobHandle(id, jobname, "jbpm");
-        TimerJobInstance jobInstance = ((AcceptsTimerJobFactoryManager) globalTimerService).
+        TimerJobInstance jobInstance = globalTimerService.
                 getTimerJobFactoryManager().createTimerJobInstance( job,
                                                                     ctx,
                                                                     trigger,
@@ -152,18 +156,26 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
         GlobalQuartzJobHandle quartzJobHandle = (GlobalQuartzJobHandle) timerJobInstance.getJobHandle();
         // Define job instance
         JobDetail jobq = new JobDetail(quartzJobHandle.getJobName(), quartzJobHandle.getJobGroup(), QuartzJob.class);
-
+        jobq.setRequestsRecovery(true);
         jobq.getJobDataMap().put("timerJobInstance", timerJobInstance);
             
+        // Amend nextFireTime not to schedule older than now + RESCHEDULE_DELAY
+        Date nextFireTime = timerJobInstance.getTrigger().hasNextFireTime();
+        Date threshold = new Date(System.currentTimeMillis() + RESCHEDULE_DELAY);
+        if (nextFireTime.before(threshold)) {
+            logger.debug("nextFireTime [" + nextFireTime + "] is older than (now + RESCHEDULE_DELAY). Amending it to [" + threshold + "]");
+            nextFireTime = threshold;
+        }
+
         // Define a Trigger that will fire "now"
-        org.quartz.Trigger triggerq = new SimpleTrigger(quartzJobHandle.getJobName()+"_trigger", quartzJobHandle.getJobGroup(), timerJobInstance.getTrigger().hasNextFireTime());
+        org.quartz.Trigger triggerq = new SimpleTrigger(quartzJobHandle.getJobName()+"_trigger", quartzJobHandle.getJobGroup(), nextFireTime);
             
         // Schedule the job with the trigger
         try {
             if (scheduler.isShutdown()) {
                 return;
             }
-            ((AcceptsTimerJobFactoryManager) globalTimerService).getTimerJobFactoryManager().addTimerJobInstance( timerJobInstance );
+            globalTimerService.getTimerJobFactoryManager().addTimerJobInstance( timerJobInstance );
             JobDetail jobDetail = scheduler.getJobDetail(quartzJobHandle.getJobName(), quartzJobHandle.getJobGroup());
             if (jobDetail == null) {
                 scheduler.scheduleJob(jobq, triggerq);
@@ -186,11 +198,11 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
                 // in case job cannot be persisted, like rule timer then make it in memory
                 internalSchedule(new InmemoryTimerJobInstanceDelegate(quartzJobHandle.getJobName(), ((GlobalTimerService) globalTimerService).getTimerServiceId()));
             } else {
-                ((AcceptsTimerJobFactoryManager) globalTimerService).getTimerJobFactoryManager().removeTimerJobInstance(timerJobInstance);
+                globalTimerService.getTimerJobFactoryManager().removeTimerJobInstance(timerJobInstance);
                 throw new RuntimeException(e);
             }
         } catch (SchedulerException e) {
-            ((AcceptsTimerJobFactoryManager) globalTimerService).getTimerJobFactoryManager().removeTimerJobInstance(timerJobInstance);
+            globalTimerService.getTimerJobFactoryManager().removeTimerJobInstance(timerJobInstance);
             throw new RuntimeException("Exception while scheduling job", e);
         }
     }
@@ -225,7 +237,7 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
         int current = timerServiceCounter.decrementAndGet();
         if (scheduler != null && current == 0) {
             try {
-                scheduler.shutdown();        
+                scheduler.shutdown(true);        
             } catch (SchedulerException e) {
                 logger.warn("Error encountered while shutting down the scheduler", e);
             }
@@ -329,13 +341,13 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
                 }
                 failedCount++;
                 quartzContext.getJobDetail().getJobDataMap().put("failedCount", failedCount);
-                if (failedCount > 5) {
-                    logger.error("Timer execution failed 5 times in a roll, unscheduling ({})", quartzContext.getJobDetail().getFullName());
+                if (failedCount > FAILED_JOB_RETRIES) {
+                    logger.error("Timer execution failed {} times in a roll, unscheduling ({})", FAILED_JOB_RETRIES, quartzContext.getJobDetail().getFullName());
                     reschedule = false;
                 }
                 // let's give it a bit of time before failing/retrying
                 try {
-                    Thread.sleep(failedCount * 1000);
+                    Thread.sleep(failedCount * FAILED_JOB_DELAY);
                 } catch (InterruptedException e1) {
                     logger.debug("Got interrupted", e1);
                 }
@@ -384,7 +396,7 @@ public class QuartzSchedulerService implements GlobalSchedulerService {
         
         protected void findDelegate() {
             if (delegate == null) {
-                Collection<TimerJobInstance> timers = ((AcceptsTimerJobFactoryManager)TimerServiceRegistry.getInstance().get(timerServiceId))
+                Collection<TimerJobInstance> timers = TimerServiceRegistry.getInstance().get(timerServiceId)
                 .getTimerJobFactoryManager().getTimerJobInstances();
                 for (TimerJobInstance instance : timers) {
                     if (((GlobalQuartzJobHandle)instance.getJobHandle()).getJobName().equals(jobname)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,6 @@
 
 package org.jbpm.kie.services.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.kie.scanner.MavenRepository.getMavenRepository;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -35,7 +28,7 @@ import java.util.Map;
 import org.drools.compiler.kie.builder.impl.InternalKieModule;
 import org.drools.core.util.StringUtils;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
-import org.jbpm.kie.test.util.AbstractBaseTest;
+import org.jbpm.kie.test.util.AbstractKieServicesBaseTest;
 import org.jbpm.services.api.ProcessInstanceNotFoundException;
 import org.jbpm.services.api.model.DeploymentUnit;
 import org.jbpm.services.api.model.UserTaskInstanceDesc;
@@ -55,11 +48,14 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.User;
 import org.kie.internal.task.api.TaskModelProvider;
 import org.kie.internal.task.api.model.InternalTask;
-import org.kie.scanner.MavenRepository;
+import org.kie.scanner.KieMavenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UserTaskServiceImplTest extends AbstractBaseTest {
+import static org.junit.Assert.*;
+import static org.kie.scanner.KieMavenRepository.getKieMavenRepository;
+
+public class UserTaskServiceImplTest extends AbstractKieServicesBaseTest {
 
 private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentServiceTest.class);   
     
@@ -89,7 +85,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
         } catch (Exception e) {
             
         }
-        MavenRepository repository = getMavenRepository();
+		KieMavenRepository repository = getKieMavenRepository();
         repository.deployArtifact(releaseId, kJar1, pom);
         
         assertNotNull(deploymentService);
@@ -169,25 +165,45 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     
     @Test
     public void testStartAndComplete() {
-    	processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
-    	assertNotNull(processInstanceId);
-    	List<Long> taskIds = runtimeDataService.getTasksByProcessInstanceId(processInstanceId);
-    	assertNotNull(taskIds);
-    	assertEquals(1, taskIds.size());
-    	
-    	Long taskId = taskIds.get(0);
-    	
-    	userTaskService.start(taskId, "salaboy");
-    	UserTaskInstanceDesc task = runtimeDataService.getTaskById(taskId);
-    	assertNotNull(task);
-    	assertEquals(Status.InProgress.toString(), task.getStatus());
-    	
-    	Map<String, Object> results = new HashMap<String, Object>();
-    	results.put("Result", "some document data");
-    	userTaskService.complete(taskId, "salaboy", results);
-    	task = runtimeDataService.getTaskById(taskId);
-    	assertNotNull(task);
-    	assertEquals(Status.Completed.toString(), task.getStatus());
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
+        assertNotNull(processInstanceId);
+        List<Long> taskIds = runtimeDataService.getTasksByProcessInstanceId(processInstanceId);
+        assertNotNull(taskIds);
+        assertEquals(1, taskIds.size());
+        
+        Long taskId = taskIds.get(0);
+        
+        userTaskService.start(taskId, "salaboy");
+        UserTaskInstanceDesc task = runtimeDataService.getTaskById(taskId);
+        assertNotNull(task);
+        assertEquals(Status.InProgress.toString(), task.getStatus());
+        
+        Map<String, Object> results = new HashMap<String, Object>();
+        results.put("Result", "some document data");
+        userTaskService.complete(taskId, "salaboy", results);
+        task = runtimeDataService.getTaskById(taskId);
+        assertNotNull(task);
+        assertEquals(Status.Completed.toString(), task.getStatus());
+    }
+    
+    @Test
+    public void testCompleteAutoProgress() {
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
+        assertNotNull(processInstanceId);
+        List<Long> taskIds = runtimeDataService.getTasksByProcessInstanceId(processInstanceId);
+        assertNotNull(taskIds);
+        assertEquals(1, taskIds.size());
+        
+        Long taskId = taskIds.get(0);
+        userTaskService.release(taskId, "salaboy");
+        
+        Map<String, Object> results = new HashMap<String, Object>();
+        results.put("Result", "some document data");
+        // claim, start, and complete the task
+        userTaskService.completeAutoProgress(taskId, "salaboy", results);
+        UserTaskInstanceDesc task = runtimeDataService.getTaskById(taskId);
+        assertNotNull(task);
+        assertEquals(Status.Completed.toString(), task.getStatus());
     }
     
     @Test
@@ -365,7 +381,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	UserTaskInstanceDesc task = runtimeDataService.getTaskById(taskId);
     	assertNotNull(task);
     	assertEquals(Status.Reserved.toString(), task.getStatus());
-    	assertEquals(0, (int)task.getPriority());
+    	assertEquals(9, (int)task.getPriority());
     	    	
     	userTaskService.setPriority(taskId, 8);
     	
@@ -480,12 +496,13 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	
     	Map<String, Object> input = userTaskService.getTaskInputContentByTaskId(taskId);
     	assertNotNull(input);
-    	assertEquals(5, input.size());
+    	assertEquals(6, input.size());
     	assertTrue(input.containsKey("ActorId"));
     	assertTrue(input.containsKey("Comment"));
     	assertTrue(input.containsKey("TaskName"));
     	assertTrue(input.containsKey("NodeName"));
     	assertTrue(input.containsKey("Priority"));
+    	assertTrue(input.containsKey("Skippable"));
     	
     	// now let's add some output data
     	Map<String, Object> values = new HashMap<String, Object>();
@@ -559,7 +576,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	assertNotNull(attachments);
     	assertEquals(0, attachments.size());
     	
-    	Long attId = userTaskService.addAttachment(taskId, "john", "String attachment");
+    	Long attId = userTaskService.addAttachment(taskId, "john", "my attachment", "String attachment");
     	assertNotNull(attId);
     	
     	attachments = userTaskService.getAttachmentsByTaskId(taskId);
@@ -573,6 +590,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	Attachment attachment = userTaskService.getAttachmentById(taskId, attId);
     	assertNotNull(attachment);
     	assertEquals("john", attachment.getAttachedBy().getId());
+    	assertEquals("my attachment", attachment.getName());
     	assertNotNull(attachment.getAttachmentContentId());
     	assertEquals("java.lang.String", attachment.getContentType());
     	

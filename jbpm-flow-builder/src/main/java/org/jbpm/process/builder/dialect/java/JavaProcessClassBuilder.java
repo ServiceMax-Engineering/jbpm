@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 JBoss Inc
+ * Copyright 2006 Red Hat, Inc. and/or its affiliates.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.drools.core.util.StringUtils;
 import org.drools.compiler.lang.descr.ProcessDescr;
 import org.drools.core.rule.ImportDeclaration;
+import org.drools.core.util.StringUtils;
 import org.jbpm.process.builder.ProcessBuildContext;
 import org.jbpm.process.builder.ProcessClassBuilder;
 
-/**
- * @author etirelli
- *
- */
 public class JavaProcessClassBuilder
     implements
     ProcessClassBuilder {
