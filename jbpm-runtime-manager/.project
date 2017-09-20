@@ -9,6 +9,7 @@
     <project>jbpm-persistence-jpa</project>
     <project>jbpm-persistence-api</project>
     <project>jbpm-audit</project>
+    <project>jbpm-query-jpa</project>
     <project>jbpm-human-task-core</project>
     <project>jbpm-human-task-workitems</project>
     <project>jbpm-human-task-audit</project>

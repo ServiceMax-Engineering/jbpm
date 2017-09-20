@@ -60,6 +60,7 @@ import org.jbpm.workflow.core.node.MilestoneNode;
 import org.jbpm.workflow.core.node.RuleSetNode;
 import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.StartNode;
+import org.jbpm.workflow.core.node.StateBasedNode;
 import org.jbpm.workflow.core.node.StateNode;
 import org.jbpm.workflow.core.node.SubProcessNode;
 import org.jbpm.workflow.core.node.ThrowLinkNode;
@@ -121,11 +122,12 @@ public class RuleFlowProcessValidator implements ProcessValidator {
                     "Process has no start node."));
         }
 
-        // Check end node of the process.
-        if (process.getEndNodes().isEmpty() && !process.isDynamic()) {
-            errors.add(new ProcessValidationErrorImpl(process,
-                "Process has no end node."));
-        }
+        // Because status process can haven't end node, comment the below validation code
+        // Check end node of the process. 
+//        if (process.getEndNodes().isEmpty() && !process.isDynamic()) {
+//            errors.add(new ProcessValidationErrorImpl(process,
+//                "Process has no end node."));
+//        }
 
         validateNodes(process.getNodes(), errors, process);
 
@@ -548,7 +550,7 @@ public class RuleFlowProcessValidator implements ProcessValidator {
         }
         for ( final Iterator<Node> it = processNodes.keySet().iterator(); it.hasNext(); ) {
             final Node node = it.next();
-            if (Boolean.FALSE.equals(processNodes.get(node)) && !(node instanceof StartNode) && !(node instanceof EventSubProcessNode)) {
+            if (Boolean.FALSE.equals(processNodes.get(node)) && !(node instanceof StartNode) && !(node instanceof EventSubProcessNode) && !(node instanceof StateBasedNode)) {
                 addErrorMessage(process, node, errors, "Has no connection to the start node.");
             }
         }

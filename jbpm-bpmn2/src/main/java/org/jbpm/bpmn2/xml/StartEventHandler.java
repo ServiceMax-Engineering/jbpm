@@ -110,7 +110,7 @@ public class StartEventHandler extends AbstractNodeHandler {
             } else if ("signalEventDefinition".equals(nodeName)) {
                 String type = ((Element) xmlNode).getAttribute("signalRef");
 
-                type = checkSignalAndConvertToRealSignalNam(parser, type);
+                //type = checkSignalAndConvertToRealSignalNam(parser, type);
 
                 if (type != null && type.trim().length() > 0) {
                     addTriggerWithInMappings(startNode, type);

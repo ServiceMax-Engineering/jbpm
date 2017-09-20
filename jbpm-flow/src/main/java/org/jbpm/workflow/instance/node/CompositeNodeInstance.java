@@ -389,27 +389,21 @@ public class CompositeNodeInstance extends StateBasedNodeInstance implements Nod
         }
 	}
 
-	public void nodeInstanceCompleted(NodeInstance nodeInstance, String outType) {
-	    Node nodeInstanceNode = nodeInstance.getNode();
-	    if( nodeInstanceNode != null ) {
-	        Object compensationBoolObj =  nodeInstanceNode.getMetaData().get("isForCompensation");
-	        boolean isForCompensation = compensationBoolObj == null ? false : ((Boolean) compensationBoolObj);
-	        if( isForCompensation ) {
-	            return;
-	        }
-	    }
-	    if (nodeInstance instanceof EndNodeInstance || nodeInstance instanceof EventSubProcessNodeInstance ) {
-            if (getCompositeNode().isAutoComplete() && !isCanceled()) {
-                if (nodeInstances.isEmpty()) {
-                    triggerCompleted(
-                        org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
-                }
+    public void nodeInstanceCompleted(NodeInstance nodeInstance, String outType) {
+        Node nodeInstanceNode = nodeInstance.getNode();
+        if (nodeInstanceNode != null) {
+            Object compensationBoolObj = nodeInstanceNode.getMetaData().get("isForCompensation");
+            boolean isForCompensation = compensationBoolObj == null ? false : ((Boolean) compensationBoolObj);
+            if (isForCompensation) {
+                return;
             }
-	    } else {
-    		throw new IllegalArgumentException(
-    			"Completing a node instance that has no outgoing connection not supported.");
-	    }
-	}
+        }
+        if (getCompositeNode().isAutoComplete() && !isCanceled()) {
+            if (nodeInstances.isEmpty()) {
+                triggerCompleted(org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+            }
+        }
+    }
 
     public void setState(final int state) {
         this.state = state;

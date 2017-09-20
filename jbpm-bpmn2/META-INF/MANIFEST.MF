@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1505832650129
+Bnd-LastModified: 1506649428589
 Build-Jdk: 1.8.0_60
 Built-By: samdai
 Bundle-Activator: org.jbpm.osgi.bpmn2.Activator
@@ -10,7 +10,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: jBPM :: BPMN2
 Bundle-SymbolicName: org.jbpm.bpmn2
 Bundle-Vendor: JBoss by Red Hat
-Bundle-Version: 7.3.0.201709191450
+Bundle-Version: 7.3.0.201709290143
 Created-By: Apache Maven Bundle Plugin
 Export-Package: org.jbpm.bpmn2;version="7.3.0",org.jbpm.bpmn2.core;versi
  on="7.3.0",org.jbpm.bpmn2.handler;version="7.3.0",org.jbpm.bpmn2.xml;ve
@@ -65,7 +65,7 @@ Private-Package: org.jbpm.bpmn2,org.jbpm.bpmn2.core,org.jbpm.bpmn2.handl
  pm.osgi.bpmn2
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 Scm-Connection: scm:git:https://github.com:kiegroup/jbpm.git/jbpm-bpmn2
-Scm-Revision: 550a3771c87f653962f160670ddf05bf72ff2e32
+Scm-Revision: 01c79e6892b641bfaa78bc6d0f42766c1d38cdc4
 Scm-Url: https://github.com/kiegroup/jbpm/jbpm-bpmn2
 Specification-Title: jBPM :: BPMN2
 Specification-Vendor: JBoss by Red Hat

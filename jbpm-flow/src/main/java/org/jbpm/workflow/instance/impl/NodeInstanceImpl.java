@@ -145,19 +145,43 @@ public abstract class NodeInstanceImpl implements
         return false;
     }
     
-    public void cancel() {
-        nodeInstanceContainer.removeNodeInstance(this);
-        boolean hidden = false;
-        Node node = getNode();
-    	if (node != null && node.getMetaData().get("hidden") != null) {
-    		hidden = true;
-    	}
-    	if (!hidden) {
-    		InternalKnowledgeRuntime kruntime = getProcessInstance().getKnowledgeRuntime();
-        	((InternalProcessRuntime) kruntime.getProcessRuntime())
-        		.getProcessEventSupport().fireAfterNodeLeft(this, kruntime);
-        }
-    }
+	public void cancel() {
+		nodeInstanceContainer.removeNodeInstance(this);
+		boolean hidden = false;
+		Node node = getNode();
+		if (node != null && node.getMetaData().get("hidden") != null) {
+			hidden = true;
+		}
+
+		InternalKnowledgeRuntime kruntime = getProcessInstance().getKnowledgeRuntime();
+		InternalProcessRuntime processRuntime = (InternalProcessRuntime) kruntime.getProcessRuntime();
+		if (!hidden) {
+			// bpm-002146 [M10] Add another state 'Canceled' for nodes which is being
+			// canceled
+			List<ProcessEventListener> listeners = processRuntime.getProcessEventSupport().getEventListeners();
+			final ProcessNodeTriggeredEvent event = new ProcessNodeTriggeredEventImpl(this, kruntime);
+			for (ProcessEventListener listener : listeners) {
+				try {
+					Method method = listener.getClass().getDeclaredMethod("afterNodeCanceled",
+							ProcessNodeTriggeredEvent.class);
+					if (method != null) {
+						method.invoke(listener, event);
+					}
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					// ignore if some listener does not care about canceled nodes
+					// e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
     
     public final void trigger(NodeInstance from, String type) {
     	boolean hidden = false;

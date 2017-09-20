@@ -37,7 +37,8 @@
     <maven.jdbc.schema>public</maven.jdbc.schema>
 
     <findbugs.failOnViolation>true</findbugs.failOnViolation>
-    <drools.version>7.3.0.Final</drools.version>
+    <drools.version>7.3.0.001</drools.version>
+    <kie.version>7.3.0.001</kie.version>
   </properties>
 
   <repositories>
@@ -228,6 +229,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>jbpm-query-jpa</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>jbpm-runtime-manager</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -364,6 +370,11 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>jbpm-executor-ejb</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.drools</groupId>
         <artifactId>drools-beliefs</artifactId>
         <version>${drools.version}</version>
@@ -482,12 +493,12 @@
       <dependency>
         <groupId>org.kie</groupId>
         <artifactId>kie-api</artifactId>
-        <version>${drools.version}</version>
+        <version>${kie.version}</version>
       </dependency>
       <dependency>
         <groupId>org.kie</groupId>
         <artifactId>kie-internal</artifactId>
-        <version>${drools.version}</version>
+        <version>${kie.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -95,13 +95,15 @@ public class WorkItemNode extends StateBasedNode implements Mappable, ContextCon
     }
     
     public void adjustOutMapping(String forEachOutVariable) {
-    	Iterator<DataAssociation> it = outMapping.iterator();
-    	while (it.hasNext()) {
-    		DataAssociation association = it.next();
-    		if (forEachOutVariable.equals(association.getTarget())) {
-    			it.remove();
-    		}
-    	}
+        Iterator<DataAssociation> it = outMapping.iterator();
+        if (forEachOutVariable != null) {
+            while (it.hasNext()) {
+                DataAssociation association = it.next();
+                if (forEachOutVariable.equals(association.getTarget())) {
+                    it.remove();
+                }
+            }
+        }
     }
 
     public void setOutMappings(Map<String, String> outMapping) {

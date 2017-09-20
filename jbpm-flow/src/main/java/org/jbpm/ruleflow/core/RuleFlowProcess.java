@@ -34,6 +34,7 @@ import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.EventTrigger;
 import org.jbpm.workflow.core.node.FaultNode;
 import org.jbpm.workflow.core.node.StartNode;
+import org.jbpm.workflow.core.node.Split;
 import org.jbpm.workflow.core.node.Trigger;
 import org.kie.api.definition.process.Node;
 import org.kie.api.definition.process.NodeContainer;
@@ -108,12 +109,16 @@ public class RuleFlowProcess extends WorkflowProcessImpl {
         return endNodes;
     }
 
-    public StartNode getStart(String trigger) {
+    public Node getStart(String trigger) {
         Node[] nodes = getNodes();
 
         for (int i = 0; i < nodes.length; i++) {
-            if (nodes[i] instanceof StartNode) {
-
+        	// bpm-1694, process can start with event gateway (beside start event)
+        	// note: intentionally avoided the trigger/timer conditions evaluated bellow 
+	       if ((nodes[i] instanceof StartNode) || (nodes[i].getIncomingConnections().isEmpty() && nodes[i] instanceof Split)) {
+          		return nodes[i];
+           	}
+        	/*if (nodes[i] instanceof StartNode) {
                 StartNode start = ((StartNode) nodes[i]);
                 // return start node that is not event based node
                 if (trigger == null && ((start.getTriggers() == null
@@ -140,7 +145,7 @@ public class RuleFlowProcess extends WorkflowProcessImpl {
                         }
                     }
                 }
-            }
+            }*/
         }
         return null;
     }

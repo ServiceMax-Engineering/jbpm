@@ -29,13 +29,22 @@ import org.jbpm.process.core.datatype.DataType;
 import org.jbpm.process.core.datatype.impl.type.ObjectDataType;
 import org.jbpm.process.core.impl.DataTransformerRegistry;
 import org.jbpm.process.core.impl.WorkImpl;
+import org.jbpm.workflow.core.Connection;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
+import org.jbpm.workflow.core.impl.ConnectionImpl;
+import org.jbpm.workflow.core.impl.ConstraintImpl;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.core.node.Assignment;
+import org.jbpm.workflow.core.node.CompositeContextNode;
+import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.DataAssociation;
+import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.ForEachNode;
+import org.jbpm.workflow.core.node.Join;
 import org.jbpm.workflow.core.node.MilestoneNode;
+import org.jbpm.workflow.core.node.Split;
+import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.Transformation;
 import org.jbpm.workflow.core.node.WorkItemNode;
 import org.kie.api.runtime.process.DataTransformer;
@@ -299,29 +308,86 @@ public class TaskHandler extends AbstractNodeHandler {
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();
 			if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
-				// create new timerNode
-				long id = node.getId();
-				ForEachNode forEachNode = new ForEachNode(node);
-				forEachNode.setId(id);
-				forEachNode.setName(node.getName());
-				String uniqueId = (String) node.getMetaData().get("UniqueId");
-				forEachNode.setMetaData("UniqueId", uniqueId);
-				node.setMetaData("UniqueId", uniqueId + ":" + uniqueIdGen++);
-				forEachNode.addNode(node);
-				forEachNode.linkIncomingConnections(NodeImpl.CONNECTION_DEFAULT_TYPE, node.getId(), NodeImpl.CONNECTION_DEFAULT_TYPE);
-				forEachNode.linkOutgoingConnections(node.getId(), NodeImpl.CONNECTION_DEFAULT_TYPE, NodeImpl.CONNECTION_DEFAULT_TYPE);
-				
-				Node orignalNode = node;				
-				node = forEachNode;
-				handleForEachNode(node, element, uri, localName, parser);
-				// remove output collection data output of for each to avoid problems when running in variable strict mode
-				if (orignalNode instanceof WorkItemNode) {
-					((WorkItemNode)orignalNode).adjustOutMapping(forEachNode.getOutputCollectionExpression());
-				}
-								
-				break;
+                // create new timerNode
+                long id = node.getId();
+                ForEachNode forEachNode = new ForEachNode(node);
+                forEachNode.setId(id);
+                forEachNode.setName(node.getName());
+                String uniqueId = (String) node.getMetaData().get("UniqueId");
+                forEachNode.setMetaData("UniqueId", uniqueId);
+                node.setMetaData("UniqueId", uniqueId + ":" + uniqueIdGen++);
+                forEachNode.addNode(node);
+                forEachNode.setInMapping(((WorkItemNode) node).getInAssociations());
+                forEachNode.setOutMapping(((WorkItemNode) node).getOutAssociations());
+                node = forEachNode;
+                handleForEachNode(node, element, uri, localName, parser);
+                break;
 			}
+            if ("standardLoopCharacteristics".equals(nodeName)) {
+                CompositeNode composite = new CompositeContextNode();
+                composite.setId(node.getId());
+                composite.setName(node.getName());
+                composite.setMetaData("UniqueId", node.getMetaData().get("UniqueId"));
 
+                StartNode start = new StartNode();
+                composite.addNode(start);
+
+                Join join = new Join();
+                join.setType(Join.TYPE_XOR);
+                composite.addNode(join);
+
+                Split split = new Split(Split.TYPE_XOR);
+                composite.addNode(split);
+
+                node.setId(4);
+                composite.addNode(node);
+
+                EndNode end = new EndNode();
+                composite.addNode(end);
+                end.setTerminate(false);
+
+                new ConnectionImpl(composite.getNode(1), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+                        composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+                new ConnectionImpl(composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+                        composite.getNode(3), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+                Connection c1 = new ConnectionImpl(composite.getNode(3),
+                        org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, composite.getNode(4),
+                        org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+                new ConnectionImpl(composite.getNode(4), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+                        composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+                Connection c2 = new ConnectionImpl(composite.getNode(3),
+                        org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, composite.getNode(5),
+                        org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+                composite.setMetaData("hidden", true);
+                start.setMetaData("hidden", true);
+                join.setMetaData("hidden", true);
+                split.setMetaData("hidden", true);
+                end.setMetaData("hidden", true);
+
+                String language = "XPath";
+                if (((Element) xmlNode.getFirstChild()).getAttribute("language") != null
+                        && !"".equals(((Element) xmlNode.getFirstChild()).getAttribute("language"))) {
+                    language = ((Element) xmlNode.getFirstChild()).getAttribute("language");
+                }
+                ConstraintImpl cons1 = new ConstraintImpl();
+                cons1.setDialect(language);
+                cons1.setConstraint(xmlNode.getFirstChild().getTextContent());
+                cons1.setType("code");
+                cons1.setName("");
+                split.setConstraint(c1, cons1);
+
+                ConstraintImpl cons2 = new ConstraintImpl();
+                cons2.setDialect(language);
+                cons2.setConstraint("");
+                cons2.setType("code");
+                cons2.setDefault(true);
+                cons2.setName("");
+                split.setConstraint(c2, cons2);
+
+                super.handleNode(node, element, uri, localName, parser);
+                node = composite;
+                break;
+            }
 			xmlNode = xmlNode.getNextSibling();
 		}
 

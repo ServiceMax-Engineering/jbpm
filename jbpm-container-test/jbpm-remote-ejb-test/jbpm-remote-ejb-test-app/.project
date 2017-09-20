@@ -9,6 +9,7 @@
     <project>jbpm-services-ejb-impl</project>
     <project>jbpm-audit</project>
     <project>jbpm-flow</project>
+    <project>jbpm-query-jpa</project>
     <project>jbpm-services-ejb-timer</project>
     <project>jbpm-persistence-jpa</project>
     <project>jbpm-persistence-api</project>
@@ -19,6 +20,7 @@
     <project>jbpm-human-task-workitems</project>
     <project>jbpm-human-task-audit</project>
     <project>jbpm-human-task-jpa</project>
+    <project>jbpm-executor-ejb</project>
     <project>jbpm-executor</project>
     <project>jbpm-kie-services</project>
     <project>jbpm-shared-services</project>

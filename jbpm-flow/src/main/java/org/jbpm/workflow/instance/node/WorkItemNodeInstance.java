@@ -80,7 +80,7 @@ public class WorkItemNodeInstance extends StateBasedNodeInstance implements Even
     private Map<String, List<ContextInstance>> subContextInstances = new HashMap<String, List<ContextInstance>>();
 
     private long workItemId = -1;
-    private transient WorkItem workItem;
+    protected transient WorkItem workItem;
 
     protected WorkItemNode getWorkItemNode() {
         return (WorkItemNode) getNode();

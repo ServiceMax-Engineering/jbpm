@@ -545,7 +545,6 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
         processInstance.setDeploymentId(_instance.getDeploymentId());
         processInstance.setCorrelationKey(_instance.getCorrelationKey());
         long nodeInstanceCounter = _instance.getNodeInstanceCounter();
-        processInstance.setKnowledgeRuntime( wm.getKnowledgeRuntime() );
         processInstance.internalSetNodeInstanceCounter( nodeInstanceCounter );
         for( String completedNodeId : _instance.getCompletedNodeIdsList() ) { 
             processInstance.addCompletedNodeId(completedNodeId);
@@ -837,12 +836,12 @@ public abstract class AbstractProtobufProcessInstanceMarshaller
                 }
                 break;
             case STATUS_SUB_NODE:
-			try {
-				nodeInstance = (NodeInstanceImpl)Class.forName("com.intalio.bpm.engine.status.subprocess.StatusSubProcessNode").newInstance();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				throw new RuntimeException(e);
-			}
+                try {
+                  nodeInstance = (NodeInstanceImpl) Class
+                        .forName("com.intalio.bpm.engine.status.subprocess.StatusSubProcessNodeInstance").newInstance();
+                } catch (Exception e) {
+                   throw new RuntimeException(e);
+                }
             if ( _content.getComposite().getTimerInstanceIdCount() > 0 ) {
                 List<Long> timerInstances = new ArrayList<Long>();
                 for ( Long _timerId : _content.getComposite().getTimerInstanceIdList() ) {

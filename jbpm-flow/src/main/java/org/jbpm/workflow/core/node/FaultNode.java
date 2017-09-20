@@ -70,9 +70,8 @@ public class FaultNode extends ExtendedNodeImpl {
                     + "] only accepts default incoming connection type!");
         }
         if (getFrom() != null) {
-        	throw new IllegalArgumentException(
-                    "This type of node [" + connection.getTo().getMetaData().get("UniqueId") + ", " + connection.getTo().getName() 
-                    + "] cannot have more than one incoming connection!");
+            throw new IllegalArgumentException("This type of node [" + connection.getTo().getMetaData().get("UniqueId")
+                    + ", " + connection.getTo().getName() + "] cannot have more than one incoming connection!");
         }
     }
 

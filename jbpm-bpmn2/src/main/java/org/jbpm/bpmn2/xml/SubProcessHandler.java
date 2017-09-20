@@ -33,14 +33,19 @@ import org.jbpm.process.core.datatype.DataType;
 import org.jbpm.process.core.datatype.impl.type.ObjectDataType;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
+import org.jbpm.workflow.core.impl.ConnectionImpl;
+import org.jbpm.workflow.core.impl.ConstraintImpl;
 import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.core.node.Assignment;
 import org.jbpm.workflow.core.node.CompositeContextNode;
 import org.jbpm.workflow.core.node.CompositeNode;
 import org.jbpm.workflow.core.node.DataAssociation;
+import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.EventSubProcessNode;
 import org.jbpm.workflow.core.node.ForEachNode;
 import org.jbpm.workflow.core.node.StartNode;
+import org.jbpm.workflow.core.node.Join;
+import org.jbpm.workflow.core.node.Split;
 import org.kie.api.definition.process.Connection;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
@@ -153,6 +158,7 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();
+			CompositeContextNode subProcess = (CompositeContextNode) node;
 			 if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
 			    Boolean isAsync = Boolean.parseBoolean((String)node.getMetaData().get("customAsync"));
 				// create new timerNode
@@ -160,18 +166,93 @@ public class SubProcessHandler extends AbstractNodeHandler {
 				forEachNode.setId(node.getId());
 				forEachNode.setName(node.getName());
 				
-				forEachNode.setAutoComplete(((CompositeContextNode) node).isAutoComplete());
+				forEachNode.setAutoComplete(subProcess.isAutoComplete());
 				
-				for (org.kie.api.definition.process.Node subNode: ((CompositeContextNode) node).getNodes()) {
+				for (org.kie.api.definition.process.Node subNode: subProcess.getNodes()) {
 			
 					forEachNode.addNode(subNode);
 				}
-				forEachNode.setMetaData("UniqueId", ((CompositeContextNode) node).getMetaData("UniqueId"));				
-				forEachNode.setMetaData(ProcessHandler.CONNECTIONS, ((CompositeContextNode) node).getMetaData(ProcessHandler.CONNECTIONS));
-				VariableScope v = (VariableScope) ((CompositeContextNode) node).getDefaultContext(VariableScope.VARIABLE_SCOPE);
+				forEachNode.setMetaData("UniqueId", subProcess.getMetaData("UniqueId"));
+				forEachNode.setMetaData(ProcessHandler.CONNECTIONS, subProcess.getMetaData(ProcessHandler.CONNECTIONS));
+				VariableScope v = (VariableScope) subProcess.getDefaultContext(VariableScope.VARIABLE_SCOPE);
 				((VariableScope) ((CompositeContextNode) forEachNode.internalGetNode(2)).getDefaultContext(VariableScope.VARIABLE_SCOPE)).setVariables(v.getVariables());
 				node = forEachNode;
 				handleForEachNode(node, element, uri, localName, parser, isAsync);
+				found = true;
+				break;
+			}
+			if ("standardLoopCharacteristics".equals(nodeName)) {
+				CompositeNode composite = new CompositeContextNode();
+				composite.setId(node.getId());
+				composite.setName(node.getName());
+				composite.setMetaData("UniqueId", node.getMetaData().get("UniqueId"));
+
+				StartNode start = new StartNode();
+				composite.addNode(start);
+
+				Join join = new Join();
+				join.setType(Join.TYPE_XOR);
+				composite.addNode(join);
+
+				Split split = new Split(Split.TYPE_XOR);
+				composite.addNode(split);
+
+				node.setId(4);
+				composite.addNode(node);
+
+				EndNode end = new EndNode();
+				composite.addNode(end);
+				end.setTerminate(false);
+
+				new ConnectionImpl(composite.getNode(1), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+						composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				new ConnectionImpl(composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+						composite.getNode(3), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				Connection c1 = new ConnectionImpl(composite.getNode(3),
+						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, composite.getNode(4),
+						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				new ConnectionImpl(composite.getNode(4), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+						composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				Connection c2 = new ConnectionImpl(composite.getNode(3),
+						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, composite.getNode(5),
+						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+
+				start.setMetaData("hidden", true);
+				join.setMetaData("hidden", true);
+				split.setMetaData("hidden", true);
+				end.setMetaData("hidden", true);
+
+				String language = "XPath";
+				if (((Element) xmlNode.getFirstChild()).getAttribute("language") != null
+						&& !"".equals(((Element) xmlNode.getFirstChild()).getAttribute("language"))) {
+					language = ((Element) xmlNode.getFirstChild()).getAttribute("language");
+				}
+				ConstraintImpl cons1 = new ConstraintImpl();
+				cons1.setDialect(language);
+				cons1.setConstraint(xmlNode.getFirstChild().getTextContent());
+				cons1.setType("code");
+				cons1.setName("");
+				split.setConstraint(c1, cons1);
+
+				ConstraintImpl cons2 = new ConstraintImpl();
+				cons2.setDialect(language);
+				cons2.setConstraint("");
+				cons2.setType("code");
+				cons2.setDefault(true);
+
+				cons2.setName("");
+				split.setConstraint(c2, cons2);
+
+				super.handleNode(node, element, uri, localName, parser);
+
+				List<SequenceFlow> connections = (List<SequenceFlow>) node.getMetaData()
+						.get(ProcessHandler.CONNECTIONS);
+
+				ProcessHandler.linkConnections(subProcess, connections);
+
+				ProcessHandler.linkBoundaryEvents(subProcess);
+
+				node = composite;
 				found = true;
 				break;
 			}

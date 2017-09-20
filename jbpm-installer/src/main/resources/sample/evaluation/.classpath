@@ -6,6 +6,6 @@
 	<classpathentry kind="con" path="JBPM/jbpm"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/jbpm-test"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/kie-api"/>
+	<classpathentry kind="var" path="M2_REPO/org/kie/kie-api/7.3.0.001/kie-api-7.3.0.001.jar" sourcepath="M2_REPO/org/kie/kie-api/7.3.0.001/kie-api-7.3.0.001-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

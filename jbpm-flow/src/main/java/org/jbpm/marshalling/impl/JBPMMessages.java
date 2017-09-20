@@ -569,11 +569,11 @@ public final class JBPMMessages {
       /**
        * <code>EVENT_SUBPROCESS_NODE = 13;</code>
        */
-      EVENT_SUBPROCESS_NODE(12, 12),
+      EVENT_SUBPROCESS_NODE(13, 13),
       /**
-       * <code>ASYNC_EVENT_NODE = 13;</code>
+       * <code>ASYNC_EVENT_NODE = 14;</code>
        */
-      ASYNC_EVENT_NODE(13, 13),
+      ASYNC_EVENT_NODE(14, 14),
       ;
 
       /**
@@ -628,11 +628,11 @@ public final class JBPMMessages {
       /**
        * <code>EVENT_SUBPROCESS_NODE = 13;</code>
        */
-      public static final int EVENT_SUBPROCESS_NODE_VALUE = 12;
+      public static final int EVENT_SUBPROCESS_NODE_VALUE = 13;
       /**
-       * <code>ASYNC_EVENT_NODE = 13;</code>
+       * <code>ASYNC_EVENT_NODE = 14;</code>
        */
-      public static final int ASYNC_EVENT_NODE_VALUE = 13;
+      public static final int ASYNC_EVENT_NODE_VALUE = 14;
 
 
       public final int getNumber() { return value; }
@@ -651,8 +651,9 @@ public final class JBPMMessages {
           case 9: return COMPOSITE_CONTEXT_NODE;
           case 10: return FOR_EACH_NODE;
           case 11: return DYNAMIC_NODE;
-          case 12: return EVENT_SUBPROCESS_NODE;
-          case 13: return ASYNC_EVENT_NODE;
+          case 12: return STATUS_SUB_NODE;
+          case 13: return EVENT_SUBPROCESS_NODE;
+          case 14: return ASYNC_EVENT_NODE;
           default: return null;
         }
       }
