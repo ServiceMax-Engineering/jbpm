@@ -1,6 +1,5 @@
-package org.jbpm.services.task.wih;
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,18 +14,19 @@ package org.jbpm.services.task.wih;
  * the License.
  */
 
+package org.jbpm.services.task.wih;
+
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import org.drools.core.impl.EnvironmentFactory;
 import org.jbpm.services.task.HumanTaskServiceFactory;
 import org.jbpm.services.task.test.TestStatefulKnowledgeSession;
+import org.jbpm.test.util.PoolingDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.kie.api.runtime.process.WorkItemHandler;
 import org.kie.internal.task.api.InternalTaskService;
-
-import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 public class HTWorkItemHandlerTest extends HTWorkItemHandlerBaseTest {
 
@@ -63,9 +63,7 @@ public class HTWorkItemHandlerTest extends HTWorkItemHandlerBaseTest {
     protected PoolingDataSource setupPoolingDataSource() {
         PoolingDataSource pds = new PoolingDataSource();
         pds.setUniqueName("jdbc/jbpm-ds");
-        pds.setClassName("bitronix.tm.resource.jdbc.lrc.LrcXADataSource");
-        pds.setMaxPoolSize(5);
-        pds.setAllowLocalTransactions(true);
+        pds.setClassName("org.h2.jdbcx.JdbcDataSource");
         pds.getDriverProperties().put("user", "sa");
         pds.getDriverProperties().put("password", "");
         pds.getDriverProperties().put("url", "jdbc:h2:mem:jbpm-db;MVCC=true");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package org.jbpm.executor.impl.mem;
 
 import java.util.Map;
 
-import org.kie.internal.executor.api.ErrorInfo;
-import org.kie.internal.executor.api.ExecutorAdminService;
-import org.kie.internal.executor.api.RequestInfo;
+import org.kie.api.executor.ErrorInfo;
+import org.kie.api.executor.ExecutorAdminService;
+import org.kie.api.executor.RequestInfo;
+
+
 
 public class InMemoryExecutorAdminServiceImpl implements ExecutorAdminService {
 
@@ -39,6 +41,9 @@ public class InMemoryExecutorAdminServiceImpl implements ExecutorAdminService {
 		Map<Long, RequestInfo> requests = storeService.getRequests();
 		int size = requests.size();
 		requests.clear();
+		Map<Long, RequestInfo> processedRequests = storeService.getProcessedRequests();
+		size += processedRequests.size();
+		processedRequests.clear();
 		return size;
 	}
 

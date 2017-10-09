@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,6 @@
 
 package org.jbpm.services.ejb.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.kie.scanner.MavenRepository.getMavenRepository;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -29,7 +23,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.ejb.EJB;
 
 import org.drools.compiler.kie.builder.impl.InternalKieModule;
@@ -62,11 +55,18 @@ import org.kie.api.KieServices;
 import org.kie.api.builder.ReleaseId;
 import org.kie.api.runtime.process.NodeInstance;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.query.QueryContext;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.internal.query.QueryContext;
+import org.kie.internal.KieInternalServices;
+import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.query.QueryFilter;
-import org.kie.scanner.MavenRepository;
+import org.kie.internal.task.api.AuditTask;
+import org.kie.internal.task.api.model.TaskEvent;
+import org.kie.scanner.KieMavenRepository;
+
+import static org.junit.Assert.*;
+import static org.kie.scanner.KieMavenRepository.getKieMavenRepository;
 
 @RunWith(Arquillian.class)
 public class RuntimeDataServiceEJBIntegrationTest extends AbstractTestSupport {
@@ -118,8 +118,8 @@ public class RuntimeDataServiceEJBIntegrationTest extends AbstractTestSupport {
         } catch (Exception e) {
 
         }
-        MavenRepository repository = getMavenRepository();
-        repository.deployArtifact(releaseId, kJar1, pom);
+		KieMavenRepository repository = getKieMavenRepository();
+        repository.installArtifact(releaseId, kJar1, pom);
 	}
 
 	private List<DeploymentUnit> units = new ArrayList<DeploymentUnit>();
@@ -161,12 +161,13 @@ public class RuntimeDataServiceEJBIntegrationTest extends AbstractTestSupport {
 	private TransactionalCommandService commandService;
 
 	@EJB
-  private UserTaskServiceEJBLocal userTaskService;
+    private UserTaskServiceEJBLocal userTaskService;
 
 	@Test
     public void testGetProcessByDeploymentId() {
     	Collection<ProcessDefinition> definitions = runtimeDataService.getProcessesByDeploymentId(deploymentUnit.getIdentifier(), new QueryContext());
     	assertNotNull(definitions);
+
     	assertEquals(3, definitions.size());
     	List<String> expectedProcessIds = new ArrayList<String>();
     	expectedProcessIds.add("org.jbpm.writedocument.empty");
@@ -204,10 +205,11 @@ public class RuntimeDataServiceEJBIntegrationTest extends AbstractTestSupport {
 
     @Test
     public void testGetProcessByProcessId() {
-    	ProcessDefinition definition = runtimeDataService.getProcessById("org.jbpm.writedocument");
+        Collection<ProcessDefinition> definition = runtimeDataService.getProcessesById("org.jbpm.writedocument");
 
-    	assertNotNull(definition);
-    	assertEquals("org.jbpm.writedocument", definition.getId());
+        assertNotNull(definition);
+        assertEquals(1, definition.size());
+        assertEquals("org.jbpm.writedocument", definition.iterator().next().getId());
     }
 
     @Test
@@ -438,6 +440,86 @@ public class RuntimeDataServiceEJBIntegrationTest extends AbstractTestSupport {
     	assertNotNull(instance);
     	assertEquals(3, (int)instance.getState());
     	assertEquals("org.jbpm.writedocument", instance.getProcessId());
+
+    }
+
+    @Test
+    public void testGetProcessInstanceByCorrelationKey() {
+        Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(0, instances.size());
+
+        CorrelationKey key = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey("my business key");
+
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", key);
+        assertNotNull(processInstanceId);
+
+        ProcessInstanceDesc instance = runtimeDataService.getProcessInstanceByCorrelationKey(key);
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("my business key", instance.getCorrelationKey());
+
+        List<UserTaskInstanceDesc> tasks = instance.getActiveTasks();
+        assertNotNull(tasks);
+        assertEquals(1, tasks.size());
+
+        UserTaskInstanceDesc activeTask = tasks.get(0);
+        assertNotNull(activeTask);
+        assertEquals(Status.Reserved.name(), activeTask.getStatus());
+        assertEquals(instance.getId(), activeTask.getProcessInstanceId());
+        assertEquals(instance.getProcessId(), activeTask.getProcessId());
+        assertEquals("Write a Document", activeTask.getName());
+        assertEquals("salaboy", activeTask.getActualOwner());
+        assertEquals(deploymentUnit.getIdentifier(), activeTask.getDeploymentId());
+
+        processService.abortProcessInstance(processInstanceId);
+
+        instance = runtimeDataService.getProcessInstanceByCorrelationKey(key);
+        processInstanceId = null;
+        assertNull(instance);
+
+    }
+
+    @Test
+    public void testGetProcessInstancesByCorrelationKey() {
+        Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(0, instances.size());
+
+        CorrelationKey key = KieInternalServices.Factory.get().newCorrelationKeyFactory().newCorrelationKey("my business key");
+
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", key);
+        assertNotNull(processInstanceId);
+
+        Collection<ProcessInstanceDesc> keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(key, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+
+        ProcessInstanceDesc instance = keyedInstances.iterator().next();
+
+        assertNotNull(instance);
+        assertEquals(1, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("my business key", instance.getCorrelationKey());
+
+        List<UserTaskInstanceDesc> tasks = instance.getActiveTasks();
+        assertNull(tasks);
+
+        processService.abortProcessInstance(processInstanceId);
+
+        instance = runtimeDataService.getProcessInstanceByCorrelationKey(key);
+        processInstanceId = null;
+        assertNull(instance);
+
+        keyedInstances = runtimeDataService.getProcessInstancesByCorrelationKey(key, new QueryContext());
+        assertNotNull(keyedInstances);
+        assertEquals(1, keyedInstances.size());
+
+        instance = keyedInstances.iterator().next();
+        assertEquals(3, (int)instance.getState());
+        assertEquals("org.jbpm.writedocument", instance.getProcessId());
+        assertEquals("my business key", instance.getCorrelationKey());
 
     }
 
@@ -907,5 +989,201 @@ public class RuntimeDataServiceEJBIntegrationTest extends AbstractTestSupport {
     	for (ProcessInstanceDesc pi : activeProcesses) {
     		processService.abortProcessInstance(pi.getId());
     	}
+    }
+
+    @Test
+    public void testGetTaskAudit() {
+    	processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
+    	assertNotNull(processInstanceId);
+
+    	ProcessInstance instance = processService.getProcessInstance(processInstanceId);
+    	assertNotNull(instance);
+
+    	Collection<NodeInstance> activeNodes = ((WorkflowProcessInstanceImpl) instance).getNodeInstances();
+    	assertNotNull(activeNodes);
+    	assertEquals(1, activeNodes.size());
+
+    	NodeInstance node = activeNodes.iterator().next();
+    	assertNotNull(node);
+    	assertTrue(node instanceof WorkItemNodeInstance);
+
+    	Long workItemId = ((WorkItemNodeInstance) node).getWorkItemId();
+    	assertNotNull(workItemId);
+
+    	List<AuditTask> auditTasks = runtimeDataService.getAllAuditTask("salaboy", new QueryFilter(0, 10));
+    	assertNotNull(auditTasks);
+    	assertEquals(1, auditTasks.size());
+    	assertEquals("Write a Document", auditTasks.get(0).getName());
+
+    }
+
+    @Test
+    public void testGetTaskEvents() {
+    	processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
+    	assertNotNull(processInstanceId);
+
+    	ProcessInstance instance = processService.getProcessInstance(processInstanceId);
+    	assertNotNull(instance);
+
+    	Collection<NodeInstance> activeNodes = ((WorkflowProcessInstanceImpl) instance).getNodeInstances();
+    	assertNotNull(activeNodes);
+    	assertEquals(1, activeNodes.size());
+
+    	NodeInstance node = activeNodes.iterator().next();
+    	assertNotNull(node);
+    	assertTrue(node instanceof WorkItemNodeInstance);
+
+    	Long workItemId = ((WorkItemNodeInstance) node).getWorkItemId();
+    	assertNotNull(workItemId);
+
+    	UserTaskInstanceDesc userTask = runtimeDataService.getTaskByWorkItemId(workItemId);
+    	assertNotNull(userTask);
+
+    	List<TaskEvent> auditTasks = runtimeDataService.getTaskEvents(userTask.getTaskId(), new QueryFilter());
+    	assertNotNull(auditTasks);
+    	assertEquals(1, auditTasks.size());
+    	assertEquals(TaskEvent.TaskEventType.ADDED, auditTasks.get(0).getType());
+
+    	userTaskService.start(userTask.getTaskId(), "salaboy");
+
+    	auditTasks = runtimeDataService.getTaskEvents(userTask.getTaskId(), new QueryFilter());
+    	assertNotNull(auditTasks);
+    	assertEquals(2, auditTasks.size());
+    	assertEquals(TaskEvent.TaskEventType.ADDED, auditTasks.get(0).getType());
+    	assertEquals(TaskEvent.TaskEventType.STARTED, auditTasks.get(1).getType());
+
+    }
+
+    @Test
+    public void testGetProcessInstancesByVariable() {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("approval_document", "initial content");
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", params);
+        assertNotNull(processInstanceId);
+
+        Collection<ProcessInstanceDesc> processInstanceLogs = runtimeDataService.getProcessInstancesByVariable("approval_document", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(1, processInstanceLogs.size());
+
+        processService.setProcessVariable(processInstanceId, "approval_document", "updated content");
+
+        processInstanceLogs = runtimeDataService.getProcessInstancesByVariable("approval_reviewComment", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(0, processInstanceLogs.size());
+
+        processService.setProcessVariable(processInstanceId, "approval_reviewComment", "under review - content");
+
+        processInstanceLogs = runtimeDataService.getProcessInstancesByVariable("approval_reviewComment", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(1, processInstanceLogs.size());
+
+        processService.abortProcessInstance(processInstanceId);
+        processInstanceId = null;
+    }
+
+    @Test
+    public void testGetProcessInstancesByVariableAndValue() {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("approval_document", "initial content");
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", params);
+        assertNotNull(processInstanceId);
+
+        Collection<ProcessInstanceDesc> processInstanceLogs = runtimeDataService.getProcessInstancesByVariableAndValue("approval_document", "initial content", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(1, processInstanceLogs.size());
+
+        processService.setProcessVariable(processInstanceId, "approval_document", "updated content");
+
+        processInstanceLogs = runtimeDataService.getProcessInstancesByVariableAndValue("approval_document", "initial content", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(0, processInstanceLogs.size());
+
+        processInstanceLogs = runtimeDataService.getProcessInstancesByVariableAndValue("approval_document", "updated content", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(1, processInstanceLogs.size());
+
+        processInstanceLogs = runtimeDataService.getProcessInstancesByVariableAndValue("approval_document", "updated%", null, new QueryContext());
+        assertNotNull(processInstanceLogs);
+        assertEquals(1, processInstanceLogs.size());
+
+        processService.abortProcessInstance(processInstanceId);
+        processInstanceId = null;
+
+    }
+
+
+    @Test
+    public void testGetTasksByVariable() {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("approval_document", "initial content");
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", params);
+        assertNotNull(processInstanceId);
+
+        List<TaskSummary> tasks = runtimeDataService.getTasksAssignedAsPotentialOwner("salaboy", null);
+        assertNotNull(tasks);
+        assertEquals(1, tasks.size());
+
+        List<TaskSummary> tasksByVariable = runtimeDataService.
+                taskSummaryQuery("salaboy")
+                .variableName("TaskName").build().getResultList();
+        assertNotNull(tasksByVariable);
+        assertEquals(1, tasksByVariable.size());
+
+        tasksByVariable = runtimeDataService.getTasksByVariable("salaboy", "ReviewComment", null, new QueryContext());
+        assertNotNull(tasksByVariable);
+        assertEquals(0, tasksByVariable.size());
+
+
+        long taskId = tasks.get(0).getId();
+
+        Map<String, Object> output = new HashMap<String, Object>();
+        output.put("ReviewComment", "document reviewed");
+        userTaskService.saveContent(taskId, output);
+
+        tasksByVariable = runtimeDataService.getTasksByVariable("salaboy", "ReviewComment", null, new QueryContext());
+        assertNotNull(tasksByVariable);
+        assertEquals(1, tasksByVariable.size());
+
+        processService.abortProcessInstance(processInstanceId);
+        processInstanceId = null;
+    }
+
+    @Test
+    public void testGetTasksByVariableAndValue() {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("approval_document", "initial content");
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument", params);
+        assertNotNull(processInstanceId);
+
+        List<TaskSummary> tasks = runtimeDataService.getTasksAssignedAsPotentialOwner("salaboy", null);
+        assertNotNull(tasks);
+        assertEquals(1, tasks.size());
+
+        List<TaskSummary> tasksByVariable = runtimeDataService.getTasksByVariableAndValue("salaboy", "TaskName", "Write a Document", null, new QueryContext());
+        assertNotNull(tasksByVariable);
+        assertEquals(1, tasksByVariable.size());
+
+        tasksByVariable = runtimeDataService.getTasksByVariableAndValue("salaboy", "TaskName", "Write", null, new QueryContext());
+        assertNotNull(tasksByVariable);
+        assertEquals(0, tasksByVariable.size());
+
+
+        long taskId = tasks.get(0).getId();
+
+        Map<String, Object> output = new HashMap<String, Object>();
+        output.put("ReviewComment", "document reviewed");
+        userTaskService.saveContent(taskId, output);
+
+        tasksByVariable = runtimeDataService.getTasksByVariableAndValue("salaboy", "ReviewComment", "document reviewed", null, new QueryContext());
+        assertNotNull(tasksByVariable);
+        assertEquals(1, tasksByVariable.size());
+
+        tasksByVariable = runtimeDataService.getTasksByVariableAndValue("salaboy", "ReviewComment", "document%", null, new QueryContext());
+        assertNotNull(tasksByVariable);
+        assertEquals(1, tasksByVariable.size());
+
+        processService.abortProcessInstance(processInstanceId);
+        processInstanceId = null;
+
     }
 }

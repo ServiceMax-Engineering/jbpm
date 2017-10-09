@@ -3,12 +3,14 @@
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="http://java.sun.com/xml/ns/persistence/orm orm_2_0.xsd"
                  version="2.0">
+    
     <named-query name="TasksAssignedAsBusinessAdministrator">
         <query>
             select distinct 
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -20,7 +22,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.businessAdministrators businessAdministrators
@@ -31,12 +34,13 @@
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
     </named-query>
-    <named-query name="TasksAssignedAsExcludedOwner">
+    <named-query name="TasksAssignedAsBusinessAdministratorByStatus">
         <query>
             select distinct 
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -48,7 +52,40 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
+            from
+            TaskImpl t
+            join t.peopleAssignments.businessAdministrators businessAdministrators
+            where
+            t.archived = 0 and
+            ( businessAdministrators.id = :userId or businessAdministrators.id in (:groupIds) ) and 
+            t.taskData.status in (:status) 
+           
+            order by t.id DESC
+        </query>
+        <!-- hint name="org.hibernate.timeout" value="200"/ -->
+    </named-query>
+    <named-query name="TasksAssignedAsExcludedOwner">
+        <query>
+            select distinct 
+            new org.jbpm.services.task.query.TaskSummaryImpl(
+                t.id,
+                t.name,
+                t.subject,
+                t.description,
+                t.taskData.status,
+                t.priority,
+                t.taskData.actualOwner.id,
+                t.taskData.createdBy.id,
+                t.taskData.createdOn,
+                t.taskData.activationTime,
+                t.taskData.expirationTime,
+                t.taskData.processId,
+                t.taskData.processInstanceId,
+                t.taskData.parentId,
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.excludedOwners excludedOwners
@@ -65,6 +102,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -76,15 +114,15 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and
             potentialOwners.id = :userId and
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId) and
+            (:userId not member of t.peopleAssignments.excludedOwners)  and
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and             
             t.taskData.status in ('Created', 'Ready', 'Reserved', 'InProgress', 'Suspended') 
             order by t.id DESC            
@@ -97,6 +135,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -108,15 +147,15 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and
             potentialOwners.id = :userId and
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId) and
+            (:userId not member of t.peopleAssignments.excludedOwners)  and
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.status in (:status) 
             order by t.id DESC    
@@ -129,6 +168,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -140,17 +180,17 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) ) and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -161,6 +201,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -172,17 +213,17 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.status in ('Created', 'Ready', 'Reserved', 'InProgress', 'Suspended') and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC          
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -193,6 +234,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -204,17 +246,17 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -225,6 +267,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -236,7 +279,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners 
@@ -277,6 +321,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -288,18 +333,18 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and             
             t.taskData.expirationTime = :expirationDate and
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -311,6 +356,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -322,18 +368,18 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners 
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and             
             (t.taskData.expirationTime = :expirationDate or t.taskData.expirationTime is null) and
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC     
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -411,6 +457,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -422,18 +469,18 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and
             t.taskData.parentId = :parentId and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.status in ('Created', 'Ready', 'Reserved', 'InProgress', 'Suspended') and 
             (potentialOwners.id = :userId or potentialOwners.id in (:groupIds)) and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId) 
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -445,6 +492,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -456,7 +504,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t,
             OrganizationalEntityImpl potentialOwners
@@ -475,19 +524,21 @@
             select distinct 
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
-                    t.name,
-                    t.description,
-                    t.taskData.status,
-                    t.priority,
-                    t.taskData.actualOwner.id,
-                    t.taskData.createdBy.id,
-                    t.taskData.createdOn,
-                    t.taskData.activationTime,
-                    t.taskData.expirationTime,
-                    t.taskData.processId,
-                    t.taskData.processInstanceId,
-                    t.taskData.parentId,
-                    t.taskData.deploymentId              )
+                t.name,
+                t.subject,
+                t.description,
+                t.taskData.status,
+                t.priority,
+                t.taskData.actualOwner.id,
+                t.taskData.createdBy.id,
+                t.taskData.createdOn,
+                t.taskData.activationTime,
+                t.taskData.expirationTime,
+                t.taskData.processId,
+                t.taskData.processInstanceId,
+                t.taskData.parentId,
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.recipients recipients
@@ -504,6 +555,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -515,7 +567,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.taskInitiator taskInitiators
@@ -532,6 +585,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -543,7 +597,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.taskStakeholders taskStakeholders
@@ -561,6 +616,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -572,7 +628,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
     
@@ -592,6 +649,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -603,7 +661,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
             left join t.peopleAssignments.potentialOwners potOwners
@@ -624,6 +683,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -635,7 +695,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
     
@@ -657,6 +718,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -668,7 +730,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
             left join t.peopleAssignments.potentialOwners potOwners
@@ -694,6 +757,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -705,7 +769,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
                 TaskImpl t 
             
@@ -722,6 +787,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -733,7 +799,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
             
@@ -754,6 +821,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -765,7 +833,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
             where
@@ -782,6 +851,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -793,7 +863,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
     
@@ -815,6 +886,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -826,7 +898,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
     
@@ -940,6 +1013,46 @@
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
     </named-query>
+    <!-- for reminder  -->
+    <named-query name="UnescalatedEndDeadlinesByTaskIdForReminder">
+        <query>
+            select
+            new org.jbpm.services.task.query.DeadlineSummaryImpl(
+            t.id,
+            d.id,
+            d.date)
+            from
+            TaskImpl t,
+            DeadlineImpl d
+            where
+            t.id = :taskId and
+            t.archived = 0 and
+            d in elements( t.deadlines.endDeadlines )
+            order by
+            d.date
+        </query>
+        <!-- hint name="org.hibernate.timeout" value="200"/ -->
+    </named-query>
+      
+    <named-query name="UnescalatedStartDeadlinesByTaskIdForReminder">
+        <query>
+            select
+            new org.jbpm.services.task.query.DeadlineSummaryImpl(
+            t.id,
+            d.id,
+            d.date)
+            from
+            TaskImpl t,
+            DeadlineImpl d
+            where
+            t.id = :taskId and
+            t.archived = 0 and
+            d in elements( t.deadlines.startDeadlines )
+            order by
+            d.date
+        </query>
+    </named-query>
+    <!-- for reminder end -->
     <named-query name="TaskByWorkItemId">
         <query>
             select
@@ -958,6 +1071,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -969,7 +1083,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t 
             
@@ -988,6 +1103,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
                 t.id,
                 t.name,
+                t.subject,
                 t.description,
                 t.taskData.status,
                 t.priority,
@@ -999,7 +1115,8 @@
                 t.taskData.processId,
                 t.taskData.processInstanceId,
                 t.taskData.parentId,
-                t.taskData.deploymentId              )
+                t.taskData.deploymentId,
+                t.taskData.skipable              )
             from
             TaskImpl t
             
@@ -1036,6 +1153,7 @@
             join t.taskData.attachments as  a  
             where 
             t.id = :taskId
+            order by a.id ASC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
     </named-query>
@@ -1048,6 +1166,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
             t.id,
             t.name,
+            t.subject,
             t.description,
             t.taskData.status,
             t.priority,
@@ -1059,17 +1178,17 @@
             t.taskData.processId,
             t.taskData.processInstanceId,
             t.taskData.parentId,
-            t.taskData.deploymentId              )
+            t.taskData.deploymentId,
+            t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) ) and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC          
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -1085,6 +1204,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
             t.id,
             t.name,
+            t.subject,
             t.description,
             t.taskData.status,
             t.priority,
@@ -1096,18 +1216,18 @@
             t.taskData.processId,
             t.taskData.processInstanceId,
             t.taskData.parentId,
-            t.taskData.deploymentId              )
+            t.taskData.deploymentId,
+            t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             (t.taskData.expirationTime = :expirationDate or t.taskData.expirationTime is null) and
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) ) and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC     
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -1119,6 +1239,7 @@
             new org.jbpm.services.task.query.TaskSummaryImpl(
             t.id,
             t.name,
+            t.subject,
             t.description,
             t.taskData.status,
             t.priority,
@@ -1130,18 +1251,18 @@
             t.taskData.processId,
             t.taskData.processInstanceId,
             t.taskData.parentId,
-            t.taskData.deploymentId              )
+            t.taskData.deploymentId,
+            t.taskData.skipable              )
             from
             TaskImpl t
             join t.peopleAssignments.potentialOwners potentialOwners
-            left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             t.taskData.expirationTime = :expirationDate and
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -1153,6 +1274,7 @@
                 new org.jbpm.services.task.query.TaskSummaryImpl(
                     t.id,
                     t.name,
+                    t.subject,
                     t.description,
                     t.taskData.status,
                     t.priority,
@@ -1164,17 +1286,17 @@
                     t.taskData.processId,
                     t.taskData.processInstanceId,
                     t.taskData.parentId,
-                    t.taskData.deploymentId              )
+                    t.taskData.deploymentId,
+                    t.taskData.skipable               )
             from
                 TaskImpl t
                 join t.peopleAssignments.potentialOwners potentialOwners
-                left join t.peopleAssignments.excludedOwners as excludedOwners
             where
                 t.archived = 0 and
                 (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and
                 t.taskData.status in (:status) and 
                 (potentialOwners.id  = :userId or potentialOwners.id in (:groupIds)) and 
-                (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)           
+                (:userId not member of t.peopleAssignments.excludedOwners)           
             order by t.id DESC    
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -1186,6 +1308,7 @@
                 new org.jbpm.services.task.query.TaskSummaryImpl(
                     t.id,
                     t.name,
+                    t.subject,
                     t.description,
                     t.taskData.status,
                     t.priority,
@@ -1197,18 +1320,18 @@
                     t.taskData.processId,
                     t.taskData.processInstanceId,
                     t.taskData.parentId,
-                    t.taskData.deploymentId              )
+                    t.taskData.deploymentId,
+                    t.taskData.skipable              )
             from
                 TaskImpl t
                 join t.peopleAssignments.potentialOwners potentialOwners
-                left join t.peopleAssignments.excludedOwners as excludedOwners
             where
             t.archived = 0 and            
             (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
             (t.taskData.expirationTime = :expirationDate or t.taskData.expirationTime is null) and
             t.taskData.status in (:status) and 
             ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-            (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+            (:userId not member of t.peopleAssignments.excludedOwners) 
             order by t.id DESC     
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -1219,6 +1342,7 @@
                 new org.jbpm.services.task.query.TaskSummaryImpl(
                     t.id,
                     t.name,
+                    t.subject,
                     t.description,
                     t.taskData.status,
                     t.priority,
@@ -1230,18 +1354,18 @@
                     t.taskData.processId,
                     t.taskData.processInstanceId,
                     t.taskData.parentId,
-                    t.taskData.deploymentId              )
+                    t.taskData.deploymentId,
+                    t.taskData.skipable              )
             from
                 TaskImpl t
                 join t.peopleAssignments.potentialOwners potentialOwners
-                left join t.peopleAssignments.excludedOwners as excludedOwners
             where
                 t.archived = 0 and
                 (t.taskData.actualOwner.id = :userId or t.taskData.actualOwner is null) and 
                 t.taskData.expirationTime = :expirationDate and
                 t.taskData.status in (:status) and 
 	            ( potentialOwners.id = :userId or potentialOwners.id in (:groupIds) )  and 
-                (t.peopleAssignments.excludedOwners is empty or excludedOwners.id != :userId)
+                (:userId not member of t.peopleAssignments.excludedOwners) 
                 order by t.id DESC
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
@@ -1252,6 +1376,7 @@
                 new org.jbpm.services.task.query.TaskSummaryImpl(
                     t.id,
                     t.name,
+                    t.subject,
                     t.description,
                     t.taskData.status,
                     t.priority,
@@ -1263,7 +1388,8 @@
                     t.taskData.processId,
                     t.taskData.processInstanceId,
                     t.taskData.parentId,
-                    t.taskData.deploymentId              )
+                    t.taskData.deploymentId,
+                    t.taskData.skipable              )
             from
                 TaskImpl t
             where
@@ -1274,5 +1400,11 @@
         </query>
         <!-- hint name="org.hibernate.timeout" value="200"/ -->
     </named-query>
-    
+    <named-query name="GetAllTasks">
+       <query>
+          select t from TaskImpl t
+       </query>
+       <!-- hint name="org.hibernate.timeout" value="200"/ -->
+    </named-query>
+
 </entity-mappings>

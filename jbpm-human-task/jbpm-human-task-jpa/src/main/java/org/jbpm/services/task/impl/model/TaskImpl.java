@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
 
+import java.util.Objects;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -236,7 +237,7 @@ public class TaskImpl implements InternalTask {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -255,15 +256,15 @@ public class TaskImpl implements InternalTask {
         }
     }
     
-    public int getVersion() {
+    public Integer getVersion() {
         return this.version;
     }
 
-    public int getPriority() {
+    public Integer getPriority() {
         return priority;
     }
 
-    public void setPriority(int priority) {
+    public void setPriority(Integer priority) {
         this.priority = priority;
     }
 
@@ -366,7 +367,7 @@ public class TaskImpl implements InternalTask {
         if ( this.version != other.version ) {
             return false;
         }
-        if ( this.archived != other.archived ) {
+        if (!Objects.equals(this.archived, other.archived)) {
             return false;
         }
         if (taskType == null) {
@@ -423,7 +424,10 @@ public class TaskImpl implements InternalTask {
     public void setDescription(String description) {
         this.description = description;
     }
-    
-    
 
+    @Override
+    public String toString() {
+        return "TaskImpl [id=" + id + ", name=" + name + "]";
+    }
+  
 }

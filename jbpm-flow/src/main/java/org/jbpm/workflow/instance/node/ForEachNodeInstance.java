@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package org.jbpm.workflow.instance.node;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-
+import org.drools.core.util.MVELSafeHelper;
 import org.jbpm.process.core.ContextContainer;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.ContextInstance;
@@ -36,13 +38,13 @@ import org.jbpm.workflow.instance.impl.NodeInstanceResolverFactory;
 import org.kie.api.definition.process.Connection;
 import org.kie.api.definition.process.Node;
 import org.mvel2.MVEL;
-
 import org.w3c.dom.Element;
+import org.mvel2.integration.VariableResolver;
+import org.mvel2.integration.impl.SimpleValueResolver;
 
 /**
  * Runtime counterpart of a for each node.
  * 
- * @author <a href="mailto:kris_verlaenen@hotmail.com">Kris Verlaenen</a>
  */
 public class ForEachNodeInstance extends CompositeContextNodeInstance {
 
@@ -95,6 +97,42 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
         return (ContextContainer) getForEachNode().getCompositeNode();
     }
     
+
+    private Collection<?> evaluateCollectionExpression(String collectionExpression) {
+        // TODO: should evaluate this expression using MVEL
+        Object collection = null;
+        VariableScopeInstance variableScopeInstance = (VariableScopeInstance)
+            resolveContextInstance(VariableScope.VARIABLE_SCOPE, collectionExpression);
+        if (variableScopeInstance != null) {
+            collection = variableScopeInstance.getVariable(collectionExpression);
+        } else {
+            try {
+                collection = MVELSafeHelper.getEvaluator().eval(collectionExpression, new NodeInstanceResolverFactory(this));
+            } catch (Throwable t) {
+                throw new IllegalArgumentException(
+                    "Could not find collection " + collectionExpression);
+            }
+            
+        }
+        if (collection == null) {
+            return Collections.EMPTY_LIST;
+        }
+        if (collection instanceof Collection<?>) {
+            return (Collection<?>) collection;
+        }
+        if (collection.getClass().isArray() ) {
+            List<Object> list = new ArrayList<Object>();
+            for (Object o: (Object[]) collection) {
+                list.add(o);
+            }
+            return list;
+        }
+        throw new IllegalArgumentException(
+            "Unexpected collection type: " + collection.getClass());
+    }
+    
+
+    
     public class ForEachSplitNodeInstance extends NodeInstanceImpl {
 
         private static final long serialVersionUID = 510l;
@@ -122,6 +160,7 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
             	}
             	if(getForEachNode().isParallel()) {
             	for (NodeInstance nodeInstance: nodeInstances) {
+            	    logger.debug( "Triggering [{}] in multi-instance loop.", ((NodeInstanceImpl) nodeInstance).getNodeId() );
             		((org.jbpm.workflow.instance.NodeInstance) nodeInstance).trigger(this, getForEachSplitNode().getTo().getToType());
             	}
             	} else {
@@ -184,7 +223,7 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         public void internalTrigger(org.kie.api.runtime.process.NodeInstance from, String type) {
-            
+        	Map<String, Object> tempVariables = new HashMap<String, Object>();
             VariableScopeInstance subprocessVariableScopeInstance = null;
             if (getForEachNode().getOutputVariableName() != null) {
                 subprocessVariableScopeInstance = (VariableScopeInstance) getContextInstance(VariableScope.VARIABLE_SCOPE);
@@ -203,8 +242,15 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
                 outputCollection.add(outputVariable);
                 
                 subprocessVariableScopeInstance.setVariable(TEMP_OUTPUT_VAR, outputCollection);
+                // add temp collection under actual mi output name for completion condition evaluation
+                tempVariables.put(getForEachNode().getOutputVariableName(), outputVariable);
+                String outputCollectionName = getForEachNode().getOutputCollectionExpression();
+                if (outputCollection != null) {
+                	tempVariables.put(outputCollectionName, outputCollection);
+                }
             }
-            if (getNodeInstanceContainer().getNodeInstances().size() == 1) {
+            boolean isCompletionConditionMet = evaluateCompletionCondition(getForEachNode().getCompletionConditionExpression(), tempVariables);
+            if (getNodeInstanceContainer().getNodeInstances().size() == 1 || isCompletionConditionMet) {
                 String outputCollection = getForEachNode().getOutputCollectionExpression();
                 if (outputCollection != null) {
                     VariableScopeInstance variableScopeInstance = (VariableScopeInstance) resolveContextInstance(VariableScope.VARIABLE_SCOPE, outputCollection);
@@ -245,6 +291,24 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
             }
         }
         
+        private boolean evaluateCompletionCondition(String expression, Map<String, Object> tempVariables) {
+        	if (expression == null || expression.isEmpty()) {
+        		return false;
+        	}
+        	try {
+                Object result = MVELSafeHelper.getEvaluator().eval(expression, new ForEachNodeInstanceResolverFactory(this, tempVariables));
+                if ( !(result instanceof Boolean) ) {
+                    throw new RuntimeException( "Completion condition expression must return boolean values: " + result 
+                    		+ " for expression " + expression);
+                }
+                return ((Boolean) result).booleanValue();
+                
+            } catch (Throwable t) {
+            	t.printStackTrace();
+                throw new IllegalArgumentException("Could not evaluate completion condition  " + expression);
+            }
+        }
+        
     }
 
     @Override
@@ -263,4 +327,31 @@ public class ForEachNodeInstance extends CompositeContextNodeInstance {
         // always 1 for for each
         return 1;
     }  
+    
+    private class ForEachNodeInstanceResolverFactory extends NodeInstanceResolverFactory {
+
+		private static final long serialVersionUID = -8856846610671009685L;
+
+		private Map<String, Object> tempVariables;
+		public ForEachNodeInstanceResolverFactory(NodeInstance nodeInstance, Map<String, Object> tempVariables) {
+			super(nodeInstance);
+			this.tempVariables = tempVariables;
+		}
+		@Override
+		public boolean isResolveable(String name) {
+			boolean result = tempVariables.containsKey(name);
+			if (result) {
+				return result;
+			}
+			return super.isResolveable(name);
+		}
+		@Override
+		public VariableResolver getVariableResolver(String name) {
+			if (tempVariables.containsKey(name)) {
+				return new SimpleValueResolver(tempVariables.get(name));
+			}
+			return super.getVariableResolver(name);
+		}
+    	
+    }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.kie.api.definition.process.Process;
 import org.kie.internal.process.CorrelationKey;
+import org.kie.internal.runtime.manager.InternalRuntimeManager;
 
 public abstract class AbstractProcessInstanceFactory implements ProcessInstanceFactory {
 	
@@ -33,6 +34,14 @@ public abstract class AbstractProcessInstanceFactory implements ProcessInstanceF
 		ProcessInstance processInstance = (ProcessInstance) createProcessInstance();
 		processInstance.setKnowledgeRuntime( kruntime );
         processInstance.setProcess( process );
+        
+        if (correlationKey != null) {
+        	processInstance.getMetaData().put("CorrelationKey", correlationKey);
+        }
+        InternalRuntimeManager manager = (InternalRuntimeManager) kruntime.getEnvironment().get("RuntimeManager");
+        if (manager != null) {
+            processInstance.setDeploymentId(manager.getIdentifier());
+        }
         
         ((InternalProcessRuntime) kruntime.getProcessRuntime()).getProcessInstanceManager()
     		.addProcessInstance( processInstance, correlationKey );

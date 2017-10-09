@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss Inc
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,11 @@ public class DeploymentDescriptorIO {
 	        marshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "http://www.jboss.org/jbpm deployment-descriptor.xsd");
 	        marshaller.setSchema(schema);
 	        StringWriter stringWriter = new StringWriter();
+	        
+	        // clone the object and cleanup transients
+	        DeploymentDescriptor clone = ((DeploymentDescriptorImpl)descriptor).clearClone();
 	
-	        marshaller.marshal(descriptor, stringWriter);
+	        marshaller.marshal(clone, stringWriter);
 	        String output = stringWriter.toString();
 	        
 	        return output;

@@ -1,14 +1,33 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.services.ejb.timer;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.Resource;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.Lock;
 import javax.ejb.LockType;
+import javax.ejb.NoSuchObjectLocalException;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ejb.Timeout;
@@ -18,7 +37,6 @@ import javax.ejb.TimerConfig;
 import org.drools.core.time.JobHandle;
 import org.drools.core.time.impl.TimerJobInstance;
 import org.jbpm.process.core.timer.TimerServiceRegistry;
-import org.jbpm.process.core.timer.impl.GlobalTimerService.GlobalJobHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +48,9 @@ public class EJBTimerScheduler {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EJBTimerScheduler.class);
 
-	private static final Integer OVERDUE_WAIT_TIME = Integer.parseInt(System.getProperty("org.jbpm.overdue.timer.wait", "10000"));
+	private static final Integer OVERDUE_WAIT_TIME = Integer.parseInt(System.getProperty("org.jbpm.overdue.timer.wait", "20000"));
+	
+	private ConcurrentMap<String, TimerJobInstance> localCache = new ConcurrentHashMap<String, TimerJobInstance>();
 	
 	@Resource
 	private javax.ejb.TimerService timerService;
@@ -64,54 +84,47 @@ public class EJBTimerScheduler {
 			((Callable<Void>) timerJobInstance).call();
 		} catch (Exception e) {
 			logger.warn("Execution of time failed due to {}", e.getMessage(), e);
+			throw new RuntimeException(e);
 		}
 	}
 	
 	public void internalSchedule(TimerJobInstance timerJobInstance) {
 		TimerConfig config = new TimerConfig(new EjbTimerJob(timerJobInstance), true);
-		Date expirationTime = timerJobInstance.getTrigger().nextFireTime();
-		
+		Date expirationTime = timerJobInstance.getTrigger().hasNextFireTime();
+		logger.debug("Timer expiration date is {}", expirationTime);
 		if (expirationTime != null) {
 			timerService.createSingleActionTimer(expirationTime, config);
 			logger.debug("Timer scheduled {} on {} scheduler service", timerJobInstance);
+			localCache.putIfAbsent(((EjbGlobalJobHandle) timerJobInstance.getJobHandle()).getUuid(), timerJobInstance);
 		} else {
 			logger.info("Timer that was to be scheduled has already expired");
 		}
-	}
-	
-	public boolean isValid(GlobalJobHandle jobHandle) {
-		EjbGlobalJobHandle ejbHandle = (EjbGlobalJobHandle) jobHandle;
-		
-		for (Timer timer : timerService.getTimers()) {
-			Serializable info = timer.getInfo();
-			if (info instanceof EjbTimerJob) {
-				EjbTimerJob job = (EjbTimerJob) info;
-				
-				EjbGlobalJobHandle handle = (EjbGlobalJobHandle) job.getTimerJobInstance().getJobHandle();
-				if (handle.getUuid().equals(ejbHandle.getUuid())) {
-					logger.debug("Job handle {} does match timer", jobHandle);
-					return true;
-				}
-			}
-		}
-		logger.debug("Job handle {} is not valid on {} scheduler service", jobHandle, this);
-		return false;
 	}
 	
 	public boolean removeJob(JobHandle jobHandle) {
 		EjbGlobalJobHandle ejbHandle = (EjbGlobalJobHandle) jobHandle;
 		
 		for (Timer timer : timerService.getTimers()) {
-			Serializable info = timer.getInfo();
-			if (info instanceof EjbTimerJob) {
-				EjbTimerJob job = (EjbTimerJob) info;
-				
-				EjbGlobalJobHandle handle = (EjbGlobalJobHandle) job.getTimerJobInstance().getJobHandle();
-				if (handle.getUuid().equals(ejbHandle.getUuid())) {
-					logger.debug("Job handle {} does match timer and is going to be canceled", jobHandle);
-					timer.cancel();
-					return true;
-				}
+			try {
+    		    Serializable info = timer.getInfo();
+    			if (info instanceof EjbTimerJob) {
+    				EjbTimerJob job = (EjbTimerJob) info;
+    				
+    				EjbGlobalJobHandle handle = (EjbGlobalJobHandle) job.getTimerJobInstance().getJobHandle();
+    				if (handle.getUuid().equals(ejbHandle.getUuid())) {
+    					logger.debug("Job handle {} does match timer and is going to be canceled", jobHandle);
+    					localCache.remove(handle.getUuid());
+    					try {
+    					    timer.cancel();
+    					} catch (Throwable e) {
+    					    logger.debug("Timer cancel error due to {}", e.getMessage());
+    					    return false;
+    					}
+    					return true;
+    				}
+    			}
+			} catch (NoSuchObjectLocalException e) {
+			    logger.debug("Timer {} has already expired or was canceled ", timer);
 			}
 		}
 		logger.debug("Job handle {} does not match any timer on {} scheduler service", jobHandle, this);
@@ -119,20 +132,32 @@ public class EJBTimerScheduler {
 	}
 	
 	public TimerJobInstance getTimerByName(String jobName) {
+	    
+	    if (localCache.containsKey(jobName)) {
+	        logger.debug("Found job {} in cache returning", jobName);
+	        return localCache.get(jobName);
+	    }
+	    TimerJobInstance found = null;
+	    
 		for (Timer timer : timerService.getTimers()) {
-			Serializable info = timer.getInfo();
-			if (info instanceof EjbTimerJob) {
-				EjbTimerJob job = (EjbTimerJob) info;
-				
-				EjbGlobalJobHandle handle = (EjbGlobalJobHandle) job.getTimerJobInstance().getJobHandle();
-				if (handle.getUuid().equals(jobName)) {
-					logger.debug("Job  {} does match timer and is going to be returned", jobName);
-					return handle.getTimerJobInstance();
-				}
-			}
+		    try {
+    			Serializable info = timer.getInfo();
+    			if (info instanceof EjbTimerJob) {
+    				EjbTimerJob job = (EjbTimerJob) info;
+    				
+    				EjbGlobalJobHandle handle = (EjbGlobalJobHandle) job.getTimerJobInstance().getJobHandle();
+    				localCache.putIfAbsent(jobName, handle.getTimerJobInstance());
+    				if (handle.getUuid().equals(jobName)) {
+    					logger.debug("Job  {} does match timer and is going to be returned", jobName);
+    					found = handle.getTimerJobInstance();
+    				}
+    			}
+		    } catch (NoSuchObjectLocalException e) {
+                logger.debug("Timer info for {} was not found ", timer);
+            }
 		}	
 		
-		return null;
+		return found;
 	}
 	
 }

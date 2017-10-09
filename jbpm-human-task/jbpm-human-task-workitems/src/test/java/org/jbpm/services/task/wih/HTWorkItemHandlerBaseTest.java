@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ public abstract class HTWorkItemHandlerBaseTest extends AbstractBaseTest {
         
         task = taskService.getTaskByWorkItemId(workItem.getId());
         assertEquals("TaskName", task.getNames().get(0).getText());
-        assertEquals(10, task.getPriority());
+        assertEquals(10, task.getPriority().intValue());
         assertEquals("Comment", task.getDescriptions().get(0).getText());
         assertEquals(Status.Exited, task.getTaskData().getStatus());
         
@@ -453,7 +453,8 @@ public abstract class HTWorkItemHandlerBaseTest extends AbstractBaseTest {
         //Checking that the input parameters are being copied automatically if the Content Element doesn't exist
         assertEquals("MyObjectValue", ((MyObject) data.get("MyObject")).getValue());
         assertEquals("10", data.get("Priority"));
-        assertEquals("MyObjectValue", ((MyObject) ((Map<String, Object>) data.get("MyMap")).get("MyObjectInsideTheMap")).getValue());
+        assertEquals("MyObjectValue", ((MyObject) ((Map<String, Object>) data.get("MyMap")).get
+                ("MyObjectInsideTheMap")).getValue());
 
         taskService.start(task.getId(), "Darth Vader");
 
@@ -728,7 +729,7 @@ public abstract class HTWorkItemHandlerBaseTest extends AbstractBaseTest {
         assertEquals("Darth Vader", task.getActualOwner().getId());
         assertEquals(10, task.getProcessInstanceId().intValue());
         
-        assertTrue( currentTime + DateTimeUtils.parseDuration("2d") > task.getExpirationTime().getTime());
+        assertTrue(currentTime + DateTimeUtils.parseDuration("2d") > task.getExpirationTime().getTime());
 
         taskService.start(task.getId(), "Darth Vader");
         taskService.complete(task.getId(), "Darth Vader", null);
@@ -770,6 +771,110 @@ public abstract class HTWorkItemHandlerBaseTest extends AbstractBaseTest {
         assertEquals("Luke Cage", actualOwner);
     }
     
+    @Test
+    public void testTaskWithVariables() throws Exception {
+        final TestWorkItemManager manager = new TestWorkItemManager();
+        ksession.setWorkItemManager(manager);
+        final String taskDescriptionParam =
+                "Comment for task "
+                    + "${task.id} "
+                    + "${task.taskData.processSessionId} "
+                    + "${task.taskData.actualOwner.id} "
+                    + "${task.taskData.parentId}";
+        handler.executeWorkItem(prepareWorkItemWithTaskVariables(taskDescriptionParam), manager);
+
+
+        final List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner("Darth Vader", "en-UK");
+        assertEquals(1, tasks.size());
+        final Task task = taskService.getTaskById(tasks.get(0).getId());
+        testTaskWithExpectedDescription(task,
+                "Comment for task "
+                        + task.getId() + " "
+                        + task.getTaskData().getProcessSessionId() + " "
+                        + task.getTaskData().getActualOwner().getId() + " "
+                        + task.getTaskData().getParentId());
+
+        taskService.start(task.getId(), "Darth Vader");
+        taskService.complete(task.getId(), "Darth Vader", null);
+
+        assertTrue(manager.waitTillCompleted(MANAGER_COMPLETION_WAIT_TIME));
+        
+        final String actualOwner = (String) manager.getResults().get("ActorId");
+        assertNotNull(actualOwner);
+        assertEquals("Darth Vader", actualOwner);
+        
+    }
+
+    @Test(timeout = 10000)
+    public void testTaskWithVariablesRecurse() {
+        final TestWorkItemManager manager = new TestWorkItemManager();
+        ksession.setWorkItemManager(manager);
+        handler.executeWorkItem(prepareWorkItemWithTaskVariables("Comment for task ${task.description}"), manager);
+
+        final List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner("Darth Vader", "en-UK");
+        assertEquals(1, tasks.size());
+        final Task task = taskService.getTaskById(tasks.get(0).getId());
+        testTaskWithExpectedDescription(task, task.getDescription());
+
+        taskService.start(task.getId(), "Darth Vader");
+        taskService.complete(task.getId(), "Darth Vader", null);
+
+        assertTrue(manager.waitTillCompleted(MANAGER_COMPLETION_WAIT_TIME));
+
+        final String actualOwner = (String) manager.getResults().get("ActorId");
+        assertNotNull(actualOwner);
+        assertEquals("Darth Vader", actualOwner);
+    }
+    
+    @Test
+    public void testTaskExitByCustomBusinessAdmin() throws Exception {
+        TestWorkItemManager manager = new TestWorkItemManager();
+        ksession.setWorkItemManager(manager);
+        WorkItemImpl workItem = new WorkItemImpl();
+        workItem.setName("Human Task");
+        workItem.setParameter("NodeName", "TaskName");
+        workItem.setParameter("Comment", "Comment");
+        workItem.setParameter("Priority", "10");
+        workItem.setParameter("ActorId", "Darth Vader");
+        workItem.setParameter("BusinessAdministratorId", "Luke Cage");
+        workItem.setProcessInstanceId(10);
+        getHandler().executeWorkItem(workItem, manager);
+        
+        Task task = taskService.getTaskByWorkItemId(workItem.getId());
+        assertNotNull(task);
+        
+        getHandler().abortWorkItem(workItem, manager);
+        
+        task = taskService.getTaskByWorkItemId(workItem.getId());
+        assertEquals("TaskName", task.getNames().get(0).getText());
+        assertEquals(10, task.getPriority().intValue());
+        assertEquals("Comment", task.getDescriptions().get(0).getText());
+        assertEquals(Status.Exited, task.getTaskData().getStatus());
+        
+        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner("Darth Vader", "en-UK");
+        assertEquals(0, tasks.size());
+    }
+
+    private WorkItemImpl prepareWorkItemWithTaskVariables(final String taskDescriptionParam) {
+        final WorkItemImpl workItem = new WorkItemImpl();
+        workItem.setName("Human Task");
+        workItem.setParameter("NodeName", "TaskName ${task.taskData.processInstanceId}");
+        workItem.setParameter("Comment", taskDescriptionParam);
+        workItem.setParameter("Priority", "10");
+        workItem.setParameter("ActorId", "Darth Vader");
+        workItem.setProcessInstanceId(10);
+        return workItem;
+    }
+
+    private void testTaskWithExpectedDescription(final Task task, final String expectedDescription) {
+        assertEquals("TaskName " + task.getTaskData().getProcessInstanceId(), task.getName());
+        assertEquals(10, task.getPriority().intValue());
+        assertEquals(expectedDescription, task.getDescription());
+        assertEquals(Status.Reserved, task.getTaskData().getStatus());
+        assertEquals("Darth Vader", task.getTaskData().getActualOwner().getId());
+        assertEquals(10L, task.getTaskData().getProcessInstanceId());
+    }
+
     public void setHandler(WorkItemHandler handler) {
         this.handler = handler;
     }

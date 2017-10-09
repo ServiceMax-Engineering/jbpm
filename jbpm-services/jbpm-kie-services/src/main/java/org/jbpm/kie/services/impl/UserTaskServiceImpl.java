@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,10 @@ import org.jbpm.services.api.RuntimeDataService;
 import org.jbpm.services.api.TaskNotFoundException;
 import org.jbpm.services.api.UserTaskService;
 import org.jbpm.services.api.model.UserTaskInstanceDesc;
+import org.jbpm.services.api.service.ServiceRegistry;
+import org.jbpm.services.task.commands.AddAttachmentCommand;
 import org.jbpm.services.task.commands.TaskCommand;
+import org.jbpm.services.task.exception.PermissionDeniedException;
 import org.jbpm.services.task.impl.TaskContentRegistry;
 import org.jbpm.services.task.utils.ContentMarshallerHelper;
 import org.kie.api.command.Command;
@@ -43,6 +46,7 @@ import org.kie.api.task.model.Comment;
 import org.kie.api.task.model.Content;
 import org.kie.api.task.model.I18NText;
 import org.kie.api.task.model.OrganizationalEntity;
+import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.internal.runtime.manager.InternalRuntimeManager;
 import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
@@ -52,7 +56,6 @@ import org.kie.internal.task.api.TaskModelProvider;
 import org.kie.internal.task.api.model.AccessType;
 import org.kie.internal.task.api.model.InternalAttachment;
 import org.kie.internal.task.api.model.InternalComment;
-import org.kie.internal.task.api.model.InternalContent;
 import org.kie.internal.task.api.model.InternalI18NText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +70,10 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
     
     private InternalTaskService nonProcessScopedTaskService;
 
+    
+    public UserTaskServiceImpl() {
+        ServiceRegistry.get().register(UserTaskService.class.getSimpleName(), this);
+    }
         
 	public void setDeploymentService(DeploymentService deploymentService) {
 		this.deploymentService = deploymentService;
@@ -95,7 +102,7 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			return new FalbackRuntimeManager(internalTaskService);
 		}
 		
-		return null;
+		throw new RuntimeException("No runtime manager found for task " + task.toString());
 	}
 	
 	protected RuntimeManager getRuntimeManager(String deploymentId, Command<?> command) {		
@@ -114,7 +121,7 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 				manager = new FalbackRuntimeManager(internalTaskService);
 			} else {
 				logger.warn("Cannot find runtime manager for deployment {}", deploymentId);
-				return null;
+				throw new RuntimeException("No runtime manager found for deployment " + deploymentId);
 			}
 		}
 		
@@ -138,7 +145,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.activate(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -160,37 +169,76 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.claim(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 
 	}
 
-	@Override
-	public void complete(Long taskId, String userId, Map<String, Object> params) {
-		UserTaskInstanceDesc task = dataService.getTaskById(taskId);
-		if (task == null) {
-			throw new TaskNotFoundException("Task with id " + taskId + " was not found");
-		}
+    @Override
+    public void complete(Long taskId, String userId, Map<String, Object> params) {
+        UserTaskInstanceDesc task = dataService.getTaskById(taskId);
+        if (task == null) {
+            throw new TaskNotFoundException("Task with id " + taskId + " was not found");
+        }
 
-		RuntimeManager manager = getRuntimeManager(task);
-		if (manager == null) {
-			logger.warn("Cannot find runtime manager for task {}", taskId);
-			return;
-		}
-		if (manager instanceof InternalRuntimeManager) {
-			params = process(params, ((InternalRuntimeManager) manager).getEnvironment().getClassLoader());
-		}
-		RuntimeEngine engine = manager.getRuntimeEngine(ProcessInstanceIdContext.get(task.getProcessInstanceId()));
-		try {
-			TaskService taskService = engine.getTaskService();
-			// perform actual operation
-			taskService.complete(taskId, userId, params);
-		} finally {
-			disposeRuntimeEngine(manager, engine);
-		}
+        RuntimeManager manager = getRuntimeManager(task);
+        if (manager == null) {
+            logger.warn("Cannot find runtime manager for task {}", taskId);
+            return;
+        }
+        if (manager instanceof InternalRuntimeManager) {
+            params = process(params, ((InternalRuntimeManager) manager).getEnvironment().getClassLoader());
+        }
+        RuntimeEngine engine = manager.getRuntimeEngine(ProcessInstanceIdContext.get(task.getProcessInstanceId()));
+        try {
+            TaskService taskService = engine.getTaskService();
+            // perform actual operation
+            taskService.complete(taskId, userId, params);
+        } catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
+            disposeRuntimeEngine(manager, engine);
+        }
 
-	}
+    }
+
+    @Override
+    public void completeAutoProgress(Long taskId, String userId, Map<String, Object> params) {
+        UserTaskInstanceDesc task = dataService.getTaskById(taskId);
+        if (task == null) {
+            throw new TaskNotFoundException("Task with id " + taskId + " was not found");
+        }
+
+        RuntimeManager manager = getRuntimeManager(task);
+        if (manager == null) {
+            logger.warn("Cannot find runtime manager for task {}", taskId);
+            return;
+        }
+        if (manager instanceof InternalRuntimeManager) {
+            params = process(params, ((InternalRuntimeManager) manager).getEnvironment().getClassLoader());
+        }
+        RuntimeEngine engine = manager.getRuntimeEngine(ProcessInstanceIdContext.get(task.getProcessInstanceId()));
+        try {
+            TaskService taskService = engine.getTaskService();
+            // auto progress if needed
+            if (task.getStatus().equals(Status.Ready.name())) {
+                taskService.claim(taskId.longValue(), userId);
+                taskService.start(taskId.longValue(), userId);
+            } else if (task.getStatus().equals(Status.Reserved.name())) {
+                taskService.start(taskId.longValue(), userId);
+            }
+            // perform actual operation
+            taskService.complete(taskId, userId, params);
+        } catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
+            disposeRuntimeEngine(manager, engine);
+        }
+
+    }
 
 	@Override
 	public void delegate(Long taskId, String userId, String targetUserId) {
@@ -209,7 +257,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.delegate(taskId, userId, targetUserId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -231,7 +281,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.exit(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -256,7 +308,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.fail(taskId, userId, faultData);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -278,7 +332,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.forward(taskId, userId, targetEntityId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -300,7 +356,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.release(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -322,7 +380,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.resume(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -344,7 +404,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.skip(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -366,7 +428,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.start(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -388,7 +452,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.stop(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -410,7 +476,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.suspend(taskId, userId);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -432,7 +500,9 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			taskService.nominate(taskId, userId, potentialOwners);
-		} finally {
+		} catch(PermissionDeniedException e){
+            throw new TaskNotFoundException(e.getMessage());
+        } finally {
 			disposeRuntimeEngine(manager, engine);
 		}
 	}
@@ -770,7 +840,7 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 	}
 
 	@Override
-	public Long addAttachment(Long taskId, String userId, Object attachment) {
+	public Long addAttachment(Long taskId, String userId, String name, Object attachment) {
 		UserTaskInstanceDesc task = dataService.getTaskById(taskId);
 		if (task == null) {
 			throw new TaskNotFoundException("Task with id " + taskId + " was not found");
@@ -789,17 +859,14 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 			TaskService taskService = engine.getTaskService();
 			// perform actual operation
 			InternalAttachment att = (InternalAttachment) TaskModelProvider.getFactory().newAttachment();
+			att.setName(name);
 			att.setAccessType(AccessType.Inline);
 			att.setAttachedAt(new Date());
 			att.setAttachedBy(TaskModelProvider.getFactory().newUser(userId));
 			att.setContentType(attachment.getClass().getName());
 	        
-			Content content = TaskModelProvider.getFactory().newContent();
-	        
-	        ContentMarshallerContext ctx = TaskContentRegistry.get().getMarshallerContext(task.getDeploymentId());
-	        
-	        ((InternalContent)content).setContent(ContentMarshallerHelper.marshallContent(attachment, ctx.getEnvironment()));
-			return ((InternalTaskService)taskService).addAttachment(taskId, att, content);
+			
+			return ((InternalTaskService)taskService).execute(new AddAttachmentCommand(taskId, att, attachment));
 		} finally {
 			disposeRuntimeEngine(manager, engine);
 		}
@@ -1014,6 +1081,12 @@ public class UserTaskServiceImpl implements UserTaskService, VariablesAware {
 		public void close() {
 			// do nothing
 		}
+
+        @Override
+        public void signalEvent(String type, Object event) {
+            // do nothing
+            
+        }
 		
 	}
 

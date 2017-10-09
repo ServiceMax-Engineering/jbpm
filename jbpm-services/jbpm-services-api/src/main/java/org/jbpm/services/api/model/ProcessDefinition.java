@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,24 @@ public interface ProcessDefinition extends Serializable, DeployedAsset {
     String getPackageName();
 
     String getType();
-    
+
     String getDeploymentId();
     
+    boolean isDynamic();
+    
     Map<String, Collection<String>> getAssociatedEntities();
-    
+
     Map<String, String> getServiceTasks();
-    
+
     Map<String, String> getProcessVariables();
-    
+
     Collection<String> getReusableSubProcesses();
 
+    Collection<String> getSignals();
+
+    Collection<String> getGlobals();
+
+    Collection<String> getReferencedRules();
+    
+    boolean isActive();
 }

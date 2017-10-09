@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ public class BoundaryEventNodeInstance extends EventNodeInstance {
         Collection<NodeInstance> nodeInstances = ((NodeInstanceContainer) getNodeInstanceContainer()).getNodeInstances();
         if( type != null && type.startsWith("Compensation") ) { 
             // if not active && completed, signal
-            if( ! isAttachedToNodeActive(nodeInstances, attachedTo) && isAttachedToNodeCompleted(attachedTo)) {
+            if( ! isAttachedToNodeActive(nodeInstances, attachedTo, type, event) && isAttachedToNodeCompleted(attachedTo)) {
                 super.signalEvent(type, event);
             } 
             else {
                 cancel();
             }
         } else { 
-            //if (isAttachedToNodeActive(nodeInstances, attachedTo)) {
+            //if (isAttachedToNodeActive(nodeInstances, attachedTo, type, event)) {
                 super.signalEvent(type, event);
             //} else {
             //    cancel();
@@ -49,7 +49,7 @@ public class BoundaryEventNodeInstance extends EventNodeInstance {
         }
     }
 
-    private boolean isAttachedToNodeActive(Collection<NodeInstance> nodeInstances, String attachedTo) {
+    private boolean isAttachedToNodeActive(Collection<NodeInstance> nodeInstances, String attachedTo, String type, Object event) {
         if (nodeInstances != null && !nodeInstances.isEmpty()) {
             for (NodeInstance nInstance : nodeInstances) {
                 String nodeUniqueId = (String) nInstance.getNode().getMetaData().get("UniqueId");
@@ -58,7 +58,7 @@ public class BoundaryEventNodeInstance extends EventNodeInstance {
                     return true;
                 }
                 if (nInstance instanceof CompositeNodeInstance) {
-                    boolean hasActive = isAttachedToNodeActive(((CompositeNodeInstance) nInstance).getNodeInstances(), attachedTo);
+                    boolean hasActive = isAttachedToNodeActive(((CompositeNodeInstance) nInstance).getNodeInstances(), attachedTo, type, event);
                     if (hasActive) {
                         return true;
                     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.kie.api.event.process.DefaultProcessEventListener;
+import org.kie.api.event.process.ProcessEventListener;
+import org.kie.api.event.process.ProcessNodeLeftEvent;
+import org.kie.api.event.process.ProcessNodeTriggeredEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.process.WorkItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
 public class CompensationTest extends JbpmBpmn2TestCase {
@@ -52,6 +58,33 @@ public class CompensationTest extends JbpmBpmn2TestCase {
     public CompensationTest(boolean persistence) {
         super(persistence);
     }
+
+    private Logger logger = LoggerFactory
+            .getLogger(CompensationTest.class);
+
+    private ProcessEventListener LOGGING_EVENT_LISTENER = new DefaultProcessEventListener() {
+
+        @Override
+        public void afterNodeLeft(ProcessNodeLeftEvent event) {
+            logger.info("After node left {}", event.getNodeInstance().getNodeName());
+        }
+
+        @Override
+        public void afterNodeTriggered(ProcessNodeTriggeredEvent event) {
+            logger.info("After node triggered {}", event.getNodeInstance().getNodeName());
+        }
+
+        @Override
+        public void beforeNodeLeft(ProcessNodeLeftEvent event) {
+            logger.info("Before node left {}", event.getNodeInstance().getNodeName());
+        }
+
+        @Override
+        public void beforeNodeTriggered(ProcessNodeTriggeredEvent event) {
+            logger.info("Before node triggered {}", event.getNodeInstance().getNodeName());
+        }
+
+    };
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -131,6 +164,7 @@ public class CompensationTest extends JbpmBpmn2TestCase {
     @Test
     public void compensationOnlyAfterAssociatedActivityHasCompleted() throws Exception {
         KieSession ksession = createKnowledgeSession("compensation/BPMN2-Compensation-UserTaskBeforeAssociatedActivity.bpmn2");
+        ksession.addEventListener(LOGGING_EVENT_LISTENER);
         TestWorkItemHandler workItemHandler = new TestWorkItemHandler();
         ksession.getWorkItemManager().registerWorkItemHandler("Human Task", workItemHandler);
         
@@ -204,7 +238,7 @@ public class CompensationTest extends JbpmBpmn2TestCase {
 
         // compensation activity (assoc. with script task) signaled *after* script task
         assertProcessInstanceCompleted(processInstance.getId(), ksession);
-        assertProcessVarValue(processInstance, "x", "1");
+        assertProcessVarValue(processInstance, "x", "2");
     }
     
     @Test
@@ -257,5 +291,20 @@ public class CompensationTest extends JbpmBpmn2TestCase {
         assertProcessInstanceCompleted(processInstance.getId(), ksession);
         assertProcessVarValue(processInstance, "compensation", "compensation");
     }
+    
+
+	/**
+	 * Test to demonstrate that Compensation Events work with Reusable
+	 * Subprocesses
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void compensationWithReusableSubprocess() throws Exception {
+		KieSession ksession = createKnowledgeSession("compensation/BPMN2-Booking.bpmn2",
+				"compensation/BPMN2-BookResource.bpmn2", "compensation/BPMN2-CancelResource.bpmn2");
+		ProcessInstance processInstance = ksession.startProcess("Booking");
+		assertProcessInstanceCompleted(processInstance.getId(), ksession);
+	}
     
 }

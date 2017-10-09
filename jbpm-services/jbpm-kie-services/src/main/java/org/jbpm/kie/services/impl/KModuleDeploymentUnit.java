@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.Map;
 import org.drools.core.util.StringUtils;
 import org.jbpm.kie.services.api.AttributesAware;
 import org.jbpm.services.api.model.DeploymentUnit;
+import org.kie.api.runtime.KieContainer;
 import org.kie.internal.runtime.conf.DeploymentDescriptor;
 import org.kie.internal.runtime.conf.MergeMode;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
@@ -44,6 +45,10 @@ public class KModuleDeploymentUnit implements DeploymentUnit, AttributesAware, S
     private DeploymentDescriptor deploymentDescriptor;
     private boolean deployed = false;
     private boolean strategyUnset = true;
+    
+    private boolean active = true;
+    
+    private transient KieContainer kieContainer;
     
     private Map<String, String> attributes = new HashMap<String, String>();
     
@@ -183,7 +188,26 @@ public class KModuleDeploymentUnit implements DeploymentUnit, AttributesAware, S
 
 	@Override
 	public Map<String, String> getAttributes() {
+	    if (this.attributes == null){
+	        return Collections.EMPTY_MAP;
+	    }
 		return Collections.unmodifiableMap(this.attributes);
 	}
+
+	public KieContainer getKieContainer() {
+		return kieContainer;
+	}
+
+	public void setKieContainer(KieContainer kieContainer) {
+		this.kieContainer = kieContainer;
+	}
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
 }

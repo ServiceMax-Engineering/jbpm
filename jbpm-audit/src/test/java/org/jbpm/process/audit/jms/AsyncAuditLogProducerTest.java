@@ -1,14 +1,35 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.process.audit.jms;
 
-import static org.jbpm.process.audit.AbstractAuditLogServiceTest.*;
-import static org.jbpm.persistence.util.PersistenceUtil.*;
-import static org.junit.Assert.*;
+import static org.jbpm.persistence.util.PersistenceUtil.JBPM_PERSISTENCE_UNIT_NAME;
+import static org.jbpm.persistence.util.PersistenceUtil.cleanUp;
+import static org.jbpm.persistence.util.PersistenceUtil.createEnvironment;
+import static org.jbpm.persistence.util.PersistenceUtil.setupWithPoolingDataSource;
+import static org.jbpm.process.audit.AbstractAuditLogServiceTest.createKieSession;
+import static org.jbpm.process.audit.AbstractAuditLogServiceTest.createKnowledgeBase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -22,8 +43,9 @@ import javax.naming.InitialContext;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.UserTransaction;
 
-import org.drools.core.io.impl.ClassPathResource;
 import org.hornetq.jms.server.embedded.EmbeddedJMS;
+import org.jboss.narayana.jta.jms.ConnectionFactoryProxy;
+import org.jboss.narayana.jta.jms.TransactionHelperImpl;
 import org.jbpm.process.audit.AbstractAuditLogger;
 import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.AuditLoggerFactory;
@@ -31,26 +53,19 @@ import org.jbpm.process.audit.AuditLoggerFactory.Type;
 import org.jbpm.process.audit.JPAAuditLogService;
 import org.jbpm.process.audit.NodeInstanceLog;
 import org.jbpm.process.audit.ProcessInstanceLog;
+import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
 import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.kie.api.io.ResourceType;
+import org.kie.api.KieBase;
 import org.kie.api.runtime.Environment;
 import org.kie.api.runtime.EnvironmentName;
-import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
-import org.kie.internal.builder.KnowledgeBuilder;
-import org.kie.internal.builder.KnowledgeBuilderFactory;
-import org.kie.internal.persistence.jpa.JPAKnowledgeService;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import bitronix.tm.resource.jms.PoolingConnectionFactory;
 
 public class AsyncAuditLogProducerTest extends AbstractBaseTest {
 
@@ -78,9 +93,9 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
     public void testAsyncAuditProducer() throws Exception {
         Environment env = createEnvironment(context);
         // load the process
-        KnowledgeBase kbase = createKnowledgeBase();
+        KieBase kbase = createKnowledgeBase();
         // create a new session
-        StatefulKnowledgeSession session = createSession(kbase, env);
+        KieSession session = createSession(kbase, env);
 
         Map<String, Object> jmsProps = new HashMap<String, Object>();
         jmsProps.put("jbpm.audit.jms.transacted", false);
@@ -107,9 +122,9 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
         ut.begin();
         Environment env = createEnvironment(context);
         // load the process
-        KnowledgeBase kbase = createKnowledgeBase();
+        KieBase kbase = createKnowledgeBase();
         // create a new session
-        StatefulKnowledgeSession session = createSession(kbase, env);
+        KieSession session = createSession(kbase, env);
         
         Map<String, Object> jmsProps = new HashMap<String, Object>();
         jmsProps.put("jbpm.audit.jms.transacted", true);
@@ -137,9 +152,9 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
         ut.begin();
         Environment env = createEnvironment(context);
         // load the process
-        KnowledgeBase kbase = createKnowledgeBase();
+        KieBase kbase = createKnowledgeBase();
         // create a new session
-        StatefulKnowledgeSession session = createSession(kbase, env);
+        KieSession session = createSession(kbase, env);
         
         Map<String, Object> jmsProps = new HashMap<String, Object>();
         jmsProps.put("jbpm.audit.jms.transacted", true);
@@ -167,14 +182,12 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
         ut.begin();
         Environment env = createEnvironment(context);
         // load the process
-        KnowledgeBase kbase = createKnowledgeBase();
+        KieBase kbase = createKnowledgeBase();
         // create a new session
-        StatefulKnowledgeSession session = createSession(kbase, env);
+        KieSession session = createSession(kbase, env);
         
         Map<String, Object> jmsProps = new HashMap<String, Object>();
         jmsProps.put("jbpm.audit.jms.transacted", false);
-        // do not use bitronix managed connection factory as it enlists it regardless of if queue session
-        // is transacted or not thus always participates in transaction
         jmsProps.put("jbpm.audit.jms.connection.factory", jmsServer.lookup("ConnectionFactory"));
         jmsProps.put("jbpm.audit.jms.queue", queue);
         AbstractAuditLogger logger = AuditLoggerFactory.newInstance(Type.JMS, session, jmsProps);
@@ -197,9 +210,9 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
     public void testAsyncAuditLoggerComplete() throws Exception {
         Environment env = createEnvironment(context);
         // load the process
-        KnowledgeBase kbase = createKnowledgeBase();
+        KieBase kbase = createKnowledgeBase();
         // create a new session
-        StatefulKnowledgeSession session = createSession(kbase, env);
+        KieSession session = createSession(kbase, env);
         
         Map<String, Object> jmsProps = new HashMap<String, Object>();
         jmsProps.put("jbpm.audit.jms.transacted", false);
@@ -238,9 +251,9 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
     public void testAsyncAuditLoggerCompleteDirectCreation() throws Exception {
         Environment env = createEnvironment(context);
         // load the process
-        KnowledgeBase kbase = createKnowledgeBase();
+        KieBase kbase = createKnowledgeBase();
         // create a new session
-        StatefulKnowledgeSession session = createSession(kbase, env);
+        KieSession session = createSession(kbase, env);
         
 
         AbstractAuditLogger logger = AuditLoggerFactory.newJMSInstance(true, factory, queue);
@@ -272,9 +285,163 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
         assertTrue(processInstances.isEmpty());
     }
     
-    public StatefulKnowledgeSession createSession(KnowledgeBase kbase, Environment env) {
+    @Test
+    public void testAsyncAuditLoggerCompleteWithVariables() throws Exception {
+        Environment env = createEnvironment(context);
+        // load the process
+        KieBase kbase = createKnowledgeBase();
+        // create a new session
+        KieSession session = createSession(kbase, env);
         
-        StatefulKnowledgeSession session = createKieSession(kbase, env);
+        Map<String, Object> jmsProps = new HashMap<String, Object>();
+        jmsProps.put("jbpm.audit.jms.transacted", false);
+        jmsProps.put("jbpm.audit.jms.connection.factory", factory);
+        jmsProps.put("jbpm.audit.jms.queue", queue);
+        AbstractAuditLogger logger = AuditLoggerFactory.newInstance(Type.JMS, session, jmsProps);
+        assertNotNull(logger);
+        assertTrue((logger instanceof AsyncAuditLogProducer));
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("s", "test value");
+
+        // start process instance
+        ProcessInstance processInstance = session.startProcess("com.sample.ruleflow3", params);
+        
+        MessageReceiver receiver = new MessageReceiver();
+        receiver.receiveAndProcess(queue, ((EntityManagerFactory)env.get(EnvironmentName.ENTITY_MANAGER_FACTORY)));
+     
+        // validate if everything is stored in db
+        AuditLogService logService = new JPAAuditLogService(env);
+        List<ProcessInstanceLog> processInstances = logService.findProcessInstances("com.sample.ruleflow3");
+        assertEquals(1, processInstances.size());
+        List<NodeInstanceLog> nodeInstances = logService.findNodeInstances(processInstance.getId());
+        assertEquals(6, nodeInstances.size());
+        for (NodeInstanceLog nodeInstance: nodeInstances) {
+
+            assertEquals(processInstance.getId(), nodeInstance.getProcessInstanceId().longValue());
+            assertEquals("com.sample.ruleflow3", nodeInstance.getProcessId());
+            assertNotNull(nodeInstance.getDate());
+        }
+        //verify variables
+        List<VariableInstanceLog> variables = logService.findVariableInstances(processInstance.getId());
+        assertNotNull(variables);
+        assertEquals(2, variables.size());
+        
+        VariableInstanceLog var = variables.get(0);
+        // initial value from rule flow definition
+        assertEquals("InitialValue", var.getValue());
+        assertEquals("", var.getOldValue());
+        assertEquals(processInstance.getId(), var.getProcessInstanceId().longValue());
+        assertEquals(processInstance.getProcessId(), var.getProcessId());
+        assertEquals("s", var.getVariableId());
+        assertEquals("s", var.getVariableInstanceId());
+        
+        // value given at process start
+        var = variables.get(1);
+        // initial value from rule flow definition
+        assertEquals("test value", var.getValue());
+        assertEquals("InitialValue", var.getOldValue());
+        assertEquals(processInstance.getId(), var.getProcessInstanceId().longValue());
+        assertEquals(processInstance.getProcessId(), var.getProcessId());
+        assertEquals("s", var.getVariableId());
+        assertEquals("s", var.getVariableInstanceId());
+        
+        logService.clear();
+        processInstances = logService.findProcessInstances("com.sample.ruleflow3");
+        logService.dispose();
+        assertTrue(processInstances.isEmpty());
+    }
+    
+    @Test
+    public void testAsyncAuditLoggerCompleteWithVariablesCustomIndexer() throws Exception {
+        Environment env = createEnvironment(context);
+        // load the process
+        KieBase kbase = createKnowledgeBase();
+        // create a new session
+        KieSession session = createSession(kbase, env);
+        
+        Map<String, Object> jmsProps = new HashMap<String, Object>();
+        jmsProps.put("jbpm.audit.jms.transacted", false);
+        jmsProps.put("jbpm.audit.jms.connection.factory", factory);
+        jmsProps.put("jbpm.audit.jms.queue", queue);
+        AbstractAuditLogger logger = AuditLoggerFactory.newInstance(Type.JMS, session, jmsProps);
+        assertNotNull(logger);
+        assertTrue((logger instanceof AsyncAuditLogProducer));
+
+        List<String> names = new LinkedList<String>();
+        names.add("john");
+        names.add("mary");
+        names.add("peter");
+        
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("list", names);
+
+        // start process instance
+        ProcessInstance processInstance = session.startProcess("com.sample.ruleflow3", params);
+        
+        MessageReceiver receiver = new MessageReceiver();
+        receiver.receiveAndProcess(queue, ((EntityManagerFactory)env.get(EnvironmentName.ENTITY_MANAGER_FACTORY)));
+     
+        // validate if everything is stored in db
+        AuditLogService logService = new JPAAuditLogService(env);
+        List<ProcessInstanceLog> processInstances = logService.findProcessInstances("com.sample.ruleflow3");
+        assertEquals(1, processInstances.size());
+        List<NodeInstanceLog> nodeInstances = logService.findNodeInstances(processInstance.getId());
+        assertEquals(12, nodeInstances.size());
+        for (NodeInstanceLog nodeInstance: nodeInstances) {
+
+            assertEquals(processInstance.getId(), nodeInstance.getProcessInstanceId().longValue());
+            assertEquals("com.sample.ruleflow3", nodeInstance.getProcessId());
+            assertNotNull(nodeInstance.getDate());
+        }
+        //verify variables
+        List<VariableInstanceLog> variables = logService.findVariableInstances(processInstance.getId());
+        assertNotNull(variables);
+        assertEquals(8, variables.size());
+        
+        List<VariableInstanceLog> listVariables = new ArrayList<VariableInstanceLog>();
+        // collect only those that are related to list process variable
+        for (VariableInstanceLog v : variables) {
+            if (v.getVariableInstanceId().equals("list")) {
+                listVariables.add(v);
+            }
+        }
+        
+        assertEquals(3, listVariables.size());
+        VariableInstanceLog var = listVariables.get(0);
+        
+        assertEquals("john", var.getValue());
+        assertEquals("", var.getOldValue());
+        assertEquals(processInstance.getId(), var.getProcessInstanceId().longValue());
+        assertEquals(processInstance.getProcessId(), var.getProcessId());
+        assertEquals("list[0]", var.getVariableId());
+        assertEquals("list", var.getVariableInstanceId());
+        
+        var = listVariables.get(1);
+        assertEquals("mary", var.getValue());
+        assertEquals("", var.getOldValue());
+        assertEquals(processInstance.getId(), var.getProcessInstanceId().longValue());
+        assertEquals(processInstance.getProcessId(), var.getProcessId());
+        assertEquals("list[1]", var.getVariableId());
+        assertEquals("list", var.getVariableInstanceId());
+        
+        var = listVariables.get(2);        
+        assertEquals("peter", var.getValue());
+        assertEquals("", var.getOldValue());
+        assertEquals(processInstance.getId(), var.getProcessInstanceId().longValue());
+        assertEquals(processInstance.getProcessId(), var.getProcessId());
+        assertEquals("list[2]", var.getVariableId());
+        assertEquals("list", var.getVariableInstanceId());
+        
+        logService.clear();
+        processInstances = logService.findProcessInstances("com.sample.ruleflow3");
+        logService.dispose();
+        assertTrue(processInstances.isEmpty());
+    }
+    
+    public KieSession createSession(KieBase kbase, Environment env) {
+        
+        KieSession session = createKieSession(kbase, env);
         session.getWorkItemManager().registerWorkItemHandler("Human Task", new SystemOutWorkItemHandler());
         return session;
     }
@@ -284,23 +451,17 @@ public class AsyncAuditLogProducerTest extends AbstractBaseTest {
         jmsServer.start();
         logger.debug("Started Embedded JMS Server");
 
-        BitronixHornetQXAConnectionFactory.connectionFactory = (XAConnectionFactory) jmsServer.lookup("ConnectionFactory");
+        XAConnectionFactory connectionFactory = (XAConnectionFactory) jmsServer.lookup("ConnectionFactory");
 
-        PoolingConnectionFactory myConnectionFactory = new PoolingConnectionFactory ();                   
-        myConnectionFactory.setClassName("org.jbpm.process.audit.jms.BitronixHornetQXAConnectionFactory");              
-        myConnectionFactory.setUniqueName("hornet");                                                    
-        myConnectionFactory.setMaxPoolSize(5); 
-        myConnectionFactory.setAllowLocalTransactions(true);
-
-        myConnectionFactory.init(); 
-        
-        factory = myConnectionFactory;
+        new InitialContext().rebind("java:comp/UserTransaction", com.arjuna.ats.jta.UserTransaction.userTransaction());
+        new InitialContext().rebind("java:comp/TransactionManager", com.arjuna.ats.jta.TransactionManager.transactionManager());
+        new InitialContext().rebind("java:comp/TransactionSynchronizationRegistry", new com.arjuna.ats.internal.jta.transaction.arjunacore.TransactionSynchronizationRegistryImple());
+        factory = new ConnectionFactoryProxy(connectionFactory, new TransactionHelperImpl(com.arjuna.ats.jta.TransactionManager.transactionManager()));
         
         queue = (Queue) jmsServer.lookup("/queue/exampleQueue");
     }
     
     private void stopHornetQServer() throws Exception {
-        ((PoolingConnectionFactory) factory).close();
         jmsServer.stop();
         jmsServer = null;
     }

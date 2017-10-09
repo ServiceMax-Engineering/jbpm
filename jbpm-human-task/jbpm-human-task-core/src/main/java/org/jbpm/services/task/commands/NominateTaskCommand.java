@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss by Red Hat.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package org.jbpm.services.task.commands;
 
-import static org.jbpm.services.task.impl.model.xml.AbstractJaxbTaskObject.convertListFromInterfaceToJaxbImpl;
-import static org.jbpm.services.task.impl.model.xml.JaxbOrganizationalEntity.convertListFromJaxbImplToInterface;
-
-import java.util.List;
+import org.jbpm.services.task.impl.model.xml.JaxbOrganizationalEntity;
+import org.kie.api.runtime.Context;
+import org.kie.api.task.model.OrganizationalEntity;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
-import org.jbpm.services.task.impl.model.xml.JaxbOrganizationalEntity;
-import org.kie.api.task.model.OrganizationalEntity;
-import org.kie.internal.command.Context;
+import static org.jbpm.services.task.impl.model.xml.AbstractJaxbTaskObject.convertListFromInterfaceToJaxbImpl;
+import static org.jbpm.services.task.impl.model.xml.JaxbOrganizationalEntity.convertListFromJaxbImplToInterface;
 
 /**
  * Operation.Skip : [ new OperationCommand().{ status = [ Status.Created ],

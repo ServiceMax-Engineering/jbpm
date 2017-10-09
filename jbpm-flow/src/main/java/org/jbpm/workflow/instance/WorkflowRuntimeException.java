@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.workflow.instance;
 
 import java.text.MessageFormat;
@@ -24,6 +39,7 @@ public class WorkflowRuntimeException extends RuntimeException {
     private long nodeInstanceId;
     private long nodeId;
     private String nodeName;
+    private String deploymentId;
 
     private Map<String, Object> variables;
 
@@ -32,7 +48,7 @@ public class WorkflowRuntimeException extends RuntimeException {
         initialize(nodeInstance, processInstance);
     }
 
-    public WorkflowRuntimeException(NodeInstance nodeInstance, ProcessInstance processInstance, String message, Exception e) {
+    public WorkflowRuntimeException(NodeInstance nodeInstance, ProcessInstance processInstance, String message, Throwable e) {
         super(message, e);
         initialize(nodeInstance, processInstance);
     }
@@ -45,6 +61,7 @@ public class WorkflowRuntimeException extends RuntimeException {
     private void initialize(NodeInstance nodeInstance, ProcessInstance processInstance) {
         this.processInstanceId = processInstance.getId();
         this.processId = processInstance.getProcessId();
+        this.setDeploymentId(((ProcessInstanceImpl)processInstance).getDeploymentId());
         if( nodeInstance != null ) { 
             this.nodeInstanceId = nodeInstance.getId();
             this.nodeId = nodeInstance.getNodeId();
@@ -146,6 +163,14 @@ public class WorkflowRuntimeException extends RuntimeException {
                 (getNodeId() == 0 ? "?" : getNodeId()), 
                 (getCause() == null ? getMessage() : getCause().getMessage()), 
                 getProcessInstanceId());
+    }
+
+    public String getDeploymentId() {
+        return deploymentId;
+    }
+
+    public void setDeploymentId(String deploymentId) {
+        this.deploymentId = deploymentId;
     }
 
 }

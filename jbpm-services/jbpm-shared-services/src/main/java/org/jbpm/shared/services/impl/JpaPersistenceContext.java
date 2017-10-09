@@ -1,14 +1,27 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.shared.services.impl;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.kie.api.runtime.Context;
 
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.Query;
-
-import org.kie.internal.command.Context;
-import org.kie.internal.command.World;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JpaPersistenceContext implements Context {
 
@@ -91,6 +104,17 @@ public class JpaPersistenceContext implements Context {
 		Query query = this.em.createQuery(updateString);
 		return query.executeUpdate();
 	}
+	
+	public int executeUpdateString(String updateString, Map<String, Object> parameters) {
+        check();
+        Query query = this.em.createQuery(updateString);
+        if (parameters != null && !parameters.isEmpty()) {
+            for (String name : parameters.keySet()) {                
+                query.setParameter(name, parameters.get(name));
+            }
+        }
+        return query.executeUpdate();
+    }
 
 	
 	public HashMap<String, Object> addParametersToMap(Object... parameterValues) {
@@ -192,12 +216,17 @@ public class JpaPersistenceContext implements Context {
 	}
 
 	
-	public void close(boolean txOwner) {
+	public void close(boolean txOwner, boolean emOwner) {
 		check();
 		if (txOwner) {
 			this.em.clear();
+			
 		}
-		this.em.close();
+		
+		if (emOwner) {
+		    this.em.close();
+		}
+		
 	}
 	
 	protected void check() {
@@ -206,33 +235,28 @@ public class JpaPersistenceContext implements Context {
 		}
 	}
 
-
-	@Override
-	public World getContextManager() {
-		return null;
-	}
-
-
 	@Override
 	public String getName() {
 		return this.getClass().getName();
 	}
-
 
 	@Override
 	public Object get(String identifier) {
 		return null;
 	}
 
-
 	@Override
 	public void set(String identifier, Object value) {
 
 	}
 
-
 	@Override
 	public void remove(String identifier) {
 
+	}
+
+	@Override
+	public boolean has( String identifier ) {
+		return false;
 	}
 }

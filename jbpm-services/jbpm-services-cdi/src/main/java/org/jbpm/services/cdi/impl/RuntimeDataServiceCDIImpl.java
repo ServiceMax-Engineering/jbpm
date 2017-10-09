@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 
 package org.jbpm.services.cdi.impl;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
 import org.jbpm.kie.services.impl.RuntimeDataServiceImpl;
+import org.jbpm.kie.services.impl.security.DeploymentRolesManager;
 import org.jbpm.services.api.DeploymentEvent;
 import org.jbpm.services.cdi.Activate;
+import org.jbpm.services.cdi.Audit;
 import org.jbpm.services.cdi.Deactivate;
 import org.jbpm.services.cdi.Deploy;
 import org.jbpm.services.cdi.RequestScopedBackupIdentityProvider;
 import org.jbpm.services.cdi.Undeploy;
+import org.jbpm.services.task.audit.service.TaskAuditService;
 import org.jbpm.shared.services.impl.TransactionalCommandService;
 import org.kie.api.task.TaskService;
 import org.kie.internal.identity.IdentityProvider;
@@ -58,9 +62,9 @@ public class RuntimeDataServiceCDIImpl extends RuntimeDataServiceImpl {
 		super.onDeactivate(event);
 	}
 
-	@Inject
+	@Inject	
 	@Override
-	public void setCommandService(TransactionalCommandService commandService) {
+	public void setCommandService(@Audit TransactionalCommandService commandService) {
 		super.setCommandService(commandService);
 	}
 
@@ -75,6 +79,22 @@ public class RuntimeDataServiceCDIImpl extends RuntimeDataServiceImpl {
 	public void setTaskService(TaskService taskService) {
 		super.setTaskService(taskService);
 	}
-	    
+	  
+    @Inject
+    @Override
+    public void setTaskAuditService(TaskAuditService taskAuditService) {
+        super.setTaskAuditService(taskAuditService);
+    }
+    
+    @Inject
+    @Override
+    public void setDeploymentRolesManager(DeploymentRolesManager deploymentRolesManager) {
+        super.setDeploymentRolesManager(deploymentRolesManager);
+    }
+
+    @PostConstruct
+    public void init() {
+        taskAuditService.setTaskService(taskService);
+    }
 	    
 }

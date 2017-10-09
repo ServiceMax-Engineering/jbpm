@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.drools.core.process.core.datatype.DataType;
-import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
 import org.drools.core.xml.ExtensibleXmlParser;
 import org.jbpm.bpmn2.core.Association;
 import org.jbpm.bpmn2.core.Definitions;
@@ -31,11 +29,13 @@ import org.jbpm.bpmn2.core.ItemDefinition;
 import org.jbpm.bpmn2.core.SequenceFlow;
 import org.jbpm.compiler.xml.ProcessBuildData;
 import org.jbpm.process.core.context.variable.VariableScope;
-import org.jbpm.workflow.core.Connection;
+import org.jbpm.process.core.datatype.DataType;
+import org.jbpm.process.core.datatype.impl.type.ObjectDataType;
 import org.jbpm.workflow.core.Node;
 import org.jbpm.workflow.core.NodeContainer;
 import org.jbpm.workflow.core.impl.ConnectionImpl;
 import org.jbpm.workflow.core.impl.ConstraintImpl;
+import org.jbpm.workflow.core.impl.NodeImpl;
 import org.jbpm.workflow.core.node.Assignment;
 import org.jbpm.workflow.core.node.CompositeContextNode;
 import org.jbpm.workflow.core.node.CompositeNode;
@@ -43,9 +43,10 @@ import org.jbpm.workflow.core.node.DataAssociation;
 import org.jbpm.workflow.core.node.EndNode;
 import org.jbpm.workflow.core.node.EventSubProcessNode;
 import org.jbpm.workflow.core.node.ForEachNode;
+import org.jbpm.workflow.core.node.StartNode;
 import org.jbpm.workflow.core.node.Join;
 import org.jbpm.workflow.core.node.Split;
-import org.jbpm.workflow.core.node.StartNode;
+import org.kie.api.definition.process.Connection;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -56,6 +57,7 @@ public class SubProcessHandler extends AbstractNodeHandler {
 	private Map<String, String> dataOutputs = new HashMap<String, String>();
     
     
+    @Override
     protected Node createNode(Attributes attrs) {
     	CompositeContextNode subProcessNode = new CompositeContextNode();    	
         String eventSubprocessAttribute = attrs.getValue("triggeredByEvent");
@@ -73,16 +75,18 @@ public class SubProcessHandler extends AbstractNodeHandler {
                 subProcessNode.setMetaData("isForCompensation", isForCompensation );
             }
         }        
-        
+        subProcessNode.setAutoComplete(true);
         return subProcessNode;
     }
     
+    @Override
     @SuppressWarnings("unchecked")
 	public Class generateNodeFor() {
 		return CompositeContextNode.class;
 	}
 
-	protected void handleNode(final Node node, final Element element,
+	@Override
+    protected void handleNode(final Node node, final Element element,
 			final String uri, final String localName,
 			final ExtensibleXmlParser parser) throws SAXException {
 		super.handleNode(node, element, uri, localName, parser);
@@ -99,7 +103,8 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		}
 	}
 
-	protected void readIoSpecification(org.w3c.dom.Node xmlNode,
+	@Override
+    protected void readIoSpecification(org.w3c.dom.Node xmlNode,
 			Map<String, String> dataInputs, Map<String, String> dataOutputs) {
 		org.w3c.dom.Node subNode = xmlNode.getFirstChild();
 		while (subNode instanceof Element) {
@@ -142,40 +147,37 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		}
 	}
 
-	public Object end(final String uri, final String localName,
+	@Override
+    public Object end(final String uri, final String localName,
 			final ExtensibleXmlParser parser) throws SAXException {
 		final Element element = parser.endElementBuilder();
 		Node node = (Node) parser.getCurrent();
-
+		
 		// determine type of event definition, so the correct type of node can be generated
 		boolean found = false;		
 		org.w3c.dom.Node xmlNode = element.getFirstChild();
 		while (xmlNode != null) {
 			String nodeName = xmlNode.getNodeName();
 			CompositeContextNode subProcess = (CompositeContextNode) node;
-			if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
+			 if ("multiInstanceLoopCharacteristics".equals(nodeName)) {
+			    Boolean isAsync = Boolean.parseBoolean((String)node.getMetaData().get("customAsync"));
 				// create new timerNode
 				ForEachNode forEachNode = new ForEachNode();
 				forEachNode.setId(node.getId());
 				forEachNode.setName(node.getName());
-				for (org.kie.api.definition.process.Node subNode: ((CompositeContextNode) node).getNodes()) {
+				
+				forEachNode.setAutoComplete(subProcess.isAutoComplete());
+				
+				for (org.kie.api.definition.process.Node subNode: subProcess.getNodes()) {
+			
 					forEachNode.addNode(subNode);
 				}
-				forEachNode.setMetaData("UniqueId",
-						subProcess.getMetaData("UniqueId"));
-				forEachNode.setMetaData(ProcessHandler.CONNECTIONS,
-						subProcess.getMetaData(ProcessHandler.CONNECTIONS));
-				forEachNode.setInMapping(((CompositeNode) node).getInMapping());
-				forEachNode.setOutMapping(((CompositeNode) node)
-						.getOutMapping());
+				forEachNode.setMetaData("UniqueId", subProcess.getMetaData("UniqueId"));
+				forEachNode.setMetaData(ProcessHandler.CONNECTIONS, subProcess.getMetaData(ProcessHandler.CONNECTIONS));
+				VariableScope v = (VariableScope) subProcess.getDefaultContext(VariableScope.VARIABLE_SCOPE);
+				((VariableScope) ((CompositeContextNode) forEachNode.internalGetNode(2)).getDefaultContext(VariableScope.VARIABLE_SCOPE)).setVariables(v.getVariables());
 				node = forEachNode;
-				if (forEachNode.getInMapping() == null
-						|| forEachNode.getInMapping().size() == 0) {
-					handleForEachNode(node, element, uri, localName, parser);
-				} else {
-					handleForEachNodeWithDataAssociations(node, element, uri,
-							localName, parser);
-				}
+				handleForEachNode(node, element, uri, localName, parser, isAsync);
 				found = true;
 				break;
 			}
@@ -202,25 +204,17 @@ public class SubProcessHandler extends AbstractNodeHandler {
 				composite.addNode(end);
 				end.setTerminate(false);
 
-				new ConnectionImpl(composite.getNode(1),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
-						composite.getNode(2),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
-				new ConnectionImpl(composite.getNode(2),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
-						composite.getNode(3),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				new ConnectionImpl(composite.getNode(1), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+						composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				new ConnectionImpl(composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+						composite.getNode(3), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
 				Connection c1 = new ConnectionImpl(composite.getNode(3),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
-						composite.getNode(4),
+						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, composite.getNode(4),
 						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
-				new ConnectionImpl(composite.getNode(4),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
-						composite.getNode(2),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
+				new ConnectionImpl(composite.getNode(4), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
+						composite.getNode(2), org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
 				Connection c2 = new ConnectionImpl(composite.getNode(3),
-						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE,
-						composite.getNode(5),
+						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE, composite.getNode(5),
 						org.jbpm.workflow.core.Node.CONNECTION_DEFAULT_TYPE);
 
 				start.setMetaData("hidden", true);
@@ -229,9 +223,10 @@ public class SubProcessHandler extends AbstractNodeHandler {
 				end.setMetaData("hidden", true);
 
 				String language = "XPath";
-				if(((Element) xmlNode.getFirstChild()).getAttribute("language") != null && !"".equals(((Element) xmlNode.getFirstChild()).getAttribute("language"))) {
+				if (((Element) xmlNode.getFirstChild()).getAttribute("language") != null
+						&& !"".equals(((Element) xmlNode.getFirstChild()).getAttribute("language"))) {
 					language = ((Element) xmlNode.getFirstChild()).getAttribute("language");
-				}				
+				}
 				ConstraintImpl cons1 = new ConstraintImpl();
 				cons1.setDialect(language);
 				cons1.setConstraint(xmlNode.getFirstChild().getTextContent());
@@ -246,12 +241,12 @@ public class SubProcessHandler extends AbstractNodeHandler {
 				cons2.setDefault(true);
 
 				cons2.setName("");
-				split.setConstraint(c2, cons2);		        
+				split.setConstraint(c2, cons2);
 
 				super.handleNode(node, element, uri, localName, parser);
 
-				List<SequenceFlow> connections = (List<SequenceFlow>) node
-						.getMetaData().get(ProcessHandler.CONNECTIONS);
+				List<SequenceFlow> connections = (List<SequenceFlow>) node.getMetaData()
+						.get(ProcessHandler.CONNECTIONS);
 
 				ProcessHandler.linkConnections(subProcess, connections);
 
@@ -269,6 +264,7 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		
         NodeContainer nodeContainer = (NodeContainer) parser.getParent();
         nodeContainer.addNode(node);
+        ((ProcessBuildData) parser.getData()).addNode(node);
 
 		return node;
 	}
@@ -283,7 +279,8 @@ public class SubProcessHandler extends AbstractNodeHandler {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@Override
+    @SuppressWarnings("unchecked")
 	protected void readMultiInstanceLoopCharacteristics(
 			org.w3c.dom.Node xmlNode, ForEachNode forEachNode,
 			ExtensibleXmlParser parser) {
@@ -419,11 +416,12 @@ public class SubProcessHandler extends AbstractNodeHandler {
             }
         }
         */
+        
     }
     
     @SuppressWarnings("unchecked")
 	protected void handleForEachNode(final Node node, final Element element, final String uri, 
-            final String localName, final ExtensibleXmlParser parser) throws SAXException {
+            final String localName, final ExtensibleXmlParser parser, boolean isAsync) throws SAXException {
     	super.handleNode(node, element, uri, localName, parser);
     	ForEachNode forEachNode = (ForEachNode) node;
     	org.w3c.dom.Node xmlNode = element.getFirstChild();
@@ -447,13 +445,33 @@ public class SubProcessHandler extends AbstractNodeHandler {
 			forEachNode.getMetaData(ProcessHandler.CONNECTIONS);
     	ProcessHandler.linkConnections(forEachNode, connections);
     	ProcessHandler.linkBoundaryEvents(forEachNode);
+    
     	
         // This must be done *after* linkConnections(process, connections)
         //  because it adds hidden connections for compensations
         List<Association> associations = (List<Association>) forEachNode.getMetaData(ProcessHandler.ASSOCIATIONS);
         ProcessHandler.linkAssociations((Definitions) forEachNode.getMetaData("Definitions"), forEachNode, associations);
-    }    
+        applyAsync(node, isAsync);
+    }  
+    
+    protected void applyAsync(Node node, boolean isAsync) {
+        for (org.kie.api.definition.process.Node subNode: ((CompositeContextNode) node).getNodes()) {
+            if (isAsync) {
+                List<Connection> incoming = subNode.getIncomingConnections(NodeImpl.CONNECTION_DEFAULT_TYPE);
+                if (incoming != null) {
+                    for (Connection con : incoming) {
+                        if (con.getFrom() instanceof StartNode) {
+                            ((Node)subNode).setMetaData("customAsync", Boolean.toString(isAsync));
+                            return;
+                        }
+                    }
+                }
+                
+            }            
+        }
+    }
 
+    @Override
     public void writeNode(Node node, StringBuilder xmlDump, int metaDataType) {
         throw new IllegalArgumentException("Writing out should be handled by specific handlers");
     }

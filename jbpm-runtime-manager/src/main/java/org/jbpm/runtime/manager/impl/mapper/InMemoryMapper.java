@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package org.jbpm.runtime.manager.impl.mapper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.kie.api.runtime.manager.Context;
-import org.kie.internal.runtime.manager.Mapper;
 
 /**
  * An in-memory implementation of the context to <code>KieSession</code> identifier mapping.
  * Used only when the <code>RuntimeManager</code> is used without persistence. 
  *
  */
-public class InMemoryMapper implements Mapper {
+public class InMemoryMapper extends InternalMapper {
 
     private Map<Object, Long> mapping = new ConcurrentHashMap<Object, Long>();
     
@@ -60,5 +61,17 @@ public class InMemoryMapper implements Mapper {
 
     public boolean hasContext(Long ksessionId) {
     	return mapping.containsValue(ksessionId);
+    }
+
+    @Override
+    public List<String> findContextIdForEvent(String eventType, String ownerId) {
+        List<String> contextIds = new ArrayList<String>(); 
+        
+        if (mapping != null && !mapping.isEmpty()) {
+            for (Object contextId : mapping.keySet()) {
+                contextIds.add(contextId.toString());
+            }
+        }
+        return contextIds;
     }
 }

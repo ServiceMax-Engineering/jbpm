@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,10 @@
 
 package org.jbpm.kie.services.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.kie.scanner.MavenRepository.getMavenRepository;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +27,8 @@ import java.util.Map;
 
 import org.drools.compiler.kie.builder.impl.InternalKieModule;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
-import org.jbpm.kie.test.util.AbstractBaseTest;
+import org.jbpm.kie.test.util.AbstractKieServicesBaseTest;
+import org.jbpm.kie.test.util.CountDownListenerFactory;
 import org.jbpm.runtime.manager.impl.deploy.DeploymentDescriptorImpl;
 import org.jbpm.services.api.ProcessInstanceNotFoundException;
 import org.jbpm.services.api.model.DeploymentUnit;
@@ -43,16 +40,20 @@ import org.junit.Test;
 import org.kie.api.KieServices;
 import org.kie.api.builder.ReleaseId;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.query.QueryContext;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.internal.query.QueryContext;
 import org.kie.internal.query.QueryFilter;
 import org.kie.internal.runtime.conf.DeploymentDescriptor;
-import org.kie.scanner.MavenRepository;
+import org.kie.internal.runtime.conf.ObjectModel;
+import org.kie.scanner.KieMavenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RuntimeDataServiceImplSecurityTest extends AbstractBaseTest {
+import static org.junit.Assert.*;
+import static org.kie.scanner.KieMavenRepository.getKieMavenRepository;
+
+public class RuntimeDataServiceImplSecurityTest extends AbstractKieServicesBaseTest {
 
 private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentServiceTest.class);   
     
@@ -74,10 +75,13 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
         processes.add("repo/processes/general/EmptyHumanTask.bpmn");
         processes.add("repo/processes/general/humanTask.bpmn");
         processes.add("repo/processes/general/BPMN2-UserTask.bpmn2");
+        processes.add("repo/processes/general/timer-process.bpmn2");
         
         DeploymentDescriptor customDescriptor = new DeploymentDescriptorImpl("org.jbpm.domain");
 		customDescriptor.getBuilder()
-		.addRequiredRole("view:managers");
+		.addEventListener(new ObjectModel("mvel", "org.jbpm.kie.test.util.CountDownListenerFactory.get(\"securityTest\", \"timer\", 1)"))
+		.addRequiredRole("view:managers")
+		.addRequiredRole("execute:employees");
 		
         Map<String, String> resources = new HashMap<String, String>();
 		resources.put("src/main/resources/" + DeploymentDescriptor.META_INF_LOCATION, customDescriptor.toXml());
@@ -92,7 +96,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
         } catch (Exception e) {
             
         }
-        MavenRepository repository = getMavenRepository();
+		KieMavenRepository repository = getKieMavenRepository();
         repository.deployArtifact(releaseId, kJar1, pom);
         
         assertNotNull(deploymentService);
@@ -103,6 +107,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
         units.add(deploymentUnit);
     	assertNotNull(processService);
 
+    	identityProvider.setRoles(Arrays.asList("employees"));
     }
     
     @After
@@ -130,6 +135,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
             units.clear();
         }
         close();
+        CountDownListenerFactory.clear();
     }
     
     
@@ -139,6 +145,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -170,6 +177,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -201,6 +209,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -236,6 +245,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -267,6 +277,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -304,6 +315,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -348,6 +360,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -379,6 +392,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -410,6 +424,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
@@ -452,6 +467,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
@@ -479,6 +495,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
@@ -508,6 +525,7 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	// let's grant managers role so process can be started
     	List<String> roles = new ArrayList<String>();
     	roles.add("managers");
+    	roles.add("employees");
     	identityProvider.setRoles(roles);
     	
     	processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "org.jbpm.writedocument");
@@ -672,4 +690,39 @@ private static final Logger logger = LoggerFactory.getLogger(KModuleDeploymentSe
     	assertNotNull(instances);
     	assertEquals(0, instances.size());    	
     }
+    
+    @Test(timeout=10000)
+    public void testGetProcessInstancesWithTimer() throws Exception {
+        
+        // let's grant managers role so process can be started
+        List<String> roles = new ArrayList<String>();
+        roles.add("managers");
+        roles.add("employees");
+        identityProvider.setRoles(roles);
+        
+        Collection<ProcessInstanceDesc> instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(0, instances.size());
+        
+        processInstanceId = processService.startProcess(deploymentUnit.getIdentifier(), "timerprocess");
+        assertNotNull(processInstanceId);                
+        
+        instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(1, instances.size());
+        assertEquals(1, (int)instances.iterator().next().getState());
+        
+        identityProvider.setRoles(new ArrayList<>());
+        
+        CountDownListenerFactory.getExisting("securityTest").waitTillCompleted();
+        
+        identityProvider.setRoles(roles);
+        instances = runtimeDataService.getProcessInstances(new QueryContext());
+        assertNotNull(instances);
+        assertEquals(1, instances.size());
+        assertEquals(2, (int)instances.iterator().next().getState());
+ 
+    
+    }
+    
 }

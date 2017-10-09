@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 JBoss Inc
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,10 @@ public class TimerServiceRegistry {
     public static final String TIMER_SERVICE_SUFFIX = "-timerServiceId";
     private ConcurrentHashMap<String, TimerService> registeredServices = new ConcurrentHashMap<String, TimerService>();
     
-    private static TimerServiceRegistry instance;
+    private static TimerServiceRegistry instance = new TimerServiceRegistry();
     
     public static TimerServiceRegistry getInstance() {
-        if (instance == null) {
-            instance = new TimerServiceRegistry();
-        }
-        
+
         return instance;
     }
     

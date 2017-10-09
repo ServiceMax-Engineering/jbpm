@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 JBoss Inc
+ * Copyright 2006 Red Hat, Inc. and/or its affiliates.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,6 @@ import org.jbpm.process.builder.ProcessBuildContext;
 import org.jbpm.process.core.ContextResolver;
 import org.jbpm.workflow.core.DroolsAction;
 
-/**
- * @author etirelli
- *
- */
 public class JavaActionBuilder extends AbstractJavaProcessBuilder
     implements
     ActionBuilder {
@@ -43,22 +39,47 @@ public class JavaActionBuilder extends AbstractJavaProcessBuilder
                       final ActionDescr actionDescr,
                       final ContextResolver contextResolver) {
 
-        final String className = "action" + context.getNextId();               
+        final String className = getClassName(context);
 
+        AnalysisResult analysis = getAnalysis(context, actionDescr);
+
+        if ( analysis == null ) {
+            // build is not possible without analysis results
+            return;
+        }
+
+        buildAction(context, 
+                    action, 
+                    actionDescr, 
+                    contextResolver, 
+                    className, 
+                    analysis);
+    }
+   
+    protected String getClassName(PackageBuildContext context) { 
+       return "action" + context.getNextId(); 
+    }
+    
+    protected AnalysisResult getAnalysis(final PackageBuildContext context,
+                                       final ActionDescr actionDescr) {
         JavaDialect dialect = (JavaDialect) context.getDialect( "java" );
         
         Map<String, Class<?>> variables = new HashMap<String,Class<?>>();
-        BoundIdentifiers boundIdentifiers = new BoundIdentifiers(variables, context.getKnowledgeBuilder().getGlobals());
+        BoundIdentifiers boundIdentifiers = new BoundIdentifiers(variables, context);
         AnalysisResult analysis = dialect.analyzeBlock( context,
                                                         actionDescr,
                                                         actionDescr.getText(),
                                                         boundIdentifiers);
-
-        if ( analysis == null ) {
-            // not possible to get the analysis results
-            return;
-        }
-
+        
+        return analysis;
+    }
+    
+    protected void buildAction(final PackageBuildContext context,
+            final DroolsAction action,
+            final ActionDescr actionDescr,
+            final ContextResolver contextResolver,
+            String className,
+            AnalysisResult analysis) {
         Set<String> identifiers = analysis.getBoundIdentifiers().getGlobals().keySet();
 
         final Map map = createVariableContext( className,
@@ -70,13 +91,16 @@ public class JavaActionBuilder extends AbstractJavaProcessBuilder
         map.put( "text",
                  ProcessKnowledgeHelperFixer.fix( actionDescr.getText() ));
 
-        generatTemplates( "actionMethod",
+        generateTemplates( "actionMethod",
                           "actionInvoker",
                           (ProcessBuildContext)context,
                           className,
                           map,
                           action,
-                          actionDescr );
+                          actionDescr ); 
+        collectTypes("JavaDialect", analysis, (ProcessBuildContext)context);
     }
+    
+
 
 }

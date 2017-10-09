@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
@@ -32,6 +33,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Temporal;
 
 import org.jbpm.services.task.utils.CollectionUtils;
@@ -103,11 +105,38 @@ public class TaskDataImpl implements InternalTaskData {
 
     @OneToMany(cascade = CascadeType.ALL, targetEntity=CommentImpl.class)
     @JoinColumn(name = "TaskData_Comments_Id", nullable = true)
+    @OrderBy("id ASC")
     private List<Comment> comments = Collections.emptyList();
 
     @OneToMany(cascade = CascadeType.ALL, targetEntity=AttachmentImpl.class)
     @JoinColumn(name = "TaskData_Attachments_Id", nullable = true)
+    @OrderBy("id ASC")
     private List<Attachment> attachments = Collections.emptyList();
+   
+
+    // transient task variables for improved access
+    private transient Map<String, Object> taskInputVariables;
+    private transient Map<String, Object> taskOutputVariables;
+    
+    @Override
+    public Map<String, Object> getTaskInputVariables() {
+        return taskInputVariables;
+    }
+
+    @Override
+    public void setTaskInputVariables(Map<String, Object> taskInputVariables) {
+        this.taskInputVariables = taskInputVariables;
+    }
+
+    @Override
+    public Map<String, Object> getTaskOutputVariables() {
+        return taskOutputVariables;
+    }
+
+    @Override
+    public void setTaskOutputVariables(Map<String, Object> taskOutputVariables) {
+        this.taskOutputVariables = taskOutputVariables;
+    }
 
     public void writeExternal(ObjectOutput out) throws IOException {
         if (status != null) {
@@ -558,7 +587,7 @@ public class TaskDataImpl implements InternalTaskData {
         this.outputType = outputType;
     }
 
-    public long getOutputContentId() {
+    public Long getOutputContentId() {
         return outputContentId;
     }
 

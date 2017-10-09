@@ -1,6 +1,19 @@
-package org.jbpm.integrationtests;
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
 
-import static org.junit.Assert.assertEquals;
+package org.jbpm.integrationtests;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -10,24 +23,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.drools.core.impl.InternalKnowledgeBase;
+import org.drools.core.impl.KnowledgeBaseFactory;
 import org.jbpm.integrationtests.test.Person;
 import org.jbpm.process.core.context.variable.VariableScope;
 import org.jbpm.process.instance.context.variable.VariableScopeInstance;
 import org.jbpm.ruleflow.instance.RuleFlowProcessInstance;
 import org.jbpm.test.util.AbstractBaseTest;
 import org.junit.Test;
+import org.kie.api.definition.KiePackage;
 import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.internal.KnowledgeBase;
-import org.kie.internal.KnowledgeBaseFactory;
 import org.kie.internal.builder.KnowledgeBuilder;
 import org.kie.internal.builder.KnowledgeBuilderError;
 import org.kie.internal.builder.KnowledgeBuilderFactory;
-import org.kie.internal.definition.KnowledgePackage;
 import org.kie.internal.io.ResourceFactory;
-import org.kie.internal.runtime.StatefulKnowledgeSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
 
 public class ProcessSplitTest extends AbstractBaseTest {
     
@@ -51,7 +66,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -85,7 +100,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -136,7 +151,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -173,10 +188,10 @@ public class ProcessSplitTest extends AbstractBaseTest {
             logger.error(error.toString());
         }
         
-        Collection<KnowledgePackage> kpkgs = kbuilder.getKnowledgePackages();
-        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
-        kbase.addKnowledgePackages( kpkgs );        
-        StatefulKnowledgeSession ksession = kbase.newStatefulKnowledgeSession();
+        Collection<KiePackage> kpkgs = kbuilder.getKnowledgePackages();
+        InternalKnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
+        kbase.addPackages( kpkgs );        
+        KieSession ksession = kbase.newKieSession();
         List<Long> list = new ArrayList<Long>();
         ksession.setGlobal("list", list);
 
@@ -225,7 +240,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"person\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.test.Person\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.test.Person\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -258,7 +273,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -290,7 +305,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -323,7 +338,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -355,7 +370,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"person\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.test.Person\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.ObjectDataType\" className=\"org.jbpm.integrationtests.test.Person\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -388,7 +403,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -420,7 +435,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -453,7 +468,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -485,7 +500,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -518,7 +533,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -550,7 +565,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -583,7 +598,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -615,7 +630,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "    </globals>" +
             "    <variables>\n" +
             "      <variable name=\"name\" >\n" +
-            "        <type name=\"org.drools.core.process.core.datatype.impl.type.StringDataType\" />\n" +
+            "        <type name=\"org.jbpm.process.core.datatype.impl.type.StringDataType\" />\n" +
             "      </variable>\n" +
             "    </variables>\n" +
             "  </header>" +
@@ -648,7 +663,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);
@@ -708,7 +723,7 @@ public class ProcessSplitTest extends AbstractBaseTest {
             "</process>");
         builder.addRuleFlow(source);
 
-        StatefulKnowledgeSession workingMemory = createKieSession(builder.getPackage());
+        KieSession workingMemory = createKieSession(builder.getPackages());
         
         List<Long> list = new ArrayList<Long>();
         workingMemory.setGlobal("list", list);

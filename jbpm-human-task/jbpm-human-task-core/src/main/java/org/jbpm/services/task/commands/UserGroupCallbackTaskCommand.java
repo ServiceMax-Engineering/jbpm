@@ -1,5 +1,49 @@
+/*
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.jbpm.services.task.commands;
 
+import org.drools.core.util.StringUtils;
+import org.jbpm.services.task.exception.CannotAddTaskException;
+import org.kie.api.runtime.Context;
+import org.kie.api.task.model.Attachment;
+import org.kie.api.task.model.Comment;
+import org.kie.api.task.model.Group;
+import org.kie.api.task.model.OrganizationalEntity;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.User;
+import org.kie.internal.task.api.TaskContext;
+import org.kie.internal.task.api.TaskModelProvider;
+import org.kie.internal.task.api.TaskPersistenceContext;
+import org.kie.internal.task.api.model.Deadline;
+import org.kie.internal.task.api.model.Deadlines;
+import org.kie.internal.task.api.model.Escalation;
+import org.kie.internal.task.api.model.InternalAttachment;
+import org.kie.internal.task.api.model.InternalComment;
+import org.kie.internal.task.api.model.InternalOrganizationalEntity;
+import org.kie.internal.task.api.model.InternalPeopleAssignments;
+import org.kie.internal.task.api.model.InternalTaskData;
+import org.kie.internal.task.api.model.Notification;
+import org.kie.internal.task.api.model.Reassignment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,34 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-
-import org.drools.core.util.StringUtils;
-import org.jbpm.services.task.exception.CannotAddTaskException;
-import org.kie.api.task.model.Attachment;
-import org.kie.api.task.model.Comment;
-import org.kie.api.task.model.Group;
-import org.kie.api.task.model.OrganizationalEntity;
-import org.kie.api.task.model.Status;
-import org.kie.api.task.model.User;
-import org.kie.internal.command.Context;
-import org.kie.internal.task.api.TaskContext;
-import org.kie.internal.task.api.TaskModelProvider;
-import org.kie.internal.task.api.TaskPersistenceContext;
-import org.kie.internal.task.api.model.Deadline;
-import org.kie.internal.task.api.model.Deadlines;
-import org.kie.internal.task.api.model.Escalation;
-import org.kie.internal.task.api.model.InternalOrganizationalEntity;
-import org.kie.internal.task.api.model.InternalPeopleAssignments;
-import org.kie.internal.task.api.model.InternalTaskData;
-import org.kie.internal.task.api.model.Notification;
-import org.kie.internal.task.api.model.Reassignment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @XmlTransient
 @XmlRootElement(name="user-group-callback-task-command")
@@ -84,6 +100,16 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
         return false;
 
     }
+    
+    protected User doCallbackAndReturnUserOperation(String userId, TaskContext context) {
+
+        if (userId != null && context.getUserGroupCallback().existsUser(userId)) {
+            return addUserFromCallbackOperation(userId, context);
+            
+        }
+        return null;
+
+    }
 
     protected boolean doCallbackGroupOperation(String groupId, TaskContext context) {
 
@@ -95,7 +121,7 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
 
     }
 
-    protected void addUserFromCallbackOperation(String userId, TaskContext context) {
+    protected User addUserFromCallbackOperation(String userId, TaskContext context) {
     	User user = context.getPersistenceContext().findUser(userId);
         boolean userExists = user != null;
         if (!StringUtils.isEmpty(userId) && !userExists) {
@@ -104,6 +130,8 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
             
             persistIfNotExists(user, context);
         } 
+        
+        return user;
     }
     
     protected void persistIfNotExists(final OrganizationalEntity entity, TaskContext context) {
@@ -122,7 +150,7 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
 
             if (groupIds != null && groupIds.size() > 0) {
 
-                List<String> userGroups = filterGroups(context.getUserGroupCallback().getGroupsForUser(userId, groupIds, null));
+                List<String> userGroups = filterGroups(context.getUserGroupCallback().getGroupsForUser(userId));
                 for (String groupId : groupIds) {
 
                     if (context.getUserGroupCallback().existsGroup(groupId) && userGroups != null && userGroups.contains(groupId)) {
@@ -131,7 +159,7 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
                 }
             } else {
                 if (!(userGroupsMap.containsKey(userId) && userGroupsMap.get(userId).booleanValue())) {
-                    List<String> userGroups = filterGroups(context.getUserGroupCallback().getGroupsForUser(userId, null, null));
+                    List<String> userGroups = filterGroups(context.getUserGroupCallback().getGroupsForUser(userId));
                     if (userGroups != null && userGroups.size() > 0) {
                         for (String group : userGroups) {
                             addGroupFromCallbackOperation(group, context);
@@ -451,7 +479,10 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
      protected void doCallbackOperationForComment(Comment comment, TaskContext context) {
          if (comment != null) {
              if (comment.getAddedBy() != null) {
-                 doCallbackUserOperation(comment.getAddedBy().getId(), context);
+                 User  entity = doCallbackAndReturnUserOperation(comment.getAddedBy().getId(), context);
+                 if (entity != null) {
+                     ((InternalComment)comment).setAddedBy(entity);
+                 }
              }
          }
      }
@@ -459,22 +490,35 @@ public class UserGroupCallbackTaskCommand<T> extends TaskCommand<T> {
      protected void doCallbackOperationForAttachment(Attachment attachment, TaskContext context) {
          if (attachment != null) {
              if (attachment.getAttachedBy() != null) {
-                 doCallbackUserOperation(attachment.getAttachedBy().getId(), context);
+                 User  entity = doCallbackAndReturnUserOperation(attachment.getAttachedBy().getId(), context);
+                 if (entity != null) {
+                     ((InternalAttachment)attachment).setAttachedBy(entity);
+                 }
              }
          }
      }
+    
      
      protected List<String> filterGroups(List<String> groups) {
          if (groups != null) {
              groups.removeAll(restrictedGroups);
+         } else{
+             groups = new ArrayList<String>();
          }
          
          return groups;
      }
+     
+     protected boolean isBusinessAdmin(String userId, List<OrganizationalEntity> businessAdmins, TaskContext context) {
+         List<String> usersGroup = context.getUserGroupCallback().getGroupsForUser(userId);
+         usersGroup.add(userId);
+         
+         return businessAdmins.stream().anyMatch(oe -> usersGroup.contains(oe.getId()));
+         
+     }
 
-	@Override
-	public T execute(Context context) {
-	    throw new UnsupportedOperationException("The " + this.getClass().getSimpleName() + " is not a standalone command that can be executed.");
-	}
-
+    @Override
+    public T execute( Context context ) {
+        throw new UnsupportedOperationException( "org.jbpm.services.task.commands.UserGroupCallbackTaskCommand.execute -> TODO" );
+    }
 }

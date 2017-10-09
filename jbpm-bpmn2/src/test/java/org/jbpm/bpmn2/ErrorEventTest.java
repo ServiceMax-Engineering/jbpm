@@ -1,5 +1,5 @@
 /*
-Copyright 2013 JBoss Inc
+Copyright 2013 Red Hat, Inc. and/or its affiliates.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.jbpm.bpmn2.handler.ServiceTaskHandler;
 import org.jbpm.bpmn2.handler.SignallingTaskHandlerDecorator;
 import org.jbpm.bpmn2.objects.ExceptionOnPurposeHandler;
 import org.jbpm.bpmn2.objects.MyError;
+import org.jbpm.bpmn2.objects.Person;
 import org.jbpm.bpmn2.objects.TestWorkItemHandler;
+import org.jbpm.process.instance.event.listeners.RuleAwareProcessEventLister;
 import org.jbpm.process.instance.impl.demo.DoNothingWorkItemHandler;
 import org.jbpm.process.instance.impl.demo.SystemOutWorkItemHandler;
 import org.jbpm.workflow.instance.WorkflowProcessInstance;
@@ -297,6 +297,47 @@ public class ErrorEventTest extends JbpmBpmn2TestCase {
         assertProcessInstanceFinished(processInstance, ksession);
         assertNodeTriggered(processInstance.getId(), "start", "split", "User Task", "Service task error attached", "end0",
                 "Script Task", "error2");
+
+        assertNotNodeTriggered(processInstance.getId(), "end");
+    }
+
+    @Test
+    public void testErrorBoundaryEventOnBusinessRuleTask() throws Exception {
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-ErrorBoundaryEventOnBusinessRuleTask.bpmn2",
+                "BPMN2-ErrorBoundaryEventOnBusinessRuleTask.drl");
+        ksession = createKnowledgeSession(kbase);
+        ksession.addEventListener(new RuleAwareProcessEventLister());
+        ProcessInstance processInstance = ksession.startProcess("BPMN2-ErrorBoundaryEventOnBusinessRuleTask");
+
+        assertProcessInstanceFinished(processInstance, ksession);
+        assertNodeTriggered(processInstance.getId(), "start", "business rule task error attached", "error1");
+    }
+
+    @Test
+    public void testMultiErrorBoundaryEventsOnBusinessRuleTask() throws Exception {
+        KieBase kbase = createKnowledgeBaseWithoutDumper("BPMN2-MultiErrorBoundaryEventsOnBusinessRuleTask.bpmn2",
+                "BPMN2-MultiErrorBoundaryEventsOnBusinessRuleTask.drl");
+        ksession = createKnowledgeSession(kbase);
+        ksession.addEventListener(new RuleAwareProcessEventLister());
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("person", new Person());
+        ProcessInstance processInstance = ksession.startProcess("BPMN2-MultiErrorBoundaryEventeOnBusinessRuleTask", params);
+
+        assertProcessInstanceFinished(processInstance, ksession);
+        assertNodeTriggered(processInstance.getId(), "start", "business rule task error attached",
+                "NPE Script Task", "error1");
+
+        ksession.dispose();
+
+        ksession = createKnowledgeSession(kbase);
+        ksession.addEventListener(new RuleAwareProcessEventLister());
+        params = new HashMap<String, Object>();
+        params.put("person", new Person("unsupported"));
+        ProcessInstance processInstance2 = ksession.startProcess("BPMN2-MultiErrorBoundaryEventeOnBusinessRuleTask", params);
+        assertProcessInstanceFinished(processInstance2, ksession);
+        assertNodeTriggered(processInstance2.getId(), "start", "business rule task error attached",
+                "UOE Script Task", "error2");
     }
 
     @Test
@@ -385,7 +426,7 @@ public class ErrorEventTest extends JbpmBpmn2TestCase {
         ksession.getWorkItemManager().completeWorkItem(workItem.getId(), null);
 
         assertEquals(1, handler.getWorkItems().size());
-    }
+    } 
 
     @Test
     public void testBoundaryErrorEventDefaultHandlerWithErrorCodeWithStructureRef() throws Exception {
@@ -447,28 +488,27 @@ public class ErrorEventTest extends JbpmBpmn2TestCase {
 
     @Test
     public void testBoundaryErrorEventSubProcessExceptionMapping() throws Exception {
-      KieBase kbase = createKnowledgeBase("BPMN2-BoundaryErrorEventSubProcessExceptionMapping.bpmn2");
-      ksession = createKnowledgeSession(kbase);
-      ExceptionWorkItemHandler handler = new ExceptionWorkItemHandler();
-      ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
+        KieBase kbase = createKnowledgeBase("BPMN2-BoundaryErrorEventSubProcessExceptionMapping.bpmn2");
+        ksession = createKnowledgeSession(kbase);
+        ExceptionWorkItemHandler handler = new ExceptionWorkItemHandler();
+        ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
 
-      ProcessInstance processInstance = ksession
-      .startProcess("com.sample.bpmn.hello");
+        ProcessInstance processInstance = ksession
+            .startProcess("com.sample.bpmn.hello");
 
-      assertEquals("java.lang.RuntimeException", getProcessVarValue(processInstance, "var1"));
+        assertEquals("java.lang.RuntimeException", getProcessVarValue(processInstance, "var1"));
     }
-
-    @Test
+    
+	@Test
     public void testBoundaryErrorEventStructureRef() throws Exception {
-      KieBase kbase = createKnowledgeBase("BPMN2-BoundaryErrorEventStructureRef.bpmn2");
-      ksession = createKnowledgeSession(kbase);
-      ExceptionWorkItemHandler handler = new ExceptionWorkItemHandler();
-      ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
+        KieBase kbase = createKnowledgeBase("BPMN2-BoundaryErrorEventStructureRef.bpmn2");
+        ksession = createKnowledgeSession(kbase);
+        ExceptionWorkItemHandler handler = new ExceptionWorkItemHandler();
+        ksession.getWorkItemManager().registerWorkItemHandler("Human Task", handler);
 
-      ProcessInstance processInstance = ksession
-      .startProcess("com.sample.bpmn.hello");
+        ProcessInstance processInstance = ksession.startProcess("com.sample.bpmn.hello");
 
-      assertNodeTriggered(processInstance.getId(), "Start", "User Task", "MyBoundaryErrorEvent");
+        assertNodeTriggered(processInstance.getId(), "Start", "User Task", "MyBoundaryErrorEvent");
     }
 
     class ExceptionWorkItemHandler implements WorkItemHandler {

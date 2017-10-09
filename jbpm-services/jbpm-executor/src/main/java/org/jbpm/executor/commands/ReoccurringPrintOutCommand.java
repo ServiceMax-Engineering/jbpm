@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss by Red Hat.
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ package org.jbpm.executor.commands;
 
 import java.util.Date;
 
-import javax.inject.Named;
-
-import org.kie.internal.executor.api.Command;
-import org.kie.internal.executor.api.CommandContext;
-import org.kie.internal.executor.api.ExecutionResults;
-import org.kie.internal.executor.api.Reoccurring;
+import org.kie.api.executor.Command;
+import org.kie.api.executor.CommandContext;
+import org.kie.api.executor.ExecutionResults;
+import org.kie.api.executor.Reoccurring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * Just for demo purpose.
  * 
  */
-@Named(value="ReoccurringPrintOutCommand")
 public class ReoccurringPrintOutCommand implements Command, Reoccurring {
     
     private static final Logger logger = LoggerFactory.getLogger(ReoccurringPrintOutCommand.class);

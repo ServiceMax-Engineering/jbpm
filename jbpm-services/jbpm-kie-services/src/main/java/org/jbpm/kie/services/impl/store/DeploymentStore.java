@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss Inc
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.jbpm.kie.services.api.AttributesAware;
+import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.services.api.model.DeploymentUnit;
 import org.jbpm.shared.services.impl.TransactionalCommandService;
 import org.jbpm.shared.services.impl.commands.MergeObjectCommand;
@@ -50,6 +51,12 @@ public class DeploymentStore {
 	
 	private TransactionalCommandService commandService;
 	
+	public DeploymentStore() {
+		String[] voidDeny = {"void.class", "Void.class"};
+		xstream.denyTypes(voidDeny);
+	    this.xstream.registerConverter(new TransientObjectConverter());
+	}
+	
 	public void setCommandService(TransactionalCommandService commandService) {
         this.commandService = commandService;
     }
@@ -70,6 +77,10 @@ public class DeploymentStore {
         	// add to the deployable list only sync flag is set to true or does not exists (default)
         	if (sync == null || sync.equalsIgnoreCase("true")) {
 	        	DeploymentUnit unit = (DeploymentUnit) xstream.fromXML(entry.getDeploymentUnit());
+	        	
+	        	if (entry.getState() == STATE_DEACTIVATED) {
+	        	    ((KModuleDeploymentUnit)unit).setActive(false);
+	        	}
 	        	
 	        	activeDeployments.add(unit);
         	}
@@ -92,7 +103,8 @@ public class DeploymentStore {
         	// add to the deployable list only sync flag is set to true or does not exists (default)
         	if (sync == null || sync.equalsIgnoreCase("true")) {
 	        	DeploymentUnit unit = (DeploymentUnit) xstream.fromXML(entry.getDeploymentUnit());
-	        	
+	        	((KModuleDeploymentUnit)unit).setActive(false);
+                
 	        	activeDeployments.add(unit);
         	}
         }
@@ -121,7 +133,8 @@ public class DeploymentStore {
 	        	} else if (entry.getState() == STATE_ACTIVATED) {
 	        		activated.add(unit);
 	        	} else if (entry.getState() == STATE_DEACTIVATED) {
-	        		deactivated.add(unit);
+	        	    ((KModuleDeploymentUnit)unit).setActive(false);
+	        	    deactivated.add(unit);	        		
 	        	} else {
 	        		logger.warn("Unknown state of deployment store entry {} for {} will be ignored", entry.getId(), entry);
 	        	}
@@ -226,14 +239,17 @@ public class DeploymentStore {
 	protected Map<String, String> getEntryAttributes(String attributes) {
 		logger.debug("Reading attributes string {}", attributes);
 		Map<String, String> attributeMap = new HashMap<String, String>();
-		if (attributes != null && !attributes.isEmpty()) {
+		if (attributes != null && !attributes.trim().isEmpty()) {
 			// expected format: key=value;key=value;...
 			String[] pairs = attributes.split(";");
 			
 			for (String pair : pairs) {
 				String[] keyValue = pair.split("=");
-				
-				attributeMap.put(keyValue[0], keyValue[1]);
+				if (keyValue.length == 2) {
+				    attributeMap.put(keyValue[0], keyValue[1]);
+				} else if (keyValue.length == 1) {
+				    attributeMap.put(keyValue[0], "");
+				}
 			}
 		}
 		

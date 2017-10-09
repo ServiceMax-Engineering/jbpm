@@ -17,12 +17,8 @@ package org.jbpm.bpmn2.core;
 
 import java.io.Serializable;
 
-import org.drools.core.process.core.datatype.DataType;
+import org.jbpm.process.core.datatype.DataType;
 
-/**
- * @author <a href="mailto:atoulme@intalio.com">Antoine Toulme</a>
- *
- */
 public class DataStore implements Serializable {
 
 	private static final long serialVersionUID = 4L;

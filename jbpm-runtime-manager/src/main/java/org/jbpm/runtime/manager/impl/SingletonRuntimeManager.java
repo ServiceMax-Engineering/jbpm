@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package org.jbpm.runtime.manager.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
+import org.drools.core.command.impl.ExecutableCommand;
+import org.drools.core.command.impl.RegistryContext;
+import org.drools.core.common.InternalKnowledgeRuntime;
+import org.drools.core.runtime.process.InternalProcessRuntime;
+import org.drools.persistence.api.TransactionManager;
+import org.jbpm.process.instance.ProcessRuntimeImpl;
+import org.jbpm.runtime.manager.impl.error.ExecutionErrorManagerImpl;
+import org.jbpm.services.task.impl.TaskContentRegistry;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.Context;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -29,9 +30,17 @@ import org.kie.api.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.runtime.manager.Disposable;
 import org.kie.internal.runtime.manager.SessionFactory;
 import org.kie.internal.runtime.manager.TaskServiceFactory;
+import org.kie.internal.task.api.ContentMarshallerContext;
 import org.kie.internal.task.api.InternalTaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
  * This RuntimeManager is backed by a "Singleton" strategy, meaning that only one <code>RuntimeEngine</code> instance will
@@ -75,34 +84,88 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
     }
     
     public void init() {
-    	if (System.getProperty("org.kie.tx.lock.enabled") == null &&
-    			((SimpleRuntimeEnvironment)environment).getEnvironmentTemplate().get("TRANSACTION_LOCK_ENABLED") == null) {
-    		((SimpleRuntimeEnvironment)environment).getEnvironmentTemplate().set("TRANSACTION_LOCK_ENABLED", "true");
-    	}
         // TODO should we proxy/wrap the ksession so we capture dispose.destroy method calls?
         String location = getLocation();
         Long knownSessionId = getPersistedSessionId(location, identifier);
         InternalTaskService internalTaskService = (InternalTaskService) taskServiceFactory.newTaskService();
         
-        
-        if (knownSessionId > 0) {
-            try {
-                this.singleton = new SynchronizedRuntimeImpl(factory.findKieSessionById(knownSessionId), internalTaskService);
-            } catch (RuntimeException e) {
-                // in case session with known id was found
-            }
-        } 
-        
-        if (this.singleton == null) {
-            
-            this.singleton = new SynchronizedRuntimeImpl(factory.newKieSession(), internalTaskService);            
-            persistSessionId(location, identifier, singleton.getKieSession().getIdentifier());
+        boolean owner = false;
+        TransactionManager tm = null;
+        if (environment.usePersistence()) {
+            tm = getTransactionManagerInternal(environment.getEnvironment());
+            owner = tm.begin();
         }
-        ((RuntimeEngineImpl) singleton).setManager(this);
-        configureRuntimeOnTaskService(internalTaskService, singleton);
-        registerItems(this.singleton);
-        attachManager(this.singleton);
-        this.registry.register(this);
+        try {
+            if (knownSessionId > 0) {
+                try {
+                    this.singleton = new SynchronizedRuntimeImpl(factory.findKieSessionById(knownSessionId), internalTaskService);
+                } catch (RuntimeException e) {
+                    // in case session with known id was found
+                }
+            } 
+            
+            if (this.singleton == null) {
+                
+                this.singleton = new SynchronizedRuntimeImpl(factory.newKieSession(), internalTaskService);            
+                persistSessionId(location, identifier, singleton.getKieSession().getIdentifier());
+            }
+            ((RuntimeEngineImpl) singleton).setManager(this);
+            TaskContentRegistry.get().addMarshallerContext(getIdentifier(), 
+        			new ContentMarshallerContext(environment.getEnvironment(), environment.getClassLoader()));
+            configureRuntimeOnTaskService(internalTaskService, singleton);
+            registerItems(this.singleton);
+            attachManager(this.singleton);
+            this.registry.register(this);
+            if (tm != null) {
+                tm.commit(owner);
+            }
+        } catch (Exception e) {
+            if (tm != null) {
+                tm.rollback(owner);
+            }
+            throw new RuntimeException("Exception while initializing runtime manager " + this.identifier, e);
+        }
+    }
+    
+    @Override
+    public void activate() {
+        super.activate();
+        this.singleton.getKieSession().execute(new ExecutableCommand<Void>() {
+
+            private static final long serialVersionUID = 4698203316007668876L;
+
+            @Override
+            public Void execute(org.kie.api.runtime.Context context) {
+                KieSession ksession = ((RegistryContext) context).lookup( KieSession.class );
+                ksession.getEnvironment().set("Active", true);
+                
+                InternalProcessRuntime processRuntime = ((InternalKnowledgeRuntime) ksession).getProcessRuntime();
+                ((ProcessRuntimeImpl) processRuntime).initProcessEventListeners();
+                ((ProcessRuntimeImpl) processRuntime).initStartTimers();
+                return null;
+            }
+        });
+        
+    }
+
+    @Override
+    public void deactivate() {
+        super.deactivate();
+        this.singleton.getKieSession().execute(new ExecutableCommand<Void>() {
+
+            private static final long serialVersionUID = 8099201526203340191L;
+
+            @Override
+            public Void execute(org.kie.api.runtime.Context context) {
+                KieSession ksession = ((RegistryContext) context).lookup( KieSession.class );
+                ksession.getEnvironment().set("Active", false);
+                
+                InternalProcessRuntime processRuntime = ((InternalKnowledgeRuntime) ksession).getProcessRuntime();
+                ((ProcessRuntimeImpl) processRuntime).removeProcessEventListeners();
+                return null;
+            }
+        });
+        
     }
 
     @SuppressWarnings("rawtypes")
@@ -112,10 +175,19 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
     		throw new IllegalStateException("Runtime manager " + identifier + " is already closed");
     	}
     	checkPermission();
+    	((ExecutionErrorManagerImpl)executionErrorManager).createHandler();
         // always return the same instance
         return this.singleton;
     }
 
+    @Override
+    public void signalEvent(String type, Object event) {
+        if (isClosed()) {
+            throw new IllegalStateException("Runtime manager " + identifier + " is already closed");
+        }
+        checkPermission();
+        this.singleton.getKieSession().signalEvent(type, event);
+    }
 
     @Override
     public void validate(KieSession ksession, Context<?> context) throws IllegalStateException {
@@ -130,6 +202,7 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
     @Override
     public void disposeRuntimeEngine(RuntimeEngine runtime) {
         // no-op, singleton session is always active
+        ((ExecutionErrorManagerImpl)executionErrorManager).closeHandler();
     }
 
     @Override
@@ -140,7 +213,7 @@ public class SingletonRuntimeManager extends AbstractRuntimeManager {
         super.close();
         // dispose singleton session only when manager is closing
         try {
-        	removeRuntimeFromTaskService((InternalTaskService) this.singleton.getTaskService());
+        	removeRuntimeFromTaskService();
         } catch (UnsupportedOperationException e) {
         	logger.debug("Exception while closing task service, was it initialized? {}", e.getMessage());
         }

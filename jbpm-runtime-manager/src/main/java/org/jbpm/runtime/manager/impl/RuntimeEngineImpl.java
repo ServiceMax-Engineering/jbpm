@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss Inc
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,9 @@ public class RuntimeEngineImpl implements RuntimeEngine, Disposable {
 
 	private RuntimeEngineInitlializer initializer;
 	private Context<?> context;
-	
+
     private KieSession ksession;
+    private Long kieSessionId;
     private TaskService taskService;
     private AuditService auditService;
     
@@ -53,6 +54,7 @@ public class RuntimeEngineImpl implements RuntimeEngine, Disposable {
     
     public RuntimeEngineImpl(KieSession ksession, TaskService taskService) {
         this.ksession = ksession;
+        this.kieSessionId = ksession.getIdentifier();
         this.taskService = taskService;
     }
     
@@ -68,6 +70,7 @@ public class RuntimeEngineImpl implements RuntimeEngine, Disposable {
         }
         if (ksession == null && initializer != null) {
         	ksession = initializer.initKieSession(context, (InternalRuntimeManager) manager, this);
+        	this.kieSessionId = ksession.getIdentifier();
         }
         return this.ksession;
     }
@@ -150,6 +153,7 @@ public class RuntimeEngineImpl implements RuntimeEngine, Disposable {
 
 	public void internalSetKieSession(KieSession ksession) {
 		this.ksession = ksession;
+		this.kieSessionId = ksession.getIdentifier();
 	}
 
 	public boolean isAfterCompletion() {
@@ -159,4 +163,16 @@ public class RuntimeEngineImpl implements RuntimeEngine, Disposable {
 	public void setAfterCompletion(boolean completing) {
 		this.afterCompletion = completing;
 	}
+		   
+    public Context<?> getContext() {
+        return context;
+    }
+    
+    public void setContext(Context<?> context) {
+        this.context = context;
+    }
+    
+    public Long getKieSessionId() {
+        return kieSessionId;
+    }
 }

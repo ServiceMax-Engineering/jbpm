@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 JBoss by Red Hat.
+ * Copyright 2013 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package org.jbpm.executor;
 
 import javax.persistence.Persistence;
 
-import org.jbpm.test.util.TestUtil;
+import org.jbpm.test.util.ExecutorTestUtil;
+import org.jbpm.test.util.PoolingDataSource;
 import org.junit.After;
 import org.junit.Before;
-
-import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 
 public class NoCDISimpleExecutorTest extends BasicExecutorBaseTest{
@@ -31,10 +30,12 @@ public class NoCDISimpleExecutorTest extends BasicExecutorBaseTest{
     
     @Before
     public void setUp() {
-        pds = TestUtil.setupPoolingDataSource();
+        pds = ExecutorTestUtil.setupPoolingDataSource();
         emf = Persistence.createEntityManagerFactory("org.jbpm.executor");
 
         executorService = ExecutorServiceFactory.newExecutorService(emf);
+        
+        
         
         executorService.init();
         super.setUp();

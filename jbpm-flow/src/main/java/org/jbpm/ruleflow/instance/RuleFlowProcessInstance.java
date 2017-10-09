@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 JBoss Inc
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 
 package org.jbpm.ruleflow.instance;
 
-import org.kie.api.definition.process.Node;
+import java.util.List;
+
 import org.jbpm.ruleflow.core.RuleFlowProcess;
 import org.jbpm.workflow.instance.NodeInstance;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
+import org.kie.api.definition.process.Node;
 
 public class RuleFlowProcessInstance extends WorkflowProcessInstanceImpl {
 
@@ -34,6 +36,11 @@ public class RuleFlowProcessInstance extends WorkflowProcessInstanceImpl {
     	if (startNode != null) {
     		((NodeInstance) getNodeInstance(startNode)).trigger(null, null);
     	}
+    	
+    	// activate ad hoc fragments if they are marked as such
+    	List<Node> autoStartNodes = getRuleFlowProcess().getAutoStartNodes();
+    	autoStartNodes
+    	    .forEach(austoStartNode -> signalEvent(austoStartNode.getName(), null));
     }
 
 }

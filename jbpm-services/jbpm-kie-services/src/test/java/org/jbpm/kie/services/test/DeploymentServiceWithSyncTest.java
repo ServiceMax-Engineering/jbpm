@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 JBoss by Red Hat.
+ * Copyright 2014 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,6 @@
 
 package org.jbpm.kie.services.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.kie.scanner.MavenRepository.getMavenRepository;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -34,18 +28,34 @@ import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.kie.services.impl.store.DeploymentStore;
 import org.jbpm.kie.services.impl.store.DeploymentSyncInvoker;
 import org.jbpm.kie.services.impl.store.DeploymentSynchronizer;
-import org.jbpm.kie.test.util.AbstractBaseTest;
+import org.jbpm.kie.services.test.objects.CoundDownDeploymentListener;
+import org.jbpm.kie.test.util.AbstractKieServicesBaseTest;
+import org.jbpm.services.api.ListenerSupport;
 import org.jbpm.services.api.model.DeployedUnit;
 import org.jbpm.services.api.model.DeploymentUnit;
 import org.jbpm.shared.services.impl.TransactionalCommandService;
+import org.jbpm.shared.services.impl.commands.UpdateStringCommand;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.kie.api.KieServices;
 import org.kie.api.builder.ReleaseId;
-import org.kie.scanner.MavenRepository;
+import org.kie.scanner.KieMavenRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
+import static org.junit.Assert.*;
+import static org.kie.scanner.KieMavenRepository.getKieMavenRepository;
+
+/*
+ * IMPORTANT: we cannot rely on @Test(timeout=1000) within this test as it is 
+ * extended by CDI tests and arquillian we use does not support it - as soon as
+ * it will be upgraded to 1.1.4 that timeout from JUnit can be used
+ *
+ */
+public class DeploymentServiceWithSyncTest extends AbstractKieServicesBaseTest {
+    
+    static Logger logger = LoggerFactory.getLogger(DeploymentServiceWithSyncTest.class);
    
 	protected List<DeploymentUnit> units = new ArrayList<DeploymentUnit>();
     protected DeploymentStore store;
@@ -80,7 +90,7 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
         } catch (Exception e) {
             
         }
-        MavenRepository repository = getMavenRepository();
+        KieMavenRepository repository = getKieMavenRepository();
         repository.deployArtifact(releaseId, kJar1, pom);
         
         ReleaseId releaseIdSupport = ks.newReleaseId(GROUP_ID, "support", VERSION);
@@ -116,8 +126,15 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
         sync.setDeploymentService(deploymentService);
         sync.setDeploymentStore(store);
         
-        invoker = new DeploymentSyncInvoker(sync, 2L, 3L, TimeUnit.SECONDS);
+        invoker = new DeploymentSyncInvoker(sync, 1L, 1L, TimeUnit.SECONDS);
         invoker.start();
+    }
+    
+    protected CoundDownDeploymentListener configureListener(int threads, boolean deploy, boolean undeploy, boolean activate, boolean deactivate) {
+        CoundDownDeploymentListener countDownListener = new CoundDownDeploymentListener(threads);
+        ((ListenerSupport)deploymentService).addListener(countDownListener);
+        
+        return countDownListener;
     }
     
     @After
@@ -125,6 +142,12 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     	if (invoker != null) {
     		invoker.stop();
     	}
+    	
+        int deleted = 0;
+        deleted += commandService.execute(new UpdateStringCommand("delete from  DeploymentStoreEntry dse"));
+
+        logger.info("Deleted " + deleted);
+        
         cleanupSingletonSessionId();
         if (units != null && !units.isEmpty()) {
             for (DeploymentUnit unit : units) {
@@ -137,17 +160,19 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     
     @Test
     public void testDeploymentOfProcessesBySync() throws Exception {
+        
+        CoundDownDeploymentListener countDownListener = configureListener(1, true, false, false, false);
 
     	Collection<DeployedUnit> deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
     	assertEquals(0, deployed.size());
     	
     	KModuleDeploymentUnit unit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);    		
-    	Thread.sleep(3000);
+
     	store.enableDeploymentUnit(unit);
 		units.add(unit);
 		
-		Thread.sleep(3000);
+		countDownListener.waitTillCompleted(10000);
 		
 		deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
@@ -157,7 +182,8 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     
     @Test
     public void testUndeploymentOfProcessesBySync() throws Exception {
-
+        CoundDownDeploymentListener countDownListener = configureListener(1, false, true, false, false);
+        
     	Collection<DeployedUnit> deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
     	assertEquals(0, deployed.size());
@@ -169,11 +195,12 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
 		deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
     	assertEquals(1, deployed.size());
-    	Thread.sleep(3000);
+
+    	countDownListener.waitTillCompleted(1000);
     	
     	store.disableDeploymentUnit(unit);
 
-		Thread.sleep(3000);
+		countDownListener.waitTillCompleted(10000);
 		
 		deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
@@ -182,7 +209,8 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     
     @Test
     public void testDeactivateAndActivateOfProcessesBySync() throws Exception {
-
+        CoundDownDeploymentListener countDownListener = configureListener(2, false, false, true, true);
+        
     	Collection<DeployedUnit> deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
     	assertEquals(0, deployed.size());
@@ -195,11 +223,10 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     	assertNotNull(deployed);
     	assertEquals(1, deployed.size());
     	assertTrue(deployed.iterator().next().isActive());
-    	Thread.sleep(3000);
-    	
+
     	store.deactivateDeploymentUnit(unit);
 
-		Thread.sleep(3000);
+    	countDownListener.waitTillCompleted(10000);
 		
 		deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
@@ -208,7 +235,8 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     	
     	store.activateDeploymentUnit(unit);
 
-		Thread.sleep(3000);
+    	countDownListener.reset(1);
+		countDownListener.waitTillCompleted(10000);
 		
 		deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
@@ -218,23 +246,24 @@ public class DeploymentServiceWithSyncTest extends AbstractBaseTest {
     
     @Test
     public void testDeploymentOfProcessesBySyncWithDisabledAttribute() throws Exception {
-
+        CoundDownDeploymentListener countDownListener = configureListener(1, true, false, false, false);
+        
     	Collection<DeployedUnit> deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
     	assertEquals(0, deployed.size());
     	
     	KModuleDeploymentUnit unit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
     	unit.addAttribute("sync", "false");
-    	Thread.sleep(3000);
+    	
     	store.enableDeploymentUnit(unit);
 		units.add(unit);
 		
-		Thread.sleep(3000);
+		countDownListener.waitTillCompleted(4000);
 		
 		deployed = deploymentService.getDeployedUnits();
     	assertNotNull(deployed);
     	assertEquals(0, deployed.size());
        
     }
-   
+
 }
